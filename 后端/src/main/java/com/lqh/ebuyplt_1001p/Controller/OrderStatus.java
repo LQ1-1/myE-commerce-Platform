@@ -27,7 +27,7 @@ public class OrderStatus
     };
 
     //字符串到枚举的映射
-    HashMap<String,OrderStatusEnum> StringToEnum=new HashMap<String,OrderStatusEnum>(
+    public HashMap<String,OrderStatusEnum> StringToEnum=new HashMap<String,OrderStatusEnum>(
             Map.ofEntries(
                     Map.entry(StatusErro,OrderStatusEnum.NoSuchStatus),
                     Map.entry(Status1,OrderStatusEnum.Unpaid),
@@ -40,7 +40,7 @@ public class OrderStatus
             )
     );
     //枚举到字符串的映射
-    HashMap<OrderStatusEnum,String> EnumToString=new HashMap<OrderStatusEnum,String>(
+    public HashMap<OrderStatusEnum,String> EnumToString=new HashMap<OrderStatusEnum,String>(
             Map.ofEntries(
                     Map.entry(OrderStatusEnum.NoSuchStatus,StatusErro),
                     Map.entry(OrderStatusEnum.Unpaid,Status1),

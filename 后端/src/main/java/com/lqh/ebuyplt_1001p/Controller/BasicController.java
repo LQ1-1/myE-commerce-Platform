@@ -2,6 +2,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
+import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -97,7 +98,7 @@ public class BasicController
         }
         catch(Exception e)
         {
-            System.out.println(e.fillInStackTrace());
+            e.printStackTrace();
         }
         return "Failed";
     }
@@ -171,7 +172,7 @@ public class BasicController
         }
         catch(Exception e)
         {
-            System.out.println(e.fillInStackTrace());
+            e.printStackTrace();
         }
         return "Failed";
     }

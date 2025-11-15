@@ -18,7 +18,7 @@ public class ProductStatus
     };
 
     //字符串到枚举的映射
-    HashMap<String, ProductStatus.ProductStatusEnum> StringToEnum=new HashMap<String, ProductStatus.ProductStatusEnum>(
+    public HashMap<String, ProductStatus.ProductStatusEnum> StringToEnum=new HashMap<String, ProductStatus.ProductStatusEnum>(
             Map.ofEntries(
                     Map.entry(StatusErro, ProductStatus.ProductStatusEnum.NoSuchStatus),
                     Map.entry(Status1, ProductStatus.ProductStatusEnum.OnSale),
@@ -26,7 +26,7 @@ public class ProductStatus
             )
     );
     //枚举到字符串的映射
-    HashMap<ProductStatus.ProductStatusEnum,String> EnumToString=new HashMap<ProductStatus.ProductStatusEnum,String>(
+    public HashMap<ProductStatus.ProductStatusEnum,String> EnumToString=new HashMap<ProductStatus.ProductStatusEnum,String>(
             Map.ofEntries(
                     Map.entry(ProductStatus.ProductStatusEnum.NoSuchStatus,StatusErro),
                     Map.entry(ProductStatus.ProductStatusEnum.OnSale,Status1),
