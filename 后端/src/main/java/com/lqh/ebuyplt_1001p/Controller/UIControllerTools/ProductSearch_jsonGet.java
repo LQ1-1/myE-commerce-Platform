@@ -21,7 +21,7 @@ public class ProductSearch_jsonGet
 
     private String pInfo;                                   //通过描述信息筛选
 
-    ProductSearch_jsonGet(){}
+    public ProductSearch_jsonGet(){}
     public String getSeachDesciption()
     {
         return SeachDesciption;
@@ -57,5 +57,14 @@ public class ProductSearch_jsonGet
     public String getpInfo()
     {
         return pInfo;
+    }
+
+    public boolean FilterOpen()
+    {
+        if(pID.length()!=0 || pType.length()!=0 || pPrice_f+pPrice_r>0 || pProducer.length()!=0 || pReleaseDate_f.length()!=0 || pReleaseDate_r.length()!=0 || pInfo.length()!=0)
+        {
+            return true;
+        }
+        return false;
     }
 }

@@ -2,6 +2,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonSend;
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonGet;
+import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,34 +25,52 @@ public class UIController
 
 
     @RequestMapping("/api/ProductSearch")
-    public ProductSearch_jsonSend ProductSearch(@RequestBody ProductSearch_jsonGet SearchCondition)
+    public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductSearch(@RequestBody ProductSearch_jsonGet SearchCondition)//返回商品搜索结果附带筛选条件
     {
-
-
+        ArrayList<ProductSearch_jsonSend>ItemList=SearchResult(SearchCondition);
+        return ApiResult.success(ItemList);
     }
-
-    private ArrayList<ProductSearch_jsonSend>  SearchResult(ProductSearch_jsonGet SearchCondition)                  //参数是描述信息
+    private ArrayList<ProductSearch_jsonSend>  SearchResult(ProductSearch_jsonGet SearchCondition)                      //参数是描述信息
     {
         ArrayList<ProductSearch_jsonSend>res=new ArrayList<ProductSearch_jsonSend>();
-        HashMap<String,ProductSearch_jsonSend>ResultList=new HashMap<String,ProductSearch_jsonSend>();              //以pID为主键，标记已经加入res的商品，避免重复加入
+        HashMap<String,ProductSearch_jsonSend>ResultList=new HashMap<String,ProductSearch_jsonSend>();                  //以pID为主键，标记已经加入res的商品，避免重复加入
 
-        String SearchDescribe=SearchCondition.getSeachDesciption();                             //用户输入大概商品描述
-        String SearchpID=SearchCondition.getpID();                                              //筛选条件：商品编号
-        String SearchpType=SearchCondition.getpType();                                          //筛选条件：商品类型
+        String SearchDescribe=SearchCondition.getSeachDesciption();                                                     //用户输入大概商品描述
+        String SearchpID=SearchCondition.getpID();                                                                      //筛选条件：商品编号
+        String SearchpType=SearchCondition.getpType();                                                                  //筛选条件：商品类型
 
-        double SearchpPrice_f=SearchCondition.getpPrice_f();                                    //筛选条件：商品价格
-        double SearchpPrice_r=SearchCondition.getpPrice_r();                                    //筛选条件：商品价格
+        double SearchpPrice_f=SearchCondition.getpPrice_f();                                                            //筛选条件：商品价格
+        double SearchpPrice_r=SearchCondition.getpPrice_r();                                                            //筛选条件：商品价格
 
-        String SearchpProducer=SearchCondition.getpProducer();                                  //筛选条件：商品生产商
+        String SearchpProducer=SearchCondition.getpProducer();                                                          //筛选条件：商品生产商
 
-        String SearchpReleaseDate_f=SearchCondition.getpReleaseDate_f();                        //筛选条件：商品上架日期
-        String SearchpReleaseDate_r=SearchCondition.getpReleaseDate_r();                        //筛选条件：商品上架日期
+        String SearchpReleaseDate_f=SearchCondition.getpReleaseDate_f();                                                //筛选条件：商品上架日期
+        String SearchpReleaseDate_r=SearchCondition.getpReleaseDate_r();                                                //筛选条件：商品上架日期
 
-        String SearchpInfo=SearchCondition.getpInfo();                                          //筛选条件：商品描述信息
+        String SearchpInfo=SearchCondition.getpInfo();                                                                  //筛选条件：商品描述信息
 
         SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd");
         Date date_f=null;
         Date date_r=null;
+
+        if(SearchpReleaseDate_f.length()==0)
+        {
+            SearchpReleaseDate_f=new StringBuilder("0000-01-01").toString();
+        }
+        if(SearchpReleaseDate_r.length()==0)
+        {
+            SearchpReleaseDate_r=new StringBuilder("9999-12-31").toString();
+        }
+
+        if(SearchpPrice_f==0.0)
+        {
+            //
+        }
+        if(SearchpPrice_r==0.0)
+        {
+            SearchpPrice_r=Double.MAX_VALUE-100.0;
+        }
+
         try
         {
             date_f=dateFormat.parse(SearchpReleaseDate_f);
@@ -75,13 +94,18 @@ public class UIController
                     "LOWER(pInfo) LIKE LOWER(?) AND " +                                                                 //商品描述
                     "pReleaseDate >= ? AND pReleaseDate <= ? AND " +
                     "pPrice >= ? AND pPrice <= ?";
-            String sql2;
+            String sql2="SELECT * FROM ProductTable WHERE " +
+                    "LOWER(pID) LIKE LOWER(?) OR " +                                                                    //商品编号
+                    "LOWER(pName) LIKE LOWER(?) OR " +                                                                  //商品名
+                    "LOWER(pType) LIKE LOWER(?) OR " +                                                                  //商品类型
+                    "LOWER(pProducer) LIKE LOWER(?) OR " +                                                              //商品生产商
+                    "LOWER(pInfo) LIKE LOWER(?);";                                                                      //商品描述信息
 
             PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1,"%"+SearchpID+"%");
-            prepare.setString(2,"%"+SearchpType+"%");
-            prepare.setString(3,"%"+SearchpProducer+"%");
-            prepare.setString(4,"%"+SearchpInfo+"%");
+            prepare.setString(1,"%"+SearchpID+"%");                                                     //填入商品编号筛选条件
+            prepare.setString(2,"%"+SearchpType+"%");                                                   //填入商品类型筛选条件
+            prepare.setString(3,"%"+SearchpProducer+"%");                                               //填入商品生产商筛选条件
+            prepare.setString(4,"%"+SearchpInfo+"%");                                                   //填入商品信息筛选条件
 
             int dateCompareResult=date_f.compareTo(date_r);
             if(dateCompareResult>0)                              //左边日期大于右边日期
@@ -91,8 +115,8 @@ public class UIController
                 StringBuilder sb2=new StringBuilder(SearchpReleaseDate_f);
                 sb2.append(" 23:59:59");
 
-                prepare.setString(5,sb1.toString());
-                prepare.setString(6,sb2.toString());
+                prepare.setString(5,sb1.toString());                                                        //填入上架日期筛选区间f          5
+                prepare.setString(6,sb2.toString());                                                        //填入上架日期筛选区间r          6
             }
             else if(dateCompareResult==0)                       //两个日期相等
             {
@@ -101,8 +125,8 @@ public class UIController
                 StringBuilder sb2=new StringBuilder(SearchpReleaseDate_r);
                 sb2.append(" 23:59:59");
 
-                prepare.setString(5,sb1.toString());
-                prepare.setString(6,sb2.toString());
+                prepare.setString(5,sb1.toString());                                                        //填入上架日期筛选区间f          5
+                prepare.setString(6,sb2.toString());                                                        //填入上架日期筛选区间r          6
             }
             else if(dateCompareResult<0)                        //左边日期小于右边日期
             {
@@ -111,26 +135,78 @@ public class UIController
                 StringBuilder sb2=new StringBuilder(SearchpReleaseDate_r);
                 sb2.append(" 23:59:59");
 
-                prepare.setString(5,sb1.toString());
-                prepare.setString(6,sb2.toString());
+                prepare.setString(5,sb1.toString());                                                        //填入上架日期筛选区间f          5
+                prepare.setString(6,sb2.toString());                                                        //填入上架日期筛选区间r          6
             }
 
+            if(SearchpPrice_f>SearchpPrice_r)
+            {
+                double temp=SearchpPrice_f;
+                SearchpPrice_f=SearchpPrice_r;
+                SearchpPrice_r=temp;
+            }
+            prepare.setString(7,"%"+SearchpPrice_f+"%");                                                //填入价格筛选区间f             7
+            prepare.setString(8,"%"+SearchpPrice_r+"%");                                                //填入价格筛选区间r             8
+
+
+            if(SearchCondition.FilterOpen()==true)
+            {
+                ResultSet rs=con.createStatement().executeQuery(sql1);
+                while(rs.next())
+                {
+                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                    item.setpID(rs.getString("pID"));
+                    item.setpName(rs.getString("pName"));
+                    item.setpType(rs.getString("pType"));
+                    item.setpProducer(rs.getString("pProducer"));
+                    item.setpDiscount(rs.getDouble("pDiscount"));
+                    item.setpPrice(rs.getDouble("pPrice"));
+                    item.setpReleaseDate(rs.getString("pReleaseDate"));
+                    item.setpInfo(rs.getString("pInfo"));
+
+                    ResultList.put(item.getpID(),item);
+                    res.add(item);
+                }
+            }
 
             //这个单独弄一块，这个部分查询需要在商品编号，商品名称，商品生产商，商品类型，商品描述信息里面查询，
-            if(SearchCondition.getSeachDesciption()!=null)                                                          //有描述信息，根据描述信息模糊查询商品
+            if(SearchDescribe.length()!=0)                                                                              //有描述信息，根据描述信息模糊查询商品
             {
+                PreparedStatement prepare2=con.prepareStatement(sql2);
+                prepare2.setString(1,"%"+SearchDescribe+"%");                                           //填入商品编号搜索_模糊查询
+                prepare2.setString(2,"%"+SearchDescribe+"%");                                           //填入商品名搜索_模糊查询
+                prepare2.setString(3,"%"+SearchDescribe+"%");                                           //填入商品类型搜索_模糊查询
+                prepare2.setString(4,"%"+SearchDescribe+"%");                                           //填入商品生产商搜索_模糊查询
+                prepare2.setString(5,"%"+SearchDescribe+"%");                                           //填入商品描述信息搜索_模糊查询
 
+                ResultSet rs2=prepare2.executeQuery();
+                while(rs2.next())
+                {
+                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                    item.setpID(rs2.getString("pID"));
+                    item.setpName(rs2.getString("pName"));
+                    item.setpType(rs2.getString("pType"));
+                    item.setpProducer(rs2.getString("pProducer"));
+                    item.setpDiscount(rs2.getDouble("pDiscount"));
+                    item.setpPrice(rs2.getDouble("pPrice"));
+                    item.setpReleaseDate(rs2.getString("pReleaseDate"));
+                    item.setpInfo(rs2.getString("pInfo"));
+
+                    if(ResultList.get(item.getpID())==null)                                                             //这条商品记录之前没有被添加
+                    {
+                        res.add(item);
+                    }
+                }
             }
         }
         catch(SQLException e)
         {
-
+            e.printStackTrace();
         }
         catch(Exception e)
         {
             e.printStackTrace();
         }
-
         return res;
     }
 

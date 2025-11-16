@@ -4,7 +4,7 @@
 
 API
 
-# **登录:api/Login_Manual or ** /api/Login_RequestBody
+# **登录:api/Login_Manual 或者/api/Login_RequestBody
 
 返回字符串，
 
@@ -69,3 +69,59 @@ json文件中
 账号类型键值名uAccountType
 
 账号状态键值名uAccountStatus
+
+## 用户类型的选项
+
+如果是在登录界面注册的话只能是普通用户。
+
+商家界面注册允许是普通用户或者商家用户。
+
+在管理员界面注册则可以选择普通用户或者商家用户或者管理员用户
+
+
+
+# 商品搜索:/api/ProductSearch
+
+返回json类型的文件，形如
+
+{  
+
+"code": 200,  
+
+"message": "success",  
+
+"data": [
+
+"pID":"xxxx"
+
+"pName":"xxxx"
+
+"pType":"xxxx"
+
+"pProducer":"xxxx"
+
+......
+
+],  
+
+"timestamp": "2025-11-16T15:30:45.123+08:00" 
+
+}
+
+需要传递json形式参数
+
+需要具有如下变量名
+
+```
+SeachDesciption   搜索框的文本内容，
+
+筛选栏用户勾选或输入的信息
+pID				筛选栏里面的商品编号输入					
+pType			筛选栏里面的商品类型勾选
+pPrice_f		筛选栏里面的商品价格区间输入
+pPrice_r		筛选栏里面的商品价格区间输入
+pProducer		筛选栏里面的商品生产商选择，也允许用户自己输入
+pReleaseDate_f	筛选栏里面的商品上架日期区间
+pReleaseDate_r	筛选栏里面的商品上架日期区间
+pInfo			筛选栏里面的商品描述信息输入
+```

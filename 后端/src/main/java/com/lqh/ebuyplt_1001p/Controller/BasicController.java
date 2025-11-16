@@ -3,6 +3,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
 import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
+import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,6 +62,10 @@ public class BasicController
 //                System.out.println("查询信息:"+getPasswordHash);
 //                System.out.println("查询信息:"+getAccountType);
 //                System.out.println("查询信息:"+getAccountStatus);
+
+                rs.close();
+                prepare.close();
+                con.close();
 
                 switch(UAS.StringToEnum.get(getAccountStatus))
                 {
@@ -135,6 +140,10 @@ public class BasicController
 //                System.out.println("查询信息:"+getPasswordHash);
 //                System.out.println("查询信息:"+getAccountType);
 //                System.out.println("查询信息:"+getAccountStatus);
+
+                rs.close();
+                prepare.close();
+                con.close();
 
                 switch(UAS.StringToEnum.get(getAccountStatus))
                 {
