@@ -86,11 +86,13 @@ pType varchar(16)DEFAULT '展示图',						--COMMENT '图片类型',
 pImagePath varchar(64) 									--COMMENT '商品图片路径',
 );
 ALTER TABLE ProductImagesTable ADD CONSTRAINT ProductImagesTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
+ALTER TABLE ProductImagesTable RENAME COLUMN pType TO pImgType;
 CREATE INDEX index_pID ON ProductImagesTable(pID);
 CREATE INDEX index_picType ON ProductImagesTable(pType);
 --若ProductTable中的商品下架(这一版)缩略图保留,即使商品下架了收藏库里依然能看到该商品只是标记为下架
 --pType图片类型:缩略图，展示图
-
+--static目录是默认映射的根路径,images文件夹放在static文件夹下
+--缩略图只能有一个
 --DROP TABLE ProductImagesTable;
 
 
@@ -241,8 +243,77 @@ SELECT * FROM ProductTable WHERE LOWER(pName) LIKE LOWER('%apple%') OR LOWER(pTy
 --CREATE TABLE ProductImagesTable
 --(
 --pID varchar(32) ,										--COMMENT '商品号',
---pType varchar(16)DEFAULT '展示图',						--COMMENT '图片类型',		
+--pType varchar(16)DEFAULT '展示图',						--COMMENT '图片类型',	--pType图片类型:缩略图，展示图	
 --pImagePath varchar(64) 									--COMMENT '商品图片路径',
 --);
-INSERT INTO ProductImagesTable(pID,pType,pImagePath)VALUES 
-();
+
+--assets/images/
+INSERT INTO ProductImagesTable(pID,pImgType,pImagePath)VALUES 
+('0000000000000000','缩略图','assets/images/iphone13_16.png'),
+('0000000000000000','展示图','assets/images/iphone13_15.png'),
+
+('0000000000000001','缩略图','assets/images/iphone13_14.png'),
+('0000000000000001','展示图','assets/images/iphone13_13.png'),
+
+('0000000000000002','缩略图','assets/images/iphone13_12.png'),
+('0000000000000002','展示图','assets/images/iphone13_11.png'),
+
+('0000000000000003','缩略图','assets/images/iphone13_10.png'),
+('0000000000000003','展示图','assets/images/iphone13_9.png'),
+
+('0000000000000004','缩略图','assets/images/iphone13_8.png'),
+('0000000000000004','展示图','assets/images/iphone13_7.png'),
+
+('0000000000000005','缩略图','assets/images/iphone13_6.png'),
+('0000000000000005','展示图','assets/images/iphone13_5.png'),
+
+('0000000000000006','缩略图','assets/images/iphone13_4.png'),
+('0000000000000006','展示图','assets/images/iphone13_3.png'),
+
+('0000000000000007','缩略图','assets/images/iphone13_2.png'),
+('0000000000000007','展示图','assets/images/iphone13_1.png'),
+
+('0000000000000008','缩略图','assets/images/iphone13_1.png'),
+('0000000000000008','展示图','assets/images/iphone13_2.png'),
+
+('0000000000000009','缩略图','assets/images/iphone13_3.png'),
+('0000000000000009','展示图','assets/images/iphone13_4.png'),
+
+('0000000000000010','缩略图','assets/images/iphone13_5.png'),
+('0000000000000010','展示图','assets/images/iphone13_6.png'),
+
+('0000000000000011','缩略图','assets/images/iphone13_7.png'),
+('0000000000000011','展示图','assets/images/iphone13_8.png'),
+
+('0000000000000012','缩略图','assets/images/iphone13_9.png'),
+('0000000000000012','展示图','assets/images/iphone13_10.png'),
+
+('0000000000000013','缩略图','assets/images/iphone13_11.png'),
+('0000000000000013','展示图','assets/images/iphone13_12.png'),
+
+('0000000000000014','缩略图','assets/images/macbookair_1.png'),
+('0000000000000015','缩略图','assets/images/macbookpro_1.png'),
+('0000000000000016','缩略图','assets/images/imac_1.png'),
+('0000000000000017','缩略图','assets/images/macbookpro_4.png'),
+('0000000000000018','缩略图','assets/images/Galaxy_1.png'),
+('0000000000000019','缩略图','assets/images/GalaxySultra_1.png'),
+('0000000000000020','缩略图','assets/images/TS-990S_1.png'),
+
+('0000000000000014','展示图','assets/images/macbookair_2.png'),
+('0000000000000015','展示图','assets/images/macbookpro_2.png'),
+('0000000000000016','展示图','assets/images/imac_2.png'),
+('0000000000000017','展示图','assets/images/macbookpro_3.png'),
+('0000000000000018','展示图','assets/images/Galaxy_2.png'),
+('0000000000000019','展示图','assets/images/GalaxySultra_2.png'),
+('0000000000000020','展示图','assets/images/TS-990S_2.png');
+
+SELECT * FROM ProductImagesTable;
+
+
+SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath FROM ProductTable,ProductImagesTable WHERE LOWER(ProductTable.pName) LIKE LOWER('%iph%') AND ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图';
+
+--后续可以建立一个视图
+
+SELECT * FROM ProductTable WHERE pID='0000000000000000';
+SELECT * FROM ProductImagesTable WHERE pID='0000000000000000';
+

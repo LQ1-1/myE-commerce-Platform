@@ -1,6 +1,8 @@
 package com.lqh.ebuyplt_1001p.Controller.UIControllerTools;
 
-public class ProductSearch_jsonSend
+import java.util.ArrayList;
+
+public class ProductClick_jsonSend
 {
     private String pID;
     private String pName;
@@ -10,16 +12,18 @@ public class ProductSearch_jsonSend
     private String pProducer;
     private String pReleaseDate;
     private String pInfo;
+    private ArrayList<String>pIcon_paths;                                                                               //该商品的图片路径
 
-    private String pIcon_path;                                                                                          //商品图标路径
+    public ProductClick_jsonSend()
+    {
+        this.pIcon_paths=new ArrayList<String>();
+    }
 
-    public ProductSearch_jsonSend(){}
-
-    //get函数
-    public String getpID() {
+    public String getpID()
+    {
         return pID;
     }
-    public String getpName()
+    public String  getpName()
     {
         return pName;
     }
@@ -47,40 +51,48 @@ public class ProductSearch_jsonSend
     {
         return pInfo;
     }
-    public String getpIcon_path() {return pIcon_path;}
+    public ArrayList<String>getpIcon_paths()
+    {
+        return pIcon_paths;
+    }
 
-    //set函数
     public void setpID(String pID)
     {
-        this.pID = pID;
+        this.pID=pID;
     }
     public void setpName(String pName)
     {
-        this.pName = pName;
+        this.pName=pName;
     }
     public void setpType(String pType)
     {
-        this.pType = pType;
+        this.pType=pType;
     }
     public void setpDiscount(double pDiscount)
     {
-        this.pDiscount = pDiscount;
+        this.pDiscount=pDiscount;
     }
     public void setpPrice(double pPrice)
     {
-        this.pPrice = pPrice;
+        this.pPrice=pPrice;
     }
     public void setpProducer(String pProducer)
     {
-        this.pProducer = pProducer;
+        this.pProducer=pProducer;
     }
     public void setpReleaseDate(String pReleaseDate)
     {
-        this.pReleaseDate = pReleaseDate;
+        this.pReleaseDate=pReleaseDate;
     }
     public void setpInfo(String pInfo)
     {
-        this.pInfo = pInfo;
+        this.pInfo=pInfo;
     }
-    public void setpIcon_path(String pIcon_path) {this.pIcon_path = pIcon_path;}
+    public void setpIcon_paths(ArrayList<String> IpIcon_paths)
+    {
+        for(String i:IpIcon_paths)
+        {
+            this.pIcon_paths.add(i);
+        }
+    }
 }

@@ -32,6 +32,8 @@ http://192.168.66.94:8081/api/Login_Manual手动请求参数:格式形如
 
 
 
+前端发送的json文件要有uID,uPassword这两个变量名
+
 http://192.168.66.94:8081/api/Login_RequestBody参数是json形式,通过请求体传递json格式
 
 json文件中账号键值对名必须是uID，密码键值对名必须是uPassword密码必须先经过SHA256哈希之后再提交给后端服务器
@@ -50,7 +52,7 @@ json文件中账号键值对名必须是uID，密码键值对名必须是uPasswo
 
 参数也是json形式,通过请求体传递json格式.
 
-json文件中
+发送的json文件中
 
 账号键值名uID
 
@@ -102,6 +104,10 @@ json文件中
 
 ......
 
+pIcon_path:"xxxxxx"        //这个存放缩略图的路径,每个商品只能有一个缩略图，url路径形如http://192.168.66.94:8081/+pIcon_path
+
+http://192.168.66.94:8081/assets/images/TS-990S_2.png
+
 ],  
 
 "timestamp": "2025-11-16T15:30:45.123+08:00" 
@@ -110,7 +116,7 @@ json文件中
 
 需要传递json形式参数
 
-需要具有如下变量名
+前端需要具有如下变量名
 
 ```
 SeachDesciption   搜索框的文本内容，
@@ -124,4 +130,40 @@ pProducer		筛选栏里面的商品生产商选择，也允许用户自己输入
 pReleaseDate_f	筛选栏里面的商品上架日期区间
 pReleaseDate_r	筛选栏里面的商品上架日期区间
 pInfo			筛选栏里面的商品描述信息输入
+
 ```
+
+接收的数据类型需要有如下的变量名
+
+```
+pID;			商品的编号
+pName;			商品名
+pType;			商品类型
+pDiscount;		商品的折扣
+pPrice;			商品的价格
+pProducer;		商品的生产商
+pReleaseDate;	商品的发售日期
+pInfo;			商品的描述信息
+pIcon_path;     商品缩略图的资源路径
+```
+
+当用户点进去的时候再次发送请求，这个时候会返回该商品的所有展示图url路径信息
+
+# 商品点击:/api/ProductClick
+
+返回json类型的文件
+
+```
+private String pID;
+private String pName;
+private String pType;
+private double pDiscount;
+private double pPrice;
+private String pProducer;
+private String pReleaseDate;
+private String pInfo;
+private ArrayList<String>pIcon_paths;         
+```
+
+前端接收时，数据类型里面有特别有pIconPaths: string[]形如这个的string类型的数组用来接收多个展示图的路径url
+

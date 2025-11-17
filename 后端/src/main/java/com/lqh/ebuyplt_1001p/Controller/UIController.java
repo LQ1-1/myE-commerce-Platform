@@ -1,5 +1,7 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
+import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductClick_jsonGet;
+import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductClick_jsonSend;
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonSend;
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonGet;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
@@ -87,19 +89,38 @@ public class UIController
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="SELECT * FROM ProductTable WHERE " +
-                    "LOWER(pID) LIKE LOWER(?) AND " +                                                                   //商品编号
-                    "LOWER(pType) LIKE LOWER(?) AND " +                                                                 //商品名
-                    "LOWER(pProducer) LIKE LOWER(?) AND " +                                                             //商品类型
-                    "LOWER(pInfo) LIKE LOWER(?) AND " +                                                                 //商品描述
-                    "pReleaseDate >= ? AND pReleaseDate <= ? AND " +
-                    "pPrice >= ? AND pPrice <= ?";
-            String sql2="SELECT * FROM ProductTable WHERE " +
-                    "LOWER(pID) LIKE LOWER(?) OR " +                                                                    //商品编号
-                    "LOWER(pName) LIKE LOWER(?) OR " +                                                                  //商品名
-                    "LOWER(pType) LIKE LOWER(?) OR " +                                                                  //商品类型
-                    "LOWER(pProducer) LIKE LOWER(?) OR " +                                                              //商品生产商
-                    "LOWER(pInfo) LIKE LOWER(?);";                                                                      //商品描述信息
+            String sql1="SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath " +
+                    "FROM ProductTable,ProductImagesTable WHERE " +
+                    "LOWER(ProductTable.pID) LIKE LOWER(?) AND " +                                                                   //商品编号
+                    "LOWER(ProductTable.pType) LIKE LOWER(?) AND " +                                                                 //商品名
+                    "LOWER(ProductTable.pProducer) LIKE LOWER(?) AND " +                                                             //商品类型
+                    "LOWER(ProductTable.pInfo) LIKE LOWER(?) AND " +                                                                 //商品描述
+                    "ProductTable.pReleaseDate >= ? AND ProductTable.pReleaseDate <= ? AND " +
+                    "ProductTable.pPrice >= ? AND ProductTable.pPrice <= ? AND "+
+                    "ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图';";
+
+            String sql2="SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath " +
+                    "FROM ProductTable,ProductImagesTable WHERE " +
+                    "LOWER(ProductTable.pID) LIKE LOWER(?) OR " +                                                                    //商品编号
+                    "LOWER(ProductTable.pName) LIKE LOWER(?) OR " +                                                                  //商品名
+                    "LOWER(ProductTable.pType) LIKE LOWER(?) OR " +                                                                  //商品类型
+                    "LOWER(ProductTable.pProducer) LIKE LOWER(?) OR " +                                                              //商品生产商
+                    "LOWER(ProductTable.pInfo) LIKE LOWER(?) AND " +
+                    "ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图';";
+
+//            String sql1="SELECT * FROM ProductTable WHERE " +
+//                    "LOWER(pID) LIKE LOWER(?) AND " +                                                                   //商品编号
+//                    "LOWER(pType) LIKE LOWER(?) AND " +                                                                 //商品名
+//                    "LOWER(pProducer) LIKE LOWER(?) AND " +                                                             //商品类型
+//                    "LOWER(pInfo) LIKE LOWER(?) AND " +                                                                 //商品描述
+//                    "pReleaseDate >= ? AND pReleaseDate <= ? AND " +
+//                    "pPrice >= ? AND pPrice <= ? ;";
+//            String sql2="SELECT * FROM ProductTable WHERE " +
+//                    "LOWER(pID) LIKE LOWER(?) OR " +                                                                    //商品编号
+//                    "LOWER(pName) LIKE LOWER(?) OR " +                                                                  //商品名
+//                    "LOWER(pType) LIKE LOWER(?) OR " +                                                                  //商品类型
+//                    "LOWER(pProducer) LIKE LOWER(?) OR " +                                                              //商品生产商
+//                    "LOWER(pInfo) LIKE LOWER(?);";                                                                      //商品描述信息
 
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1,"%"+SearchpID+"%");                                                     //填入商品编号筛选条件
@@ -155,14 +176,16 @@ public class UIController
                 while(rs.next())
                 {
                     ProductSearch_jsonSend item=new ProductSearch_jsonSend();
-                    item.setpID(rs.getString("pID"));
-                    item.setpName(rs.getString("pName"));
-                    item.setpType(rs.getString("pType"));
-                    item.setpProducer(rs.getString("pProducer"));
-                    item.setpDiscount(rs.getDouble("pDiscount"));
-                    item.setpPrice(rs.getDouble("pPrice"));
-                    item.setpReleaseDate(rs.getString("pReleaseDate"));
-                    item.setpInfo(rs.getString("pInfo"));
+                    item.setpID(rs.getString("ProductTable.pID"));
+                    item.setpName(rs.getString("ProductTable.pName"));
+                    item.setpType(rs.getString("ProductTable.pType"));
+                    item.setpProducer(rs.getString("ProductTable.pProducer"));
+                    item.setpDiscount(rs.getDouble("ProductTable.pDiscount"));
+                    item.setpPrice(rs.getDouble("ProductTable.pPrice"));
+                    item.setpReleaseDate(rs.getString("ProductTable.pReleaseDate"));
+                    item.setpInfo(rs.getString("ProductTable.pInfo"));
+
+                    item.setpIcon_path(rs.getString("ProductImagesTable.pImgType"));
 
                     ResultList.put(item.getpID(),item);
                     res.add(item);
@@ -183,14 +206,16 @@ public class UIController
                 while(rs2.next())
                 {
                     ProductSearch_jsonSend item=new ProductSearch_jsonSend();
-                    item.setpID(rs2.getString("pID"));
-                    item.setpName(rs2.getString("pName"));
-                    item.setpType(rs2.getString("pType"));
-                    item.setpProducer(rs2.getString("pProducer"));
-                    item.setpDiscount(rs2.getDouble("pDiscount"));
-                    item.setpPrice(rs2.getDouble("pPrice"));
-                    item.setpReleaseDate(rs2.getString("pReleaseDate"));
-                    item.setpInfo(rs2.getString("pInfo"));
+                    item.setpID(rs2.getString("ProductTable.pID"));
+                    item.setpName(rs2.getString("ProductTable.pName"));
+                    item.setpType(rs2.getString("ProductTable.pType"));
+                    item.setpProducer(rs2.getString("ProductTable.pProducer"));
+                    item.setpDiscount(rs2.getDouble("ProductTable.pDiscount"));
+                    item.setpPrice(rs2.getDouble("ProductTable.pPrice"));
+                    item.setpReleaseDate(rs2.getString("ProductTable.pReleaseDate"));
+                    item.setpInfo(rs2.getString("ProductTable.pInfo"));
+
+                    item.setpIcon_path(rs2.getString("ProductImagesTable.pImgType"));
 
                     if(ResultList.get(item.getpID())==null)                                                             //这条商品记录之前没有被添加
                     {
@@ -208,6 +233,62 @@ public class UIController
             e.printStackTrace();
         }
         return res;
+    }
+
+    @RequestMapping("/api/ProductClick")
+    public ApiResult<ProductClick_jsonSend> ProductClick(@RequestBody ProductClick_jsonGet ClickCondition)              //返回该点击的商品信息
+    {
+        ProductClick_jsonSend Item=ClickResult(ClickCondition);
+        return ApiResult.success(Item);
+    }
+    private ProductClick_jsonSend ClickResult(ProductClick_jsonGet ClickCondition)
+    {
+        ProductClick_jsonSend result=new ProductClick_jsonSend();
+
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM ProductTable WHERE pID=?;";                                                    //查询商品的基本信息
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,ClickCondition.getpID());
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
+            {
+                result.setpID(rs.getString("pID"));
+                result.setpName(rs.getString("pName"));
+                result.setpType(rs.getString("pType"));
+                result.setpProducer(rs.getString("pProducer"));
+                result.setpDiscount(rs.getDouble("pDiscount"));
+                result.setpPrice(rs.getDouble("pPrice"));
+                result.setpReleaseDate(rs.getString("pReleaseDate"));
+                result.setpInfo(rs.getString("pInfo"));
+            }
+
+            String sql2="SELECT * FROM ProductImagesTable WHERE pID=?;";                                                //查询该商品的图片信息
+            PreparedStatement prepare2=con.prepareStatement(sql2);
+            prepare2.setString(1,ClickCondition.getpID());
+            ResultSet rs2=prepare2.executeQuery();
+            ArrayList<String>temparr=new ArrayList<>();
+            while(rs2.next())
+            {
+                String tempstr=rs2.getString("pImagePath");
+                temparr.add(tempstr);
+            }
+            result.setpIcon_paths(temparr);
+
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 
 }
