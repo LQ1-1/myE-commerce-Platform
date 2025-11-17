@@ -317,3 +317,5 @@ SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath 
 SELECT * FROM ProductTable WHERE pID='0000000000000000';
 SELECT * FROM ProductImagesTable WHERE pID='0000000000000000';
 
+SELECT * FROM UserDeliveryInfoTable WHERE uID='';
+
