@@ -370,4 +370,52 @@ public class OrderController
         return res;
     }
 
+    @RequestMapping("/api/OrderConfirm_OrderPaid")
+    public String OrderConfirm_OrderPaid(@RequestBody OrderPaid_jsonGet paidCondition)
+    {
+        boolean res=OrderConfirm_OrderPaidResult(paidCondition);
+        if(res==true)
+        {
+            return OrderCheckStatus.Accept;
+        }
+        else
+        {
+            return OrderCheckStatus.Error;
+        }
+    }
+    private boolean OrderConfirm_OrderPaidResult(OrderPaid_jsonGet paidCondition)
+    {
+        boolean res=false;
+
+        OrderStatus OrStatus=new OrderStatus();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE OrderBasicInfoTable SET oStatus=? WHERE oOrderID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,OrStatus.EnumToString.get(OrderStatus.OrderStatusEnum.Paid));
+            prepare.setString(2,paidCondition.getoOrderID());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            else
+            {
+                res=false;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
 }

@@ -29,6 +29,9 @@ uContactPersonPhone varchar(11) NOT NULL,				-- COMMENT'收货人联系电话',
 uContactPersonGender varchar(64)						-- COMMENT'性别',
 );
 ALTER TABLE UserDeliveryInfoTable ADD CONSTRAINT UserDeliveryInfoTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
+ALTER TABLE UserDeliveryInfoTable ADD COLUMN oReceieverEmail varchar(32) NOT NULL;
+ALTER TABLE UserDeliveryInfoTable ADD COLUMN oPostalCode varchar(16) NOT NULL ;
+ALTER TABLE UserDeliveryInfoTable ADD COLUMN oDeliveryNote varchar(512);
 --若UserAccountTable中的账号被注销后，则在UserDeliveryInfoTable的收货信息记录也要被删除，所以uID仅作为外键
 
 --用户购物车记录
@@ -125,16 +128,16 @@ SELECT * FROM OrderSequenceTable WHERE UniDate='20251119' FOR UPDATE;
 INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251119',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
 COMMIT;
 
+--定义函数获取当日的订单序列
 CREATE OR REPLACE FUNCTION GetCurrentNumber(UniDatePeri varchar(8))
-RETURN bigint 
-DECLARE res bigint;
-BEGIN 
-	INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251119',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
+RETURN bigint AS DECLARE res bigint;
+BEGIN
+	INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES (UniDatePeri,0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
 	SELECT CurrentNumber INTO res FROM OrderSequenceTable WHERE UniDate=UniDatePeri FOR UPDATE;
 	RETURN res;
-END
+END;
 
-
+SELECT GetCurrentNumber('20251119');
 
 --订单基本信息表
 CREATE TABLE OrderBasicInfoTable
@@ -348,3 +351,4 @@ SELECT * FROM UserDeliveryInfoTable WHERE uID='';
 
 SELECT * FROM ProductTable WHERE pID=0000000000000007 OR pID='0000000000000020' OR;
 
+UPDATE OrderBasicInfoTable SET oStatus='Paid' WHERE oOrderID='20251119';
