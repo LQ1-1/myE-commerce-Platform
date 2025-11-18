@@ -32,9 +32,6 @@ public class OrderController
     @RequestMapping("/api/OrderConfirm_DeliveryCheck")
     public String OrderConfirm_DeliveryCheck(@RequestBody Order_jsonGet orderCondition)                                 //查询用户是否有派送信息，有让用户选择，没有就让用户填写
     {
-//        LocalDateTime currentDateTime = LocalDateTime.now();
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-//        String oOrderDate = currentDateTime.format(formatter);          //下单的时间
         return OrderConfirm_DeliveryCheckResult(orderCondition);
     }                                                                                                                   //购物流程将是通过加入购物车，然后在购物车里下单
     private String OrderConfirm_DeliveryCheckResult(Order_jsonGet orderCondition)
@@ -80,7 +77,7 @@ public class OrderController
         OrderAmountCheck_jsonSend res=OrderConfirm_AmountCheckResult(orderCondition);
         if(res.orderStatus.equals(OrderCheckStatus.Accept))                                                             //数量检查没有问题，可以正式生成订单
         {
-            OrderConfirm_OrderIDGenerate(res);                                                                          //生成订单
+            OrderConfirm_OrderIDGenerate(orderCondition);                                                                          //生成订单
         }
 
         return ApiResult.success(res);
@@ -146,12 +143,28 @@ public class OrderController
         }
         return res;
     }
-    private void OrderConfirm_OrderIDGenerate(OrderAmountCheck_jsonSend orderCondition)
+    private void OrderConfirm_OrderIDGenerate(OrderAmountCheck_jsonGet orderCondition)
     {
         try
         {
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
+
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            String oOrderDate = currentDateTime.format(formatter);          //下单的时间
+
+            String sql1="BEGIN;" +
+                    "SELECT * FROM OrderSequenceTable WHERE UniDate=? FOR UPDATE;" +
+                    "INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES (?,0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;" +
+                    "COMMIT;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, oOrderDate);
+            ResultSet rs=prepare.executeQuery();
+            if()
+            {
+
+            }
 
         }
         catch(SQLException e)

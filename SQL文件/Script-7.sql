@@ -108,6 +108,33 @@ ALTER TABLE OrderGeneralInfoTable ADD CONSTRAINT OrderGeneralInfoTableForeignKey
 --oOrdererID这个是下单的账号
 --oOrdererID作为外键但是不用delete on cascade级联删除,账号不真的从数据库上面删除，保存下单记录，以及下单者的信息
 
+--订单序列表以(8位YYYYmmDD)日期为主键
+--存储当日的下单序列
+CREATE TABLE OrderSequenceTable
+(
+	UniDate varchar(8) PRIMARY KEY, 				 	--COMMENT '前8位日期',		
+	CurrentNumber bigint NOT NULL DEFAULT 0				--COMMENT '当日下单次序',
+);
+SELECT * FROM OrderSequenceTable FOR UPDATE;			--FOR UPDATE 排他锁，防止两个线程读到同一个旧的数值
+INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251118',0);
+INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251118',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;	--存在冲突就会自动更新CurrentNumber+1
+INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251117',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
+--先查询 + 加锁 + 更新
+BEGIN;
+SELECT * FROM OrderSequenceTable WHERE UniDate='20251119' FOR UPDATE;
+INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251119',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
+COMMIT;
+
+CREATE OR REPLACE FUNCTION GetCurrentNumber(UniDatePeri varchar(8))
+RETURN bigint 
+DECLARE res bigint;
+BEGIN 
+	INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES ('20251119',0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;
+	SELECT CurrentNumber INTO res FROM OrderSequenceTable WHERE UniDate=UniDatePeri FOR UPDATE;
+	RETURN res;
+END
+
+
 
 --订单基本信息表
 CREATE TABLE OrderBasicInfoTable
