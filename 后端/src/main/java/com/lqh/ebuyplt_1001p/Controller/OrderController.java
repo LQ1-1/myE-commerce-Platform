@@ -1,6 +1,7 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.OrderCheckPack.OrderCheckStatus;
+import com.lqh.ebuyplt_1001p.Controller.OrderCheckPack.OrderStatus;
 import com.lqh.ebuyplt_1001p.Controller.OrderPack.Order_jsonGet;
 import com.lqh.ebuyplt_1001p.Controller.OrderPack.Order_jsonSend;
 import com.lqh.ebuyplt_1001p.Controller.OrderPack.*;
@@ -75,11 +76,6 @@ public class OrderController
     public ApiResult<OrderAmountCheck_jsonSend> OrderConfirm_AmountCheck(@RequestBody  OrderAmountCheck_jsonGet orderCondition)             //检查订购数量与库存数量是否有问题，有问题就返回；没有问题就正式生成订单
     {
         OrderAmountCheck_jsonSend res=OrderConfirm_AmountCheckResult(orderCondition);
-        if(res.orderStatus.equals(OrderCheckStatus.Accept))                                                             //数量检查没有问题，可以正式生成订单
-        {
-            OrderConfirm_OrderIDGenerate(orderCondition);                                                                          //生成订单
-        }
-
         return ApiResult.success(res);
     }
     private OrderAmountCheck_jsonSend OrderConfirm_AmountCheckResult(OrderAmountCheck_jsonGet orderCondition)
@@ -143,8 +139,23 @@ public class OrderController
         }
         return res;
     }
-    private void OrderConfirm_OrderIDGenerate(OrderAmountCheck_jsonGet orderCondition)
+
+    @RequestMapping("/api/OrderConfirm_OrderIDGenerate")
+    public String OrderConfirm_OrderIDGenerate(@RequestBody OrderWrapper rapper)
     {
+        boolean GenerateResult=OrderConfirm_OrderIDGenerate(rapper.OrderInfo,rapper.DeliveryInfo);
+        if(GenerateResult==true)
+        {
+         return OrderCheckStatus.Accept;
+        }
+        else
+        {
+            return OrderCheckStatus.Error;
+        }
+    }
+    private boolean OrderConfirm_OrderIDGenerate(OrderAmountCheck_jsonGet orderCondition,OrderDeliveryList orderDeliveryInfo)
+    {
+        boolean res=true;
         try
         {
             Class.forName("com.kingbase8.Driver");
@@ -152,20 +163,36 @@ public class OrderController
 
             LocalDateTime currentDateTime = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            String oOrderDate = currentDateTime.format(formatter);          //下单的时间
+            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String oOrderDate = currentDateTime.format(formatter);                                                      //下单的时间(8位)
+            String oOrderDateTime = currentDateTime.format(formatter1);                                                 //下单时间(14位)
 
-            String sql1="BEGIN;" +
-                    "SELECT * FROM OrderSequenceTable WHERE UniDate=? FOR UPDATE;" +
-                    "INSERT INTO OrderSequenceTable(UniDate,CurrentNumber) VALUES (?,0) ON CONFLICT (UniDate)DO UPDATE SET CurrentNumber=OrderSequenceTable.CurrentNumber+1;" +
-                    "COMMIT;";
+            String sql1="SELECT GetCurrentNumber(?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1, oOrderDate);
+            prepare.setString(1,oOrderDate);
             ResultSet rs=prepare.executeQuery();
-            if()
+            long sequence=-1;
+            if(rs.next())
             {
-
+                sequence=rs.getInt(1);
             }
+            StringBuilder OrderID=new StringBuilder();                          //最终的订单编号
+            OrderID.append(oOrderDate);                                         //前8位，下单的日期YYYYmmDD
+            OrderID.append(GenerateOrderID_9digit(sequence));                   //后9位，该日的序列号，互斥访问该项数据
 
+            String oOrdererID=orderCondition.uID;                               //下单者的账号
+
+            //true表示插入成功，false表示插入失败
+            boolean OrderGeneralInfoResult=InsertOrderGeneralInfoTable(OrderID.toString(),oOrdererID);      //往OrderGeneralInfoTable里面插入该订单信息
+            boolean OrderBasicInfoResult=InsertOrderBasicInfoTable(OrderID.toString(),oOrderDateTime);      //往OrderBasicInfoTable里面插入该订单信息
+            boolean OrdererInfoResult=InsertOrdererInfoTable(OrderID.toString(),orderDeliveryInfo.getuContactPersonName(),orderDeliveryInfo.getuContactPersonGender(),orderDeliveryInfo.getuContactPersonEmail());//往OrdererInfoTable里面插入信息
+            boolean OrderDeliveryInfoResult=InsertOrderDeliveryInfo(OrderID.toString(),orderDeliveryInfo.getuDeliveryAddress(),orderDeliveryInfo.getoPostalCode(),orderDeliveryInfo.getuContactPersonPhone(),orderDeliveryInfo.getoDeliveryNote());
+            boolean OrderProductInfoTableResult=InsertOrderProductInfoTable(OrderID.toString(),orderCondition.pIDs,orderCondition.pPrices,orderCondition.pAmounts);
+
+            if(OrderGeneralInfoResult==false || OrderBasicInfoResult==false || OrdererInfoResult==false || OrderDeliveryInfoResult==false || OrderProductInfoTableResult==false)
+            {
+                res=false;
+            }
         }
         catch(SQLException e)
         {
@@ -175,7 +202,172 @@ public class OrderController
         {
             e.printStackTrace();
         }
+        return res;
     }
+    private String GenerateOrderID_9digit(long iSequence)
+    {
+        StringBuilder res=new StringBuilder(String.valueOf(iSequence));
+        while(res.length()<9)
+        {
+            res.append("0");
+        }
+        return res.toString();
+    }
+    private boolean InsertOrderGeneralInfoTable(String OrderID,String OrdererID)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
 
+            String sql1="INSERT INTO OrderGeneralInfo (OrderID,OrdererID) VALUES (?,?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, OrderID);
+            prepare.setString(2, OrdererID);
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    private boolean InsertOrderBasicInfoTable(String OrderID,String oDate)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="INSERT INTO OrderBasicInfo (OrderID,oDate,oStatus) VALUES (?,?,?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, OrderID);
+            prepare.setString(2, oDate);OrderStatus OrStatus=new OrderStatus();
+            prepare.setString(3, OrStatus.EnumToString.get(OrderStatus.OrderStatusEnum.Unpaid));
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    private boolean InsertOrdererInfoTable(String OrderID,String oReceiverName,String oReceieverGender,String oReceieverEmail)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="INSERT INTO OrdererInfoTable(oOrderID,oReceiverName,oReceieverGender,oReceieverEmail)VALUES (?,?,?,?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, OrderID);
+            prepare.setString(2, oReceiverName);
+            prepare.setString(3, oReceieverGender);
+            prepare.setString(4, oReceieverEmail);
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    private boolean InsertOrderDeliveryInfo(String OrderID,String oDeliveryAddress,String oPostalCode,String oContactPhone,String oDeliveryNote)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="INSERT INTO OrderDeliveryInfo()VALUES(?,?,?,?,?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, OrderID);
+            prepare.setString(2, oDeliveryAddress);
+            prepare.setString(3, oPostalCode);
+            prepare.setString(4, oContactPhone);
+            prepare.setString(5, oDeliveryNote);
+
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    private boolean InsertOrderProductInfoTable(String OrderID,ArrayList<String>pIDs,ArrayList<Double>oPrices,ArrayList<Integer>oAmounts)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            for(int i=0;i<pIDs.size();i++)
+            {
+                String sql1="INSERT INTO OrderProductInfoTable(oOrderID,pID,oPrice,oAmount)VALUES(?,?,?,?);";
+                PreparedStatement prepare=con.prepareStatement(sql1);
+                prepare.setString(1,OrderID);
+                prepare.setString(2,pIDs.get(i));
+                prepare.setString(3,String.valueOf(oPrices.get(i)));
+                prepare.setString(4,String.valueOf(oAmounts.get(i)));
+                int row=prepare.executeUpdate();
+                if(row>0)
+                {
+                    res=true;
+                }
+                else
+                {
+                    res=false;
+                }
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
 
 }

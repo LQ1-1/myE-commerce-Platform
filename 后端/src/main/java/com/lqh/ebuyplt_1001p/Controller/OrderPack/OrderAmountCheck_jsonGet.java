@@ -4,13 +4,6 @@ import java.util.*;
 
 public class OrderAmountCheck_jsonGet
 {
-    public OrderAmountCheck_jsonGet()
-    {
-        this.pIDs=new ArrayList<String>();
-        this.pAmounts=new ArrayList<Integer>();
-        this.pPrices=new ArrayList<Double>();
-    }
-
     public String uID;                                                                                                  //下单的用户的账号
     public ArrayList<String> pIDs;                                                                                      //各个商品的商品编号
     public ArrayList<Integer> pAmounts;                                                                                 //各个商品的订购数量
@@ -26,4 +19,12 @@ public class OrderAmountCheck_jsonGet
             pIDsToIndex.put(pIDs.get(i),i);
         }
     }
+
+    public OrderAmountCheck_jsonGet()
+    {
+        this.pIDs=new ArrayList<String>();
+        this.pAmounts=new ArrayList<Integer>();
+        this.pPrices=new ArrayList<Double>();
+    }
+
 }

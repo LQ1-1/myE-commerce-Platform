@@ -30,6 +30,9 @@ uContactPersonGender varchar(64)						-- COMMENT'性别',
 );
 ALTER TABLE UserDeliveryInfoTable ADD CONSTRAINT UserDeliveryInfoTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
 --若UserAccountTable中的账号被注销后，则在UserDeliveryInfoTable的收货信息记录也要被删除，所以uID仅作为外键
+--uContactPersonEmail varchar(32)
+--oPostalCode varchar(16)
+--oDeliveryNote varchar(512)
 
 --用户购物车记录
 CREATE TABLE UserShoppingCartTable
@@ -113,7 +116,6 @@ oReceieverGender varchar(64),							--COMMENT '收货人性别',
 oReceieverEmail varchar(32) DEFAULT NULL				--COMMENT '收货人邮箱',
 );
 ALTER TABLE OrdererInfoTable ADD CONSTRAINT OrdererInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
-
 
 --订单配送信息表
 CREATE TABLE OrderDeliveryInfo
