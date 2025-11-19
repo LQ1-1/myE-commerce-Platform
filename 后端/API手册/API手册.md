@@ -353,3 +353,24 @@ String
 ```
 private String oOrderID;			该订单的订单编号
 ```
+
+
+
+# 订单取消:/api/OrderConfirm_OrderCancelled
+
+## 返回类型:String
+
+当内容为'Accept'时表示取消成功
+
+当内容为'ErrorFromServer'时表示由于服务器故障导致的取消失败
+
+当内容为'Error'时表示无法查询到订单或者订单的订购时间已经超过1小时无法取消
+
+## 传递参数
+
+```
+public class OrderCancelled_jsonGet
+{
+    private String orderId;
+}
+```

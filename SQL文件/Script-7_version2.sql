@@ -101,7 +101,7 @@ ALTER TABLE OrderGeneralInfoTable ADD CONSTRAINT OrderGeneralInfoTableForeignKey
 CREATE TABLE OrderBasicInfoTable
 (
 oOrderID varchar(17) ,									--COMMENT '订单编号',
-oDate date NOT NULL, 									--COMMENT '下单日期',
+oDate date NOT NULL, 									--COMMENT '下单日期',精确到HHmmSS的时间
 oStatus varchar(20) NOT NULL 							--COMMENT '订单状态'
 );
 ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOREIGN KEY (OOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);

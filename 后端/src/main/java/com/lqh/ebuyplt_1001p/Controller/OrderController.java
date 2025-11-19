@@ -17,6 +17,7 @@ import java.sql.SQLException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 @RestController
@@ -141,7 +142,7 @@ public class OrderController
     }
 
     @RequestMapping("/api/OrderConfirm_OrderIDGenerate")
-    public String OrderConfirm_OrderIDGenerate(@RequestBody OrderWrapper rapper)
+    public String OrderConfirm_OrderIDGenerate(@RequestBody OrderWrapper rapper)                                        //订单生成的API,生成订单时默认是Unpaid状态
     {
         boolean GenerateResult=OrderConfirm_OrderIDGenerate(rapper.OrderInfo,rapper.DeliveryInfo);
         if(GenerateResult==true)
@@ -165,7 +166,7 @@ public class OrderController
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
             DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String oOrderDate = currentDateTime.format(formatter);                                                      //下单的时间(8位)
-            String oOrderDateTime = currentDateTime.format(formatter1);                                                 //下单时间(14位)
+            String oOrderDateTime = currentDateTime.format(formatter1);    //精确到hhMMss的时间                                             //下单时间(14位)
 
             String sql1="SELECT GetCurrentNumber(?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
@@ -370,7 +371,7 @@ public class OrderController
         return res;
     }
 
-    @RequestMapping("/api/OrderConfirm_OrderPaid")
+    @RequestMapping("/api/OrderConfirm_OrderPaid")                  //订单已付款的API
     public String OrderConfirm_OrderPaid(@RequestBody OrderPaid_jsonGet paidCondition)
     {
         boolean res=OrderConfirm_OrderPaidResult(paidCondition);
@@ -417,5 +418,152 @@ public class OrderController
         }
         return res;
     }
+
+    @RequestMapping("/api/OrderConfirm_OrderCancelled")
+    public String OrderConfirm_OrderCancelled(@RequestBody OrderCancelled_jsonGet CancelledCondition)   //取消单个订单的API，当在下单之后的某一段时间内可以取消订单(1hour),超过之后就无法取消
+    {
+        boolean res=OrderConfirm_OrderCancelledResult(CancelledCondition);
+        if(res==true)           //订单在1小时之内可以取消
+        {
+            OrderStatus orderStatus=new OrderStatus();
+            boolean updateres=OrderBasicInfoTableUpdate(CancelledCondition.getOrderId(),orderStatus.EnumToString.get(OrderStatus.OrderStatusEnum.Cancelled));
+            if(updateres==true)
+            {
+                return OrderCheckStatus.Accept;                    //取消成功
+            }
+            else
+            {
+                return OrderCheckStatus.ErrorFromServer;          //取消失败,服务器的问题
+            }
+        }
+        else
+        {
+            return OrderCheckStatus.Error;                        //取消失败,下单时间超过1h
+        }
+    }
+    private boolean OrderConfirm_OrderCancelledResult(OrderCancelled_jsonGet CancelledCondition)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT oDate FROM OrderBasicInfoTable WHERE oOrderID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,CancelledCondition.getOrderId());
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
+            {
+                String oDate=rs.getString("oDate");
+
+                LocalDateTime currentDateTime = LocalDateTime.now();//当前的时间
+                DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                LocalDateTime orderDateTime = LocalDateTime.parse(oDate,formatter1);//下单的时间
+
+                long hoursDiffer=ChronoUnit.HOURS.between(orderDateTime,currentDateTime);
+                if(Math.abs(hoursDiffer)==0)          //时间差在1h之内会被取整为0,该订单可以取消
+                {
+                    res=true;
+                }
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    public boolean OrderBasicInfoTableUpdate(String oOrderID,String oStatus)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE OrderBasicInfoTable SET oStatus=? WHERE oOrderID=?";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,oStatus);
+            prepare.setString(2,oOrderID);
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @RequestMapping("/api/OrderConfirm_OrderMultipleCancelled")
+    public ApiResult<OrderMultipleCancelled_jsonSend>OrderConfirm_OrderMultipleCancelled(@RequestBody OrderMultipleCancelled_jsonGet CancelledCondition)        //多个订单取消的API
+    {
+
+    }
+    public OrderMultipleCancelled_jsonSend OrderConfirm_OrderMultipleCancelledResult(OrderMultipleCancelled_jsonGet CancelledCondition)
+    {
+        OrderMultipleCancelled_jsonSend res=new OrderMultipleCancelled_jsonSend();
+        res.setoOrderIDs(CancelledCondition.oOrderIDs);                                 //往res里面填入数据
+        res.IniMapping();                                                               //完成oOrderID名到反馈缩影的映射
+
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            StringBuilder sql1=new StringBuilder("SELECT oOrderID,oDate FROM OrderBasicInfoTable WHERE ");
+            for(int i=0;i<res.oOrderIDs.size();i++)
+            {
+                if(i==res.oOrderIDs.size()-1)
+                {
+                    sql1.append("oOrderID="+res.oOrderIDs.get(i)+" AND ");
+                }
+                else
+                {
+                    sql1.append("oOrderID="+res.oOrderIDs.get(i)+" ;");
+                }
+            }
+            ResultSet rs=con.prepareStatement(sql1.toString()).executeQuery();
+            while(rs.next())
+            {
+                String oID=rs.getString("oOrderID");
+                String oDate=rs.getString("oDate");
+
+                LocalDateTime orderDateTime = LocalDateTime.parse(oDate,formatter);
+
+                long hoursDiff=ChronoUnit.HOURS.between(orderDateTime,currentDateTime);
+                if(Math.abs(hoursDiff)==0)          //差距在一个小时之内，该订单可以取消
+                {
+
+                }
+
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
 
 }
