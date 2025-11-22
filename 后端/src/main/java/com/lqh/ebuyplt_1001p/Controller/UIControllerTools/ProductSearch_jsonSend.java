@@ -1,6 +1,6 @@
 package com.lqh.ebuyplt_1001p.Controller.UIControllerTools;
 
-public class ProductSearch_jsonSend
+public class ProductSearch_jsonSend                 //图片只返回一个
 {
     private String pID;
     private String pName;

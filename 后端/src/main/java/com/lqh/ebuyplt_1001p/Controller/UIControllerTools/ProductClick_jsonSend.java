@@ -2,7 +2,7 @@ package com.lqh.ebuyplt_1001p.Controller.UIControllerTools;
 
 import java.util.ArrayList;
 
-public class ProductClick_jsonSend
+public class ProductClick_jsonSend              //图片返回全部的展示图
 {
     private String pID;
     private String pName;

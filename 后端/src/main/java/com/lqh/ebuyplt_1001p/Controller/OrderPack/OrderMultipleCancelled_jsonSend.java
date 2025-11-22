@@ -31,7 +31,6 @@ public class OrderMultipleCancelled_jsonSend
         for(String ID:oOrderIDsI)
         {
             this.oOrderIDs.add(ID);
-            this.fCancelledFeedBack.add(null);
         }
     }
 

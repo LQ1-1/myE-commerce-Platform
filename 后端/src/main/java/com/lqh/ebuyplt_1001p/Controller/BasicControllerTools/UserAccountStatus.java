@@ -5,11 +5,11 @@ import java.util.Map;
 
 public class UserAccountStatus
 {
-    public String StatusErro="NoSuchStatus";
+    public String StatusErro="无此类型账户";
 
-    public String Status1="Normal";
-    public String Status2="Banned";
-    public String Status3="Deleted";
+    public String Status1="正常";
+    public String Status2="封禁";
+    public String Status3="注销";
 
     public enum UserAccountStatusEnum
     {

@@ -9,8 +9,8 @@ public class OrderAmountCheck_jsonGet
     public ArrayList<Integer> pAmounts;                                                                                 //各个商品的订购数量
     public ArrayList<Double>pPrices;                                                                                    //各个商品的购买单价
 
-    //pID名与索引名对应
-    public HashMap<String,Integer>pIDsToIndex;
+
+    public HashMap<String,Integer>pIDsToIndex;                                                                          //pID名与索引名对应
     public void InipIDsToIndex()
     {
         this.pIDsToIndex=new HashMap<String,Integer>();

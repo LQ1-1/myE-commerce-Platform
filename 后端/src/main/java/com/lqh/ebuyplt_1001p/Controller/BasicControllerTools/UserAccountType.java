@@ -5,11 +5,11 @@ import java.util.Map;
 
 public class UserAccountType
 {
-    public String TypeErro="NoSuchType";
+    public String TypeErro="无此类型账户";
 
-    public String Type1="RegularUser";
-    public String Type2="Merchant";
-    public String Type3="Administrator";
+    public String Type1="普通账户";
+    public String Type2="商户";
+    public String Type3="管理员";
 
     public enum UserAccountTypeEnum
     {

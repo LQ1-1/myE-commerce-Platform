@@ -98,6 +98,14 @@ CREATE INDEX index_picType ON ProductImagesTable(pType);
 --缩略图只能有一个
 --DROP TABLE ProductImagesTable;
 
+--统计商品的点击次数
+CREATE TABLE ProductClicksInfoTable
+(
+pID varchar(32),										--COMMENT '商品号',
+pClicksAmount int16 DEFAULT 0							--COMMENT '商品的点击次数',
+);
+ALTER TABLE ProductClicksInfoTable ADD CONSTRAINT ProductClicksInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
+
 
 
 --订单总体信息表
@@ -136,7 +144,7 @@ BEGIN
 	SELECT CurrentNumber INTO res FROM OrderSequenceTable WHERE UniDate=UniDatePeri FOR UPDATE;
 	RETURN res;
 END;
-
+--GetCurrentNumber函数检测
 SELECT GetCurrentNumber('20251119');
 
 --订单基本信息表
@@ -185,7 +193,6 @@ oAmount int16 NOT NULL									--COMMENT '购买数量',
 );
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
-
 
 
 --添加账号信息
@@ -352,3 +359,65 @@ SELECT * FROM UserDeliveryInfoTable WHERE uID='';
 SELECT * FROM ProductTable WHERE pID=0000000000000007 OR pID='0000000000000020' OR;
 
 UPDATE OrderBasicInfoTable SET oStatus='Paid' WHERE oOrderID='20251119';
+
+
+--注册函数，检查账号是否存在，同时同账号注册添加反馈
+CREATE OR REPLACE FUNCTION RegistrationResult(iuID varchar(32),iuNickName varchar(32),iuPassword varchar(128),
+iuPhone varchar(11),iuEmail varchar(32),iuGender varchar(64),
+iuRegisterDate date,iuAccountType varchar(16),iuAccountStatus varchar(10))
+RETURN varchar AS DECLARE res varchar;exist boolean; 
+BEGIN
+	SELECT EXISTS(SELECT UserAccountTable.uID FROM UserAccountTable WHERE UserAccountTable.uID=iuID) INTO exist;
+	IF exist THEN
+		RETURN 'Account Exist';
+	ELSE 
+	 INSERT INTO UserAccountTable VALUES(iuID,iuNickName,iuPassword,
+	 iuPhone,iuEmail,iuGender,
+	 iuRegisterDate,iuAccountType,iuAccountStatus);
+	 RETURN 'Registration Success';
+	 END IF;
+	 
+	 EXCEPTION
+	 	WHEN unique_violation THEN 
+	 		RETURN 'Account Exist';
+	 	WHEN OTHERS THEN 
+	 		RETURN 'Registration Fail';
+END;
+
+--RegistrationResult函数检测
+SELECT RegistrationResult('079754646484','test1','5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9',
+'12345678911','asdw564651@gmail.com','Armor Helicopter',
+'2025-11-21 18:21:54','正常','普通用户');
+
+
+
+CREATE OR REPLACE FUNCTION ProductInventoryDecrease(ipID varchar(32),iNum int16)
+RETURN boolean AS DECLARE currentInventory int16;
+BEGIN 
+	SELECT ProductTable.pInventory INTO currentInventory FROM ProductTable WHERE ProductTable.pID=ipID FOR UPDATE;
+	IF currentInventory-iNum>=0 THEN 
+		UPDATE ProductTable SET ProductTable.pInventory=currentInventory-iNum WHERE ProductTable.pID=ipID;
+		RETURN true;
+	ELSE 
+		RETURN false;
+	END IF;
+END
+
+--ProductInventoryDecrease函数检查
+SELECT ProductInventoryDecrease('0000000000000000',1115);
+SELECT * FROM ProductTable;
+
+
+CREATE OR REPLACE FUNCTION ProductInventoryAscend(ipID varchar(32),iNum int16)
+RETURN void AS DECLARE currentInventory int16;
+BEGIN 
+	SELECT ProductTable.pInventory INTO currentInventory FROM ProductTable WHERE ProductTable.pID=ipID FOR UPDATE;
+	UPDATE ProductTable SET ProductTable.pInventory=currentInventory+iNum WHERE ProductTable.pID=ipID;
+END
+
+--ProductInventoryAscend函数检查
+SELECT ProductInventoryAscend('0000000000000000',15);
+SELECT * FROM ProductTable;
+
+SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID='';
+

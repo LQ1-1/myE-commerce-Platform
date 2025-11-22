@@ -83,7 +83,7 @@ public class OrderController
     {
         OrderAmountCheck_jsonSend res=new  OrderAmountCheck_jsonSend();
         res.setpIDs(orderCondition.pIDs);                                                                               //存储pID信息
-        res.setpAmounts(orderCondition.pAmounts);                                                                       //存储商品数量
+        res.setpAmounts(orderCondition.pAmounts);                                                                       //存储商品订购数量
         res.setpPrices(orderCondition.pPrices);                                                                         //存储商品价格
         ArrayList<String> iFeedBacks=new ArrayList<String>(orderCondition.pIDs.size());                                 //定义数量检查的反馈数组
         for(int i=0;i<orderCondition.pIDs.size();i++){iFeedBacks.add(null);}                                            //往iFeedBacks填充数据块
@@ -116,17 +116,29 @@ public class OrderController
             while(rs.next())
             {
                 String pID=rs.getString("pID");                                                              //获取该记录的商品编号
-                int pAmount=rs.getInt("pAmount");                                                            //获取该记录的商品库存
+                int pInventor=rs.getInt("pAmount");                                                            //获取该记录的商品库存
+                int pIDIndex=orderCondition.pIDsToIndex.get(pID);                                                       //该商品编号对应的数组索引
+                int pOrderAmount=orderCondition.pAmounts.get(pIDIndex);                                                 //该商品的订购数量
 
-                if(pAmount >= orderCondition.pAmounts.get(orderCondition.pIDsToIndex.get(pID)))                         //库存数量大于订购数量,正常
+                String sql2="SELECT ProductInventoryDecrease(?,?);";                                                     //调用数据库包装好的函数
+                PreparedStatement prepare=con.prepareStatement(sql2);
+                prepare.setString(1, pID);
+                prepare.setInt(2, pOrderAmount);
+                ResultSet rs2=prepare.executeQuery();
+                if(rs2.next())
                 {
-                    iFeedBacks.set(orderCondition.pIDsToIndex.get(pID), OrderCheckStatus.Accept);
+                    boolean FuncResult=rs.getBoolean(1);
+                    if(FuncResult)
+                    {
+                        iFeedBacks.set(pIDIndex,OrderCheckStatus.Accept);                                               //数量检查没问题，库存数量减少
+                    }
+                    else
+                    {
+                        iFeedBacks.set(pIDIndex,OrderCheckStatus.Error);
+                        res.setorderStatus(OrderCheckStatus.Error);
+                    }
                 }
-                else                                                                                                    //库存数量小于订购数量，异常
-                {
-                    iFeedBacks.set(orderCondition.pIDsToIndex.get(pID),OrderCheckStatus.Error);
-                    res.setorderStatus(OrderCheckStatus.Error);
-                }
+
             }
             res.setpFeedback(iFeedBacks);                                                                               //存储商品数量检查的反馈数组
         }
@@ -140,6 +152,49 @@ public class OrderController
         }
         return res;
     }
+    private boolean OrderConfirm_OrderPaidInventoryDecreaseResult(OrderPaid_jsonGet paidCondition)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID=?;";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,paidCondition.getoOrderID());
+            ResultSet rs=prepare1.executeQuery();
+            while(rs.next())
+            {
+                String pID=rs.getString("pID");
+                int oAmount=rs.getInt("oAmount");
+
+                String sql2="SELECT ProductInventoryDecrease(?,?);";
+                PreparedStatement prepare2=con.prepareStatement(sql2);
+                prepare2.setString(1,pID);
+                prepare2.setString(2,oAmount+"");
+
+                ResultSet rs2=prepare2.executeQuery();
+                if(rs2.next())
+                {
+
+                }
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    private void OrderConfirm_OrderPaidInventoryAscendResult(OrderPaid_jsonGet paidCondition)
+    {
+
+    }
 
     @RequestMapping("/api/OrderConfirm_OrderIDGenerate")
     public String OrderConfirm_OrderIDGenerate(@RequestBody OrderWrapper rapper)                                        //订单生成的API,生成订单时默认是Unpaid状态
@@ -147,7 +202,7 @@ public class OrderController
         boolean GenerateResult=OrderConfirm_OrderIDGenerate(rapper.OrderInfo,rapper.DeliveryInfo);
         if(GenerateResult==true)
         {
-         return OrderCheckStatus.Accept;
+            return OrderCheckStatus.Accept;
         }
         else
         {
@@ -371,7 +426,7 @@ public class OrderController
         return res;
     }
 
-    @RequestMapping("/api/OrderConfirm_OrderPaid")                  //订单已付款的API
+    @RequestMapping("/api/OrderConfirm_OrderPaid")                  //订单已付款的API,付款之后商品库存应该减少
     public String OrderConfirm_OrderPaid(@RequestBody OrderPaid_jsonGet paidCondition)
     {
         boolean res=OrderConfirm_OrderPaidResult(paidCondition);
@@ -419,105 +474,19 @@ public class OrderController
         return res;
     }
 
-    @RequestMapping("/api/OrderConfirm_OrderCancelled")
-    public String OrderConfirm_OrderCancelled(@RequestBody OrderCancelled_jsonGet CancelledCondition)   //取消单个订单的API，当在下单之后的某一段时间内可以取消订单(1hour),超过之后就无法取消
-    {
-        boolean res=OrderConfirm_OrderCancelledResult(CancelledCondition);
-        if(res==true)           //订单在1小时之内可以取消
-        {
-            OrderStatus orderStatus=new OrderStatus();
-            boolean updateres=OrderBasicInfoTableUpdate(CancelledCondition.getOrderId(),orderStatus.EnumToString.get(OrderStatus.OrderStatusEnum.Cancelled));
-            if(updateres==true)
-            {
-                return OrderCheckStatus.Accept;                    //取消成功
-            }
-            else
-            {
-                return OrderCheckStatus.ErrorFromServer;          //取消失败,服务器的问题
-            }
-        }
-        else
-        {
-            return OrderCheckStatus.Error;                        //取消失败,下单时间超过1h
-        }
-    }
-    private boolean OrderConfirm_OrderCancelledResult(OrderCancelled_jsonGet CancelledCondition)
-    {
-        boolean res=false;
-        try
-        {
-            Class.forName("com.kingbase8.Driver");
-            Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="SELECT oDate FROM OrderBasicInfoTable WHERE oOrderID=?;";
-            PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1,CancelledCondition.getOrderId());
-            ResultSet rs=prepare.executeQuery();
-            if(rs.next())
-            {
-                String oDate=rs.getString("oDate");
-
-                LocalDateTime currentDateTime = LocalDateTime.now();//当前的时间
-                DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-                LocalDateTime orderDateTime = LocalDateTime.parse(oDate,formatter1);//下单的时间
-
-                long hoursDiffer=ChronoUnit.HOURS.between(orderDateTime,currentDateTime);
-                if(Math.abs(hoursDiffer)==0)          //时间差在1h之内会被取整为0,该订单可以取消
-                {
-                    res=true;
-                }
-            }
-        }
-        catch(SQLException e)
-        {
-            e.printStackTrace();
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
-        return res;
-    }
-    public boolean OrderBasicInfoTableUpdate(String oOrderID,String oStatus)
-    {
-        boolean res=false;
-        try
-        {
-            Class.forName("com.kingbase8.Driver");
-            Connection con=DriverManager.getConnection(url,user,password);
-
-            String sql1="UPDATE OrderBasicInfoTable SET oStatus=? WHERE oOrderID=?";
-            PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1,oStatus);
-            prepare.setString(2,oOrderID);
-            int row=prepare.executeUpdate();
-            if(row>0)
-            {
-                res=true;
-            }
-        }
-        catch(SQLException e)
-        {
-            e.printStackTrace();
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
-        return res;
-    }
-
+    //订单取消库存的数量要加上用户订购的数量
     @RequestMapping("/api/OrderConfirm_OrderMultipleCancelled")
     public ApiResult<OrderMultipleCancelled_jsonSend>OrderConfirm_OrderMultipleCancelled(@RequestBody OrderMultipleCancelled_jsonGet CancelledCondition)        //多个订单取消的API
     {
-
+        return ApiResult.success(OrderConfirm_OrderMultipleCancelledResult(CancelledCondition));
     }
     public OrderMultipleCancelled_jsonSend OrderConfirm_OrderMultipleCancelledResult(OrderMultipleCancelled_jsonGet CancelledCondition)
     {
         OrderMultipleCancelled_jsonSend res=new OrderMultipleCancelled_jsonSend();
         res.setoOrderIDs(CancelledCondition.oOrderIDs);                                 //往res里面填入数据
-        res.IniMapping();                                                               //完成oOrderID名到反馈缩影的映射
+        for(int i=0;i<CancelledCondition.oOrderIDs.size();i++){res.fCancelledFeedBack.add(null);}//往fCancelledFeedBack里面填入数据块
+        res.IniMapping();                                                               //完成oOrderID名到反馈索引的映射
 
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -538,7 +507,7 @@ public class OrderController
                     sql1.append("oOrderID="+res.oOrderIDs.get(i)+" ;");
                 }
             }
-            ResultSet rs=con.prepareStatement(sql1.toString()).executeQuery();
+            ResultSet rs=con.prepareStatement(sql1.toString()).executeQuery();              //筛选要取消的多个订单
             while(rs.next())
             {
                 String oID=rs.getString("oOrderID");
@@ -549,9 +518,39 @@ public class OrderController
                 long hoursDiff=ChronoUnit.HOURS.between(orderDateTime,currentDateTime);
                 if(Math.abs(hoursDiff)==0)          //差距在一个小时之内，该订单可以取消
                 {
+                    String sql2="UPDATE OrderBasicInfoTable SET oState='Cancelled' WHERE oOrderID=?;";
+                    PreparedStatement prepare=con.prepareStatement(sql2);
+                    prepare.setString(1,oID);
+                    int row=prepare.executeUpdate();                                    //将这个订单的订单状态更新为取消
+                    if(row>0)                   //更新成功
+                    {
+                        //将该订单的商品数量添加到库存里面
+                        String sql3="SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE oOrderID=?;";
+                        PreparedStatement prepare2=con.prepareStatement(sql3);
+                        prepare2.setString(1,oID);
+                        ResultSet rs2=prepare2.executeQuery();                          //将这个订单中订购的商品的商品数量加回到库存里面,一个订单可以订购多个商品
+                        while(rs2.next())
+                        {
+                            String pID=rs2.getString("pID");//该商品的编号
+                            int oAmount=rs2.getInt("oAmount");//该商品的订购数量
 
+                            String sql4="SELECT ProductInventoryAscend(?,?);";
+                            PreparedStatement prepare3=con.prepareStatement(sql4);
+                            prepare3.setString(1,pID);
+                            prepare3.setInt(2,oAmount);
+                            ResultSet rs3=prepare3.executeQuery();                  //将这个订单中这个商品的订购数量重新加回库存里面
+                            if(rs3.next())
+                            {
+                                boolean AscendResult=rs3.getBoolean(1);
+                            }
+                        }
+                        res.fCancelledFeedBack.set(res.IDsToIntegerMapping.get(oID),OrderCheckStatus.Accept);
+                    }
                 }
-
+                else                                //差距在一小时之外，该订单不可以取消
+                {
+                    res.fCancelledFeedBack.set(res.IDsToIntegerMapping.get(oID),OrderCheckStatus.Error);
+                }
             }
         }
         catch(SQLException e)
@@ -562,8 +561,49 @@ public class OrderController
         {
             e.printStackTrace();
         }
+        return res;
     }
 
+    //订单状态更新，供商家调用
+    @RequestMapping("/api/OrderConfirm_OrderStatusUpdate")
+    public String OrderConfirm_OrderStatusUpdate(@RequestBody OrderStatusUpdate_jsonGet newOrderStatus)
+    {
+        String res=OrderConfirm_OrderStatusUpdateResult(newOrderStatus);
+        return res;
+    }
+    private String OrderConfirm_OrderStatusUpdateResult(OrderStatusUpdate_jsonGet newOrderStatus)
+    {
+        String res="";
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE OrderBasicInfoTable SET oStatus=? WHERE oOrderID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,newOrderStatus.getoOrderID());
+            prepare.setString(2,newOrderStatus.getNewState());
+
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=OrderCheckStatus.Accept;
+            }
+            else
+            {
+                res=OrderCheckStatus.Error;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
 
 
 }

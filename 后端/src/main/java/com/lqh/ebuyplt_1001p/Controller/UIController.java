@@ -25,6 +25,52 @@ public class UIController
     private static String user="system";
     private static String password="qh20050908";
 
+    @RequestMapping("/api/ProductRecommend")
+    public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductRecommend()
+    {
+        ArrayList<ProductSearch_jsonSend> res=ProductRecommendResult();
+        return ApiResult.success(res);
+    }
+    private ArrayList<ProductSearch_jsonSend> ProductRecommendResult()
+    {
+        ArrayList<ProductSearch_jsonSend>res=new ArrayList<ProductSearch_jsonSend>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM ProductTable " +
+                    "INNER JOIN ProductClicksInfoTable ON ProductTable.pID = ProductClicksInfoTable.pID " +
+                    "INNER JOIN ProductImagesTable ON ProductImagesTable.pID=ProductClicksInfoTable.pID AND ProductImagesTable.pImgType='缩略图' " +
+                    "ORDER BY ProductClicksInfoTable.pClicksAmount DESC " +
+                    "LIMIT 50 ;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                item.setpID(rs.getString("pID"));
+                item.setpName(rs.getString("pName"));
+                item.setpType(rs.getString("pType"));
+                item.setpDiscount(rs.getDouble("pDiscount"));
+                item.setpPrice(rs.getDouble("pPrice"));
+                item.setpProducer(rs.getString("pProducer"));
+                item.setpReleaseDate(rs.getString("pReleaseDate"));
+                item.setpInfo(rs.getString("pInfo"));
+                item.setpIcon_path(rs.getString("pIcon_path"));
+                res.add(item);
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
 
     @RequestMapping("/api/ProductSearch")
     public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductSearch(@RequestBody ProductSearch_jsonGet SearchCondition)//返回商品搜索结果附带筛选条件

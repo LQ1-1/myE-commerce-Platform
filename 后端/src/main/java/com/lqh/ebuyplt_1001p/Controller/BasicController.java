@@ -4,9 +4,11 @@ import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
 import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
+import jakarta.servlet.Registration;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 
 
@@ -25,6 +27,8 @@ public class BasicController
     private static UserAccountStatus UAS=new UserAccountStatus();
     private static UserAccountType UAT=new UserAccountType();
 
+    //    @CrossOrigin(origins="http://192.168.66.94:8082")
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/Welcome")
     public String Hello()
     {
@@ -33,6 +37,8 @@ public class BasicController
 
     //处理登录函数1
     //手动请求参数
+    //    @CrossOrigin(origins="http://192.168.66.94:8082")
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/Login_Manual")
     public String Login_Manual(HttpServletRequest request)
     {
@@ -111,6 +117,8 @@ public class BasicController
 
     //处理函数2
     //参数是json形式,通过请求体传递json格式
+    //    @CrossOrigin(origins="http://192.168.66.94:8082")
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/Login_RequestBody")
     public String Login_RequestBody(@RequestBody UserLogin userlogin)
     {
@@ -137,9 +145,9 @@ public class BasicController
                 String getAccountType=rs.getString("uAccountType");
                 String getAccountStatus=rs.getString("uAccountStatus");
 
-//                System.out.println("查询信息:"+getPasswordHash);
-//                System.out.println("查询信息:"+getAccountType);
-//                System.out.println("查询信息:"+getAccountStatus);
+                System.out.println("查询信息:"+getPasswordHash);
+                System.out.println("查询信息:"+getAccountType);
+                System.out.println("查询信息:"+getAccountStatus);
 
                 rs.close();
                 prepare.close();
@@ -186,87 +194,63 @@ public class BasicController
         return "Failed";
     }
 
+//    @CrossOrigin(origins="http://192.168.66.94:8082")
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/Registration")
     public String Registration(@RequestBody UserRegistration userregistration)
     {
-        StringBuffer res=new StringBuffer();
+        String res=RegistrationResult(userregistration);
+        return res;
+    }
+    private String RegistrationResult(UserRegistration userregistration)
+    {
+        //api连接测试//
+        System.out.println(userregistration.getuID());
+        System.out.println(userregistration.getuNickName());
+        System.out.println(userregistration.getuPassword());
+        System.out.println(userregistration.getuPhone());
+        System.out.println(userregistration.getuEmail());
+        System.out.println(userregistration.getuGender());
+        System.out.println(userregistration.getuRegisterDate());
+        System.out.println(userregistration.getuAccountType());
+        System.out.println(userregistration.getuAccountStatus());
 
-        String uID=userregistration.getuID();
-        String uNickName=userregistration.getuNickName();
-        String uPassword=userregistration.getuPassword();
-        String uPhone=userregistration.getuPhone();
-        String uEmail=userregistration.getuEmail();
-        String uGender=userregistration.getuGender();
-        String uRegisterDate=userregistration.getuRegisterDate();
-        String uAccountType=userregistration.getuAccountType();
-        String uAccountStatus=userregistration.getuAccountStatus();
+        //api连接测试//
 
+
+        StringBuilder res=new StringBuilder("");
         try
         {
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql="INSERT INTO UserAccountTable(" +
-                    "uID,uNickName,uPassword," +
-                    "uPhone,uEmail,uGender," +
-                    "uRegisterDate,uAccountType,uAccountStatus)VALUES(" +
-                    "?,?,?," +
+            String sql1="SELECT RegistrationResult(?,?,?," +
                     "?,?,?," +
                     "?,?,?);";
-            PreparedStatement prepare=con.prepareStatement(sql);
-            prepare.setString(1,uID);                                       //用户账号
-            prepare.setString(2,uNickName);                                 //用户昵称
-            prepare.setString(3,uPassword);                                 //用户密码
-            prepare.setString(4,uPhone);                                    //用户电话
-            prepare.setString(5,uEmail);                                    //用户邮件
-            prepare.setString(6,uGender);                                   //用户性别
-            prepare.setString(7,uRegisterDate);                             //用户注册日期
-            prepare.setString(8,uAccountType);                              //用户类别
-            prepare.setString(9,uAccountStatus);                            //用户状态
-
-            int rows=prepare.executeUpdate();
-            if(rows>0)                                                                    //rows > 0 表示至少插入了1条记录，插入成功
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,userregistration.getuID());
+            prepare.setString(2,userregistration.getuNickName());
+            prepare.setString(3,userregistration.getuPassword());
+            prepare.setString(4,userregistration.getuPhone());
+            prepare.setString(5,userregistration.getuEmail());
+            prepare.setString(6,userregistration.getuGender());
+            prepare.setString(7,userregistration.getuRegisterDate());
+            prepare.setString(8,userregistration.getuAccountType());
+            prepare.setString(9,userregistration.getuAccountStatus());
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
             {
-                prepare.close();
-                con.close();
-                res.append("RegistrationSuccess");
-                return res.toString();
+                System.out.println(rs.getString(1));
+                res.append(rs.getString(1));
             }
-            else                                                                          //插入失败
-            {
-                prepare.close();
-                con.close();
-                System.out.println("Failed to insert this record");
-                res.append("Registration Failed.");
-            }
-        }
-        catch(ClassNotFoundException e)
-        {
-            System.out.print("驱动类加载失败 : ");
-            e.printStackTrace();
-
-//            res.append("驱动类加载失败;");
         }
         catch(SQLException e)
         {
-            System.out.println("Database operation failed.");
-            System.out.println("ERROINFO : "+e.getMessage());
-            System.out.println("SQLSTATE : "+e.getSQLState());
-            System.out.println("DATABASESTATE : "+e.getErrorCode());
             e.printStackTrace();
-
-//            res.append("Registration Failed.");
-//            res.append("ERROINFO : "+e.getMessage());
-//            res.append("SQLSTATE : "+e.getSQLState());
-//            res.append("DATABASESTATE : "+e.getErrorCode());
-            if(e.getErrorCode()==23505)
-            {
-                res.append("AccountAlreadyExist");
-            }
-            else if(e.getErrorCode()==22001)
-            {
-                res.append("ValuetooLargeForColumn");
-            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
         }
         return res.toString();
     }
