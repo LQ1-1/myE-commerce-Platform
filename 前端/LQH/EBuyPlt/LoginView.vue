@@ -85,6 +85,7 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Key, UserFilled, Phone, MessageBox } from '@element-plus/icons-vue'
@@ -173,6 +174,9 @@ const toggleMode = () => {
   }
 }
 
+//获取router实例
+const router = useRouter() 
+
 const getNowTime = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始，需 +1
@@ -247,7 +251,7 @@ const handleSubmit = async () => {
             // router.push('/admin')
           } else if (messageStr.includes('普通用户')) {
             //跳转到普通用户界面
-            // router.push('/regularuser')
+            router.push('/ShoppingnbView')
           } else if (messageStr.includes('商户')) {
             //跳转到商户界面
             // router.push('/merchant')
