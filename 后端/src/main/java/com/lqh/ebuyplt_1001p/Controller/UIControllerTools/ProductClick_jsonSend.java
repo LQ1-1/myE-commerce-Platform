@@ -12,11 +12,13 @@ public class ProductClick_jsonSend              //图片返回全部的展示图
     private String pProducer;
     private String pReleaseDate;
     private String pInfo;
-    private ArrayList<String>pIcon_paths;                                                                               //该商品的图片路径
+    private int pInventory;
+    private String pStatus;
+    private ArrayList<String>pImagePaths;                                                                               //该商品的图片路径
 
     public ProductClick_jsonSend()
     {
-        this.pIcon_paths=new ArrayList<String>();
+        this.pImagePaths=new ArrayList<String>();
     }
 
     public String getpID()
@@ -51,9 +53,17 @@ public class ProductClick_jsonSend              //图片返回全部的展示图
     {
         return pInfo;
     }
-    public ArrayList<String>getpIcon_paths()
+    public int getpInventory()
     {
-        return pIcon_paths;
+        return pInventory;
+    }
+    public String getpStatus()
+    {
+        return pStatus;
+    }
+    public ArrayList<String>getpImagePaths()
+    {
+        return pImagePaths;
     }
 
     public void setpID(String pID)
@@ -88,11 +98,19 @@ public class ProductClick_jsonSend              //图片返回全部的展示图
     {
         this.pInfo=pInfo;
     }
-    public void setpIcon_paths(ArrayList<String> IpIcon_paths)
+    public void setpInventory(int pInventory)
+    {
+        this.pInventory=pInventory;
+    }
+    public void  setpStatus(String pStatus)
+    {
+        this.pStatus=pStatus;
+    }
+    public void setpImagePaths(ArrayList<String> IpIcon_paths)
     {
         for(String i:IpIcon_paths)
         {
-            this.pIcon_paths.add(i);
+            this.pImagePaths.add(i);
         }
     }
 }

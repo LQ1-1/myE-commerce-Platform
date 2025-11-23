@@ -6,6 +6,7 @@ import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonSend
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonGet;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +26,7 @@ public class UIController
     private static String user="system";
     private static String password="qh20050908";
 
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductRecommend")
     public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductRecommend()
     {
@@ -47,6 +49,22 @@ public class UIController
             ResultSet rs=con.createStatement().executeQuery(sql1);
             while(rs.next())
             {
+                {
+                    System.out.println(rs.getString("pID"));
+                    System.out.println(rs.getString("pName"));
+                    System.out.println(rs.getString("pType"));
+                    System.out.println(rs.getDouble("pDiscount"));
+                    System.out.println(rs.getDouble("pPrice"));
+                    System.out.println(rs.getString("pProducer"));
+                    System.out.println(rs.getString("pReleaseDate"));
+                    System.out.println(rs.getString("pInfo"));
+                    System.out.println(rs.getInt("pInventory"));
+                    System.out.println(rs.getString("pStatus"));
+                    System.out.println(rs.getString("pImagePath"));
+
+                }
+
+
                 ProductSearch_jsonSend item=new ProductSearch_jsonSend();
                 item.setpID(rs.getString("pID"));
                 item.setpName(rs.getString("pName"));
@@ -56,7 +74,9 @@ public class UIController
                 item.setpProducer(rs.getString("pProducer"));
                 item.setpReleaseDate(rs.getString("pReleaseDate"));
                 item.setpInfo(rs.getString("pInfo"));
-                item.setpIcon_path(rs.getString("pIcon_path"));
+                item.setpInventory(rs.getInt("pInventory"));
+                item.setpStatus(rs.getString("pStatus"));
+                item.setpImagePath(rs.getString("pImagePath"));
                 res.add(item);
             }
         }
@@ -71,7 +91,7 @@ public class UIController
         return res;
     }
 
-
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductSearch")
     public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductSearch(@RequestBody ProductSearch_jsonGet SearchCondition)//返回商品搜索结果附带筛选条件
     {
@@ -230,8 +250,10 @@ public class UIController
                     item.setpPrice(rs.getDouble("ProductTable.pPrice"));
                     item.setpReleaseDate(rs.getString("ProductTable.pReleaseDate"));
                     item.setpInfo(rs.getString("ProductTable.pInfo"));
+                    item.setpInventory(rs.getInt("ProductTable.pInventory"));
+                    item.setpStatus(rs.getString("ProductTable.pStatus"));
 
-                    item.setpIcon_path(rs.getString("ProductImagesTable.pImgType"));
+                    item.setpImagePath(rs.getString("ProductImagesTable.pImagePath"));
 
                     ResultList.put(item.getpID(),item);
                     res.add(item);
@@ -260,8 +282,10 @@ public class UIController
                     item.setpPrice(rs2.getDouble("ProductTable.pPrice"));
                     item.setpReleaseDate(rs2.getString("ProductTable.pReleaseDate"));
                     item.setpInfo(rs2.getString("ProductTable.pInfo"));
+                    item.setpInventory(rs2.getInt("ProductTable.pInventory"));
+                    item.setpStatus(rs2.getString("ProductTable.pStatus"));
 
-                    item.setpIcon_path(rs2.getString("ProductImagesTable.pImgType"));
+                    item.setpImagePath(rs2.getString("ProductImagesTable.pImagePath"));
 
                     if(ResultList.get(item.getpID())==null)                                                             //这条商品记录之前没有被添加
                     {
@@ -310,6 +334,8 @@ public class UIController
                 result.setpPrice(rs.getDouble("pPrice"));
                 result.setpReleaseDate(rs.getString("pReleaseDate"));
                 result.setpInfo(rs.getString("pInfo"));
+                result.setpInventory(rs.getInt("pInventory"));
+                result.setpStatus(rs.getString("pStatus"));
             }
 
             String sql2="SELECT * FROM ProductImagesTable WHERE pID=?;";                                                //查询该商品的图片信息
@@ -322,7 +348,7 @@ public class UIController
                 String tempstr=rs2.getString("pImagePath");
                 temparr.add(tempstr);
             }
-            result.setpIcon_paths(temparr);
+            result.setpImagePaths(temparr);
 
         }
         catch(SQLException e)

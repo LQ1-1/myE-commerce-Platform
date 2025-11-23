@@ -17,6 +17,7 @@ uAccountStatus varchar(10) NOT NULL 					--COMMENT'账号状态'
 );
 --SELECT * FROM UserAccountTable;
 --账号以及附带的信息不删除，标记为注销后，该账号的信息就不再更新了，账号密码登录失效，UserDeliveryInfoTable,UserShoppingCartTable,UserFavoritesTable上的记录删除
+SELECT * FROM UserAccountTable;
 
 
 --用户收件地址,用户保存的收件人，收件地址，收件联系方式(与订单购买人信息表不一样)
@@ -105,8 +106,9 @@ pID varchar(32),										--COMMENT '商品号',
 pClicksAmount int16 DEFAULT 0							--COMMENT '商品的点击次数',
 );
 ALTER TABLE ProductClicksInfoTable ADD CONSTRAINT ProductClicksInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
-
-
+ALTER TABLE ProductClicksInfoTable ADD CONSTRAINT uk_pid UNIQUE (pID);
+ALTER TABLE ProductClicksInfoTable ALTER COLUMN pClicksAmount TYPE bigint;
+CREATE INDEX index_producet_clicks_amount ON ProductClicksInfoTable(pClicksAmount DESC);
 
 --订单总体信息表
 CREATE TABLE OrderGeneralInfoTable
@@ -156,6 +158,7 @@ oStatus varchar(20) NOT NULL 							--COMMENT '订单状态'
 );
 ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOREIGN KEY (OOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 --一次订单可以有多个商品，多个收货人
+
 
 --订单收货人信息表
 CREATE TABLE OrdererInfoTable
@@ -388,7 +391,7 @@ END;
 SELECT RegistrationResult('079754646484','test1','5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9',
 '12345678911','asdw564651@gmail.com','Armor Helicopter',
 '2025-11-21 18:21:54','正常','普通用户');
-
+SELECT * FROM UserAccountTable;
 
 
 CREATE OR REPLACE FUNCTION ProductInventoryDecrease(ipID varchar(32),iNum int16)
@@ -407,7 +410,7 @@ END
 SELECT ProductInventoryDecrease('0000000000000000',1115);
 SELECT * FROM ProductTable;
 
-
+--ProductInventoryAscend库存数量增加函数
 CREATE OR REPLACE FUNCTION ProductInventoryAscend(ipID varchar(32),iNum int16)
 RETURN void AS DECLARE currentInventory int16;
 BEGIN 
@@ -421,3 +424,37 @@ SELECT * FROM ProductTable;
 
 SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID='';
 
+UPDATE OrderBasicInfoTable SET oState='Cancelled' WHERE oOrderID='';
+SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE oOrderID='';
+
+
+INSERT INTO ProductClicksInfoTable(pID,pClicksAmount)VALUES
+('0000000000000004',47),
+('0000000000000013',35),
+('0000000000000014',10),
+('0000000000000016',21),
+('0000000000000017',12),
+('0000000000000018',123),
+('0000000000000019',40);
+
+--当点击就添加点击次数的函数
+CREATE OR REPLACE FUNCTION ProductClicksInfoTableClickAdd(ipID varchar(32))
+RETURN void AS DECLARE currentClickAmount int16;
+BEGIN 
+	INSERT INTO ProductClicksInfoTable(pID,pClicksAmount)VALUES (ipID,1) ON CONFLICT (pID)DO UPDATE SET pClicksAmount=ProductClicksInfoTable.pClicksAmount+1;
+END
+--ProductClicksInfoTableClickAdd函数测试
+SELECT ProductClicksInfoTableClickAdd('0000000000000007');
+
+SELECT * FROM ProductClicksInfoTable;
+
+--查找前50个
+SELECT pID FROM ProductClicksInfoTable ORDER BY pClicksAmount DESC LIMIT 50;
+
+
+--查找点击量前50的点击商品并按照点击量一次下降
+SELECT * FROM ProductTable
+INNER JOIN ProductClicksInfoTable ON ProductTable.pID = ProductClicksInfoTable.pID
+INNER JOIN ProductImagesTable ON ProductImagesTable.pID=ProductClicksInfoTable.pID AND ProductImagesTable.pImgType='缩略图'
+ORDER BY ProductClicksInfoTable.pClicksAmount DESC 
+LIMIT 50 ;

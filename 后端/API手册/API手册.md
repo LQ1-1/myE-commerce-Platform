@@ -44,11 +44,11 @@ json文件中账号键值对名必须是uID，密码键值对名必须是uPasswo
 
 返回字符串
 
-插入成功返回"RegistrationSuccess"
+插入成功返回"Registration Success"
 
-插入失败则返回报错信息，账户已经存在返回"AccountAlreadyExist"
+插入失败则返回报错信息，账户已经存在返回"Account Exist"
 
-插入失败则返回报错信息，某一个属性太长则返回已经存在返回"ValuetooLargeForColumn"
+插入失败则返回"Registration Fail"
 
 参数也是json形式,通过请求体传递json格式.
 

@@ -10,8 +10,9 @@ public class ProductSearch_jsonSend                 //图片只返回一个
     private String pProducer;
     private String pReleaseDate;
     private String pInfo;
-
-    private String pIcon_path;                                                                                          //商品图标路径
+    private int pInventory;
+    private String pStatus;
+    private String pImagePath;                                                                                          //商品图标路径
 
     public ProductSearch_jsonSend(){}
 
@@ -47,7 +48,15 @@ public class ProductSearch_jsonSend                 //图片只返回一个
     {
         return pInfo;
     }
-    public String getpIcon_path() {return pIcon_path;}
+    public int getpInventory()
+    {
+        return pInventory;
+    }
+    public String getpStatus()
+    {
+        return pStatus;
+    }
+    public String getpImagePath() {return pImagePath;}
 
     //set函数
     public void setpID(String pID)
@@ -82,5 +91,13 @@ public class ProductSearch_jsonSend                 //图片只返回一个
     {
         this.pInfo = pInfo;
     }
-    public void setpIcon_path(String pIcon_path) {this.pIcon_path = pIcon_path;}
+    public void setpInventory(int pInventory)
+    {
+        this.pInventory = pInventory;
+    }
+    public void setpStatus(String pStatus)
+    {
+        this.pStatus = pStatus;
+    }
+    public void setpImagePath(String pIcon_path) {this.pImagePath = pIcon_path;}
 }
