@@ -305,6 +305,7 @@ public class UIController
         return res;
     }
 
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductClick")
     public ApiResult<ProductClick_jsonSend> ProductClick(@RequestBody ProductClick_jsonGet ClickCondition)              //返回该点击的商品信息
     {
@@ -314,7 +315,27 @@ public class UIController
     private ProductClick_jsonSend ClickResult(ProductClick_jsonGet ClickCondition)
     {
         ProductClick_jsonSend result=new ProductClick_jsonSend();
+        //添加点击次数记录
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
 
+            String sql1="SELECT ProductClicksInfoTableClickAdd(?);";//空函数返回空类型的函数
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,ClickCondition.getpID());
+            ResultSet rs=prepare.executeQuery();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        //返回商品的信息
         try
         {
             Class.forName("com.kingbase8.Driver");

@@ -33,7 +33,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT UserShoppingCartTableAdd(?,?,?);";
@@ -81,7 +81,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sq1="DELETE FROM UserShoppingCartTable WHERE uID=? AND pID=?;";
@@ -123,7 +123,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             StringBuilder sql1=new StringBuilder("DELETE FROM UserShoppingCartTable WHERE (uID,pID) IN (");
@@ -167,7 +167,7 @@ public class ShoppingCartController
         ArrayList<ShoppingCartItem>res=new ArrayList<ShoppingCartItem>();
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT UserShoppingCartTable.pID,UserShoppingCartTable.cAmount,ProductTable.pName,ProductTable.pType," +
@@ -216,7 +216,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="INSERT INTO UserFavoritesTable (uID,pID) VALUES (?,?);";
@@ -257,7 +257,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="DELETE FROM UserFavoritesTable WHERE uID=? AND pID=?;";
@@ -300,7 +300,7 @@ public class ShoppingCartController
     {
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             StringBuilder sql1=new StringBuilder("DELETE FROM UserShoppingCartTable WHERE (uID,pID) IN (");
@@ -344,7 +344,7 @@ public class ShoppingCartController
         ArrayList<FavouriteRecordItem>res=new ArrayList<>();
         try
         {
-            Class.forName("com.kingbase8.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT UserFavoritesTable.pID,ProductTable.pName,ProductTable.pType, "+
