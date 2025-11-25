@@ -426,6 +426,8 @@ public class OrderController
         return res;
     }
 
+
+    //单个订单支付
     @RequestMapping("/api/OrderConfirm_OrderPaid")                  //订单已付款的API,付款之后商品库存应该减少
     public String OrderConfirm_OrderPaid(@RequestBody OrderPaid_jsonGet paidCondition)
     {
@@ -473,6 +475,7 @@ public class OrderController
         }
         return res;
     }
+    //多个订单支付
 
 
     //订单取消库存的数量要加上用户订购的数量
@@ -604,6 +607,5 @@ public class OrderController
         }
         return res;
     }
-
 
 }

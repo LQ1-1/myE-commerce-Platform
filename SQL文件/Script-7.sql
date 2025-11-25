@@ -44,6 +44,9 @@ cAmount int16 NOT NULL									--COMMENT'加入购物车数量',
 );
 ALTER TABLE UserShoppingCartTable ADD CONSTRAINT UserShoppingCartTableForignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID); 
 ALTER TABLE UserShoppingCartTable ADD CONSTRAINT UUserShoppingCartTableForignKey FOREIGN KEY(pID) REFERENCES ProductTable(pID);
+ALTER TABLE UserShoppingCartTable ADD PRIMARY KEY (uID,pID);
+CREATE INDEX index_uID ON UserShoppingCartTable(uID);
+
 
 --用户收藏表
 CREATE TABLE UserFavoritesTable
@@ -53,7 +56,7 @@ pID varchar(32)											--COMMENT'商品编号',
 );
 ALTER TABLE UserFavoritesTable ADD CONSTRAINT UserFavoritesTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
 ALTER TABLE UserFavoritesTable ADD CONSTRAINT UUserFavoritesTableForeignKey FOREIGN KEY(pID) REFERENCES ProductTable(pID);
-
+CREATE INDEX index_uID_UFiT ON UserFavoritesTable(uID);
 
 --商品信息表
 CREATE TABLE ProductTable
@@ -458,3 +461,19 @@ INNER JOIN ProductClicksInfoTable ON ProductTable.pID = ProductClicksInfoTable.p
 INNER JOIN ProductImagesTable ON ProductImagesTable.pID=ProductClicksInfoTable.pID AND ProductImagesTable.pImgType='缩略图'
 ORDER BY ProductClicksInfoTable.pClicksAmount DESC 
 LIMIT 50 ;
+
+--商品添加进购物车函数，重复添加就在原来的基础上继续添加数字
+CREATE OR REPLACE FUNCTION UserShoppingCartTableAdd(iuID varchar(32),ipID varchar(32),icAmount int16)
+RETURN boolean AS DECLARE currentCartAmount int16;
+BEGIN
+--	SELECT cAmount INTO currentCartAmount FROM UserShoppingCartTable WHERE uID=iuID AND pID=ipID FOR UPDATE;
+	INSERT INTO UserShoppingCartTable(uID,pID,cAmount)VALUES(iuID,ipID,icAmount) ON CONFLICT (uID,pID) DO UPDATE SET cAmount=UserShoppingCartTable.cAmount+icAmount;
+	RETURN TRUE;
+EXCEPTION
+	WHEN OTHERS THEN
+	RETURN FALSE;
+END
+
+--UserShoppingCartTableAdd函数检查
+SELECT UserShoppingCartTableAdd('18775332736','0000000000000010',1);
+SELECT * FROM UserShoppingCartTable;
