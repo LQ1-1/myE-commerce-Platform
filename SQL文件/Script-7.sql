@@ -56,6 +56,7 @@ pID varchar(32)											--COMMENT'商品编号',
 );
 ALTER TABLE UserFavoritesTable ADD CONSTRAINT UserFavoritesTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
 ALTER TABLE UserFavoritesTable ADD CONSTRAINT UUserFavoritesTableForeignKey FOREIGN KEY(pID) REFERENCES ProductTable(pID);
+ALTER TABLE UserFavoritesTable ADD PRIMARY KEY (uID,pID);
 CREATE INDEX index_uID_UFiT ON UserFavoritesTable(uID);
 
 --商品信息表
@@ -477,3 +478,6 @@ END
 --UserShoppingCartTableAdd函数检查
 SELECT UserShoppingCartTableAdd('18775332736','0000000000000010',1);
 SELECT * FROM UserShoppingCartTable;
+SELECT * FROM UserFavoritesTable;
+
+SELECT UserShoppingCartTable.pID,UserShoppingCartTable.cAmount,ProductTable.pName,ProductTable.pType,ProductTable.pPrice,ProductImagesTable.pImagePath FROM UserShoppingCartTable,ProductTable,ProductImagesTable WHERE UserShoppingCartTable.pID=ProductTable.pID AND ProductImagesTable.pID=UserShoppingCartTable.pID AND ProductImagesTable.pImgType='缩略图' AND uID='18775332736';

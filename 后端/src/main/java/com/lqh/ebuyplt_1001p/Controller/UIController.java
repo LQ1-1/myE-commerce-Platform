@@ -50,6 +50,7 @@ public class UIController
             while(rs.next())
             {
                 {
+                    System.out.println("*************Most click product*************");
                     System.out.println(rs.getString("pID"));
                     System.out.println(rs.getString("pName"));
                     System.out.println(rs.getString("pType"));
@@ -61,7 +62,7 @@ public class UIController
                     System.out.println(rs.getInt("pInventory"));
                     System.out.println(rs.getString("pStatus"));
                     System.out.println(rs.getString("pImagePath"));
-
+                    System.out.println("*************Most click product*************");
                 }
 
 
@@ -95,6 +96,22 @@ public class UIController
     @RequestMapping("/api/ProductSearch")
     public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductSearch(@RequestBody ProductSearch_jsonGet SearchCondition)//返回商品搜索结果附带筛选条件
     {
+        {
+            System.out.println("***************Product search***************");
+            System.out.println(SearchCondition.getSearchDesciption());
+            System.out.println(SearchCondition.getpID());
+            System.out.println(SearchCondition.getpType());
+            System.out.println(SearchCondition.getpPrice_f());
+            System.out.println(SearchCondition.getpPrice_r());
+            System.out.println(SearchCondition.getpReleaseDate_f());
+            System.out.println(SearchCondition.getpReleaseDate_r());
+            System.out.println(SearchCondition.getSearchDesciption());
+            System.out.println(SearchCondition.getpInfo());
+            System.out.println(SearchCondition.getpProducer());
+            System.out.println("***************Product search***************");
+        }
+
+
         ArrayList<ProductSearch_jsonSend>ItemList=SearchResult(SearchCondition);
         return ApiResult.success(ItemList);
     }
@@ -103,19 +120,19 @@ public class UIController
         ArrayList<ProductSearch_jsonSend>res=new ArrayList<ProductSearch_jsonSend>();
         HashMap<String,ProductSearch_jsonSend>ResultList=new HashMap<String,ProductSearch_jsonSend>();                  //以pID为主键，标记已经加入res的商品，避免重复加入
 
-        String SearchDescribe=SearchCondition.getSeachDesciption();                                                     //用户输入大概商品描述
-        String SearchpID=SearchCondition.getpID();                                                                      //筛选条件：商品编号
-        String SearchpType=SearchCondition.getpType();                                                                  //筛选条件：商品类型
+        String SearchDescribe=new StringBuilder("").append(SearchCondition.getSearchDesciption()).toString();                                                     //用户输入大概商品描述
+        String SearchpID=new StringBuilder("").append(SearchCondition.getpID()).toString();                                                                      //筛选条件：商品编号
+        String SearchpType=new StringBuilder("").append(SearchCondition.getpType()).toString();                                                                  //筛选条件：商品类型
 
         double SearchpPrice_f=SearchCondition.getpPrice_f();                                                            //筛选条件：商品价格
         double SearchpPrice_r=SearchCondition.getpPrice_r();                                                            //筛选条件：商品价格
 
-        String SearchpProducer=SearchCondition.getpProducer();                                                          //筛选条件：商品生产商
+        String SearchpProducer=new StringBuilder("").append(SearchCondition.getpProducer()).toString();                                                          //筛选条件：商品生产商
 
-        String SearchpReleaseDate_f=SearchCondition.getpReleaseDate_f();                                                //筛选条件：商品上架日期
-        String SearchpReleaseDate_r=SearchCondition.getpReleaseDate_r();                                                //筛选条件：商品上架日期
+        String SearchpReleaseDate_f=new StringBuilder("").append(SearchCondition.getpReleaseDate_f()).toString();                                                //筛选条件：商品上架日期
+        String SearchpReleaseDate_r=new StringBuilder("").append(SearchCondition.getpReleaseDate_r()).toString();                                                //筛选条件：商品上架日期
 
-        String SearchpInfo=SearchCondition.getpInfo();                                                                  //筛选条件：商品描述信息
+        String SearchpInfo=new StringBuilder("").append(SearchCondition.getpInfo()).toString();                                                                  //筛选条件：商品描述信息
 
         SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd");
         Date date_f=null;
@@ -150,29 +167,42 @@ public class UIController
             return res;
         }
 
+        {
+            System.out.println("***************Product search***************");
+            System.out.println(SearchDescribe);
+            System.out.println(SearchpType);
+            System.out.println(SearchpPrice_f);
+            System.out.println(SearchpPrice_r);
+            System.out.println(SearchpProducer);
+            System.out.println(SearchpReleaseDate_f);
+            System.out.println(SearchpReleaseDate_r);
+            System.out.println(SearchpInfo);
+            System.out.println("***************Product search***************");
+        }
+
         try
         {
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath " +
-                    "FROM ProductTable,ProductImagesTable WHERE " +
+                    "FROM ProductTable INNER JOIN ProductImagesTable ON ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图' " +
+                    "WHERE " +
                     "LOWER(ProductTable.pID) LIKE LOWER(?) AND " +                                                                   //商品编号
                     "LOWER(ProductTable.pType) LIKE LOWER(?) AND " +                                                                 //商品名
                     "LOWER(ProductTable.pProducer) LIKE LOWER(?) AND " +                                                             //商品类型
                     "LOWER(ProductTable.pInfo) LIKE LOWER(?) AND " +                                                                 //商品描述
                     "ProductTable.pReleaseDate >= ? AND ProductTable.pReleaseDate <= ? AND " +
-                    "ProductTable.pPrice >= ? AND ProductTable.pPrice <= ? AND "+
-                    "ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图';";
+                    "ProductTable.pPrice >= ? AND ProductTable.pPrice <= ? ;";
 
             String sql2="SELECT ProductTable.*,ProductImagesTable.pImgType,ProductImagesTable.pImagePath " +
-                    "FROM ProductTable,ProductImagesTable WHERE " +
+                    "FROM ProductTable INNER JOIN ProductImagesTable ON ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图' " +
+                    "WHERE " +
                     "LOWER(ProductTable.pID) LIKE LOWER(?) OR " +                                                                    //商品编号
                     "LOWER(ProductTable.pName) LIKE LOWER(?) OR " +                                                                  //商品名
                     "LOWER(ProductTable.pType) LIKE LOWER(?) OR " +                                                                  //商品类型
                     "LOWER(ProductTable.pProducer) LIKE LOWER(?) OR " +                                                              //商品生产商
-                    "LOWER(ProductTable.pInfo) LIKE LOWER(?) AND " +
-                    "ProductTable.pID=ProductImagesTable.pID AND ProductImagesTable.pImgType='缩略图';";
+                    "LOWER(ProductTable.pInfo) LIKE LOWER(?) ;";
 
 //            String sql1="SELECT * FROM ProductTable WHERE " +
 //                    "LOWER(pID) LIKE LOWER(?) AND " +                                                                   //商品编号
@@ -232,13 +262,13 @@ public class UIController
                 SearchpPrice_f=SearchpPrice_r;
                 SearchpPrice_r=temp;
             }
-            prepare.setString(7,"%"+SearchpPrice_f+"%");                                                //填入价格筛选区间f             7
-            prepare.setString(8,"%"+SearchpPrice_r+"%");                                                //填入价格筛选区间r             8
+            prepare.setDouble(7,SearchpPrice_f);                                                //填入价格筛选区间f             7
+            prepare.setDouble(8,SearchpPrice_r);                                                //填入价格筛选区间r             8
 
 
             if(SearchCondition.FilterOpen()==true)
             {
-                ResultSet rs=con.createStatement().executeQuery(sql1);
+                ResultSet rs=prepare.executeQuery();
                 while(rs.next())
                 {
                     ProductSearch_jsonSend item=new ProductSearch_jsonSend();
@@ -273,19 +303,20 @@ public class UIController
                 ResultSet rs2=prepare2.executeQuery();
                 while(rs2.next())
                 {
-                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
-                    item.setpID(rs2.getString("ProductTable.pID"));
-                    item.setpName(rs2.getString("ProductTable.pName"));
-                    item.setpType(rs2.getString("ProductTable.pType"));
-                    item.setpProducer(rs2.getString("ProductTable.pProducer"));
-                    item.setpDiscount(rs2.getDouble("ProductTable.pDiscount"));
-                    item.setpPrice(rs2.getDouble("ProductTable.pPrice"));
-                    item.setpReleaseDate(rs2.getString("ProductTable.pReleaseDate"));
-                    item.setpInfo(rs2.getString("ProductTable.pInfo"));
-                    item.setpInventory(rs2.getInt("ProductTable.pInventory"));
-                    item.setpStatus(rs2.getString("ProductTable.pStatus"));
 
-                    item.setpImagePath(rs2.getString("ProductImagesTable.pImagePath"));
+                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                    item.setpID(rs2.getString("pID"));
+                    item.setpName(rs2.getString("pName"));
+                    item.setpType(rs2.getString("pType"));
+                    item.setpProducer(rs2.getString("pProducer"));
+                    item.setpDiscount(rs2.getDouble("pDiscount"));
+                    item.setpPrice(rs2.getDouble("pPrice"));
+                    item.setpReleaseDate(rs2.getString("pReleaseDate"));
+                    item.setpInfo(rs2.getString("pInfo"));
+                    item.setpInventory(rs2.getInt("pInventory"));
+                    item.setpStatus(rs2.getString("pStatus"));
+
+                    item.setpImagePath(rs2.getString("pImagePath"));
 
                     if(ResultList.get(item.getpID())==null)                                                             //这条商品记录之前没有被添加
                     {
@@ -314,6 +345,13 @@ public class UIController
     }
     private ProductClick_jsonSend ClickResult(ProductClick_jsonGet ClickCondition)
     {
+        {
+            System.out.println("*************ProductClick*************");
+            System.out.println(ClickCondition.getpID());
+            System.out.println("*************ProductClick*************");
+        }
+
+
         ProductClick_jsonSend result=new ProductClick_jsonSend();
         //添加点击次数记录
         try
