@@ -247,12 +247,18 @@ const handleSubmit = async () => {
             ElMessage.error(messageStr)
           } else if (messageStr.includes('管理员')) {
             ElMessage.success(messageStr)
+            sessionStorage.setItem('uID', formData.uID) 
             //跳转到管理员界面
             // router.push('/admin')
           } else if (messageStr.includes('普通用户')) {
+            //欢迎
+            ElMessage.success('欢迎,用户'+formData.uID)
+            sessionStorage.setItem('uID', formData.uID) 
             //跳转到普通用户界面
             router.push('/ShoppingnbView')
           } else if (messageStr.includes('商户')) {
+            ElMessage.success('欢迎,用户'+formData.uID)
+            sessionStorage.setItem('uID', formData.uID) 
             //跳转到商户界面
             // router.push('/merchant')
           } else if (messageStr.includes('无此类型账户')) {

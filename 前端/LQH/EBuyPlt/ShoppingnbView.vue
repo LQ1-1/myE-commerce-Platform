@@ -4,24 +4,33 @@
         <el-affix :offset="0">
             <el-header class="header">
                 <div class="header-content">
-                    <div class="logo">EBuyPlt</div>
+                    <!-- 点击 Logo 重置回推荐页 -->
+                    <div class="logo" @click="resetFilters">EBuyPlt</div>
 
                     <div class="search-bar">
-                        <el-input v-model="searchQuery" placeholder="搜索商品..." class="search-input" :prefix-icon="Search"
-                            clearable />
+                        <!-- 搜索框：按下回车触发搜索 -->
+                        <el-input v-model="searchQuery" placeholder="搜索商品名称/描述..." class="search-input"
+                            :prefix-icon="Search" clearable @keyup.enter="handleSearch" @clear="handleSearch" />
                     </div>
 
                     <div class="actions">
+                        <el-button :type="showFilter ? 'primary' : 'default'" :icon="Filter"
+                            @click="showFilter = !showFilter">
+                            {{ showFilter ? '收起筛选' : '高级筛选' }}
+                        </el-button>
+
+                        <el-button :icon="Star" circle size="large" @click="openFavorites" title="我的收藏" />
+
                         <el-badge :value="cartCount" :hidden="cartCount === 0" class="item-badge">
-                            <el-button :icon="ShoppingCart" circle size="large" @click="cartVisible = true" />
+                            <el-button :icon="ShoppingCart" circle size="large" @click="openCart" />
                         </el-badge>
+
                         <el-dropdown>
                             <el-avatar :icon="User" class="user-avatar" />
                             <template #dropdown>
                                 <el-dropdown-menu>
-                                    <el-dropdown-item>我的订单</el-dropdown-item>
-                                    <el-dropdown-item>个人设置</el-dropdown-item>
-                                    <el-dropdown-item divided>退出登录</el-dropdown-item>
+                                    <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
+                                    <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
@@ -32,56 +41,119 @@
 
         <el-main class="main-content" v-loading="isLoading">
 
-            <!-- 分类筛选栏 (动态生成) -->
+            <!-- 高级筛选面板 -->
+            <el-collapse-transition>
+                <div v-show="showFilter" class="filter-panel">
+                    <el-form :model="filterForm" label-width="80px" size="default">
+                        <el-row :gutter="20">
+                            <el-col :xs="24" :sm="12" :md="6">
+                                <el-form-item label="商品ID">
+                                    <el-input v-model="filterForm.pID" placeholder="输入ID" clearable />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :xs="24" :sm="12" :md="6">
+                                <el-form-item label="生产厂商">
+                                    <el-input v-model="filterForm.pProducer" placeholder="输入厂商名" clearable />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :xs="24" :sm="12" :md="6">
+                                <el-form-item label="商品类型">
+                                    <el-select v-model="filterForm.pType" placeholder="选择或输入类型" style="width: 100%"
+                                        filterable allow-create default-first-option clearable>
+                                        <el-option label="全部" value="" />
+                                        <el-option v-for="cat in categoryList" :key="cat" :label="cat" :value="cat" />
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :xs="24" :sm="12" :md="6">
+                                <el-form-item label="详情描述">
+                                    <el-input v-model="filterForm.pInfo" placeholder="描述关键词" clearable />
+                                </el-form-item>
+                            </el-col>
+                            <el-col :xs="24" :sm="12" :md="10">
+                                <el-form-item label="价格区间">
+                                    <div class="range-group">
+                                        <el-input-number v-model="filterForm.minPrice" :min="0" :controls="false"
+                                            placeholder="Min" style="width: 100px" />
+                                        <span class="range-separator">-</span>
+                                        <el-input-number v-model="filterForm.maxPrice" :min="0" :controls="false"
+                                            placeholder="Max" style="width: 100px" />
+                                    </div>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :xs="24" :sm="24" :md="14">
+                                <el-form-item label="发布日期">
+                                    <el-date-picker v-model="filterForm.dateRange" type="daterange" range-separator="至"
+                                        start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD"
+                                        style="width: 100%" />
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+
+                        <div class="filter-actions">
+                            <el-button @click="resetFilters">重置</el-button>
+                            <el-button type="primary" @click="handleSearch">应用筛选</el-button>
+                        </div>
+                    </el-form>
+                </div>
+            </el-collapse-transition>
+
+            <!-- 快捷分类栏 (点击直接搜索该类型) -->
             <div class="category-bar">
-                <el-tabs v-model="activeCategory" class="category-tabs">
+                <el-tabs v-model="activeCategory" class="category-tabs" @tab-change="handleCategoryChange">
                     <el-tab-pane label="全部" name="全部" />
-                    <el-tab-pane v-for="cat in categoryList" :key="cat" :label="cat" :name="cat" />
+                    <!-- 可以在这里修改为你实际的分类 -->
+                    <el-tab-pane label="电子产品" name="电子产品" />
+                    <el-tab-pane label="书籍" name="书籍" />
+                    <el-tab-pane label="服装" name="服装" />
+                    <el-tab-pane label="家具" name="家具" />
                 </el-tabs>
             </div>
 
             <!-- 商品展示区 -->
             <div class="product-section">
                 <div class="section-header">
-                    <h2 class="section-title">{{ activeCategory }}商品</h2>
-                    <span class="product-count">共 {{ filteredProducts.length }} 件商品</span>
+                    <!-- 根据当前是否是推荐模式，可以动态显示标题 -->
+                    <h2 class="section-title">
+                        {{ isRecommendMode ? '为您推荐' : '商品列表' }}
+                    </h2>
+                    <span class="product-count">共 {{ products.length }} 件商品</span>
                 </div>
 
                 <el-row :gutter="20">
-                    <el-col v-for="product in filteredProducts" :key="product.pID" :xs="24" :sm="12" :md="8" :lg="6"
+                    <el-col v-for="product in products" :key="product.pID" :xs="24" :sm="12" :md="8" :lg="6"
                         class="product-col">
                         <el-card class="product-card" shadow="hover">
-                            <!-- 点击图片查看详情 -->
-                            <div class="image-wrapper" @click="showProductDetails(product)">
+                            <!-- 点击图片跳转详情页 -->
+                            <div class="image-wrapper" @click="goToDetail(product.pID)">
                                 <img :src="getProductImage(product.pImagePath)" class="product-image" />
-
                                 <el-tag class="category-tag" size="small" effect="dark">{{ product.pType }}</el-tag>
-
-                                <!-- 缺货遮罩 -->
                                 <div v-if="product.pInventory <= 0" class="out-of-stock-mask">缺货</div>
-
-                                <!-- 折扣标签 (如果有折扣且不为无) -->
                                 <div v-if="product.pDiscount && product.pDiscount !== '无'" class="discount-badge">
-                                    {{"Discount : " +product.pDiscount}}
+                                    {{ "Discount : " + product.pDiscount }}
+                                </div>
+                                <div class="fav-icon-wrapper" @click.stop="toggleFavorite(product)">
+                                    <el-icon :size="22" :color="isFavorite(product.pID) ? '#E6A23C' : '#909399'">
+                                        <component :is="isFavorite(product.pID) ? StarFilled : Star" />
+                                    </el-icon>
                                 </div>
                             </div>
 
                             <div class="card-body">
-                                <!-- 点击标题查看详情 -->
-                                <h3 class="product-title" @click="showProductDetails(product)">{{ product.pName }}</h3>
-
-                                <!-- 列表页只展示少部分信息，防止拥挤 -->
+                                <h3 class="product-title" @click="goToDetail(product.pID)">
+                                    {{ product.pName }}
+                                </h3>
                                 <div class="simple-info">
                                     <span
-                                        :class="['status-dot', product.pStatus === '正常' ? 'online' : 'offline']"></span>
+                                        :class="['status-dot', product.pStatus === '正常' || product.pStatus === '上架' ? 'online' : 'offline']"></span>
                                     {{ product.pStatus }}
+                                    <span class="producer-text">| {{ product.pProducer }}</span>
                                 </div>
-
                                 <div class="card-footer">
                                     <span class="price">¥ {{ product.pPrice }}</span>
                                     <el-button type="primary" size="small" :disabled="product.pInventory <= 0"
-                                        @click="addToCart(product)">
-                                        {{ product.pInventory > 0 ? '加入购物车' : '缺货' }}
+                                        @click="addToCart(product, 1)">
+                                        加入购物车
                                     </el-button>
                                 </div>
                             </div>
@@ -89,39 +161,38 @@
                     </el-col>
                 </el-row>
 
-                <el-empty v-if="!isLoading && filteredProducts.length === 0" description="暂无相关商品" />
+                <el-empty v-if="!isLoading && products.length === 0" description="没有找到商品">
+                    <el-button type="primary" @click="resetFilters">重置条件</el-button>
+                </el-empty>
             </div>
         </el-main>
 
-        <!-- 底部 -->
         <el-footer class="footer">
-            <p>© 2023 EBuyPlt Demo. Built with Element Plus.</p>
+            <p>© 2023 EBuyPlt. Built with Element Plus.</p>
         </el-footer>
 
-        <!-- 交互功能 1: 购物车抽屉 -->
-        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="400px">
+        <!-- 购物车抽屉 -->
+        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="450px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
             </div>
-
-            <div v-else class="cart-list">
+            <div v-else class="cart-list" v-loading="cartLoading">
                 <div v-for="item in cart" :key="item.pID" class="cart-item">
-                    <img :src="getProductImage(item.pImagePath)" class="cart-item-img" />
+                    <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                     <div class="cart-item-info">
                         <h4>{{ item.pName }}</h4>
                         <div class="cart-controls">
                             <span class="price">¥ {{ item.pPrice }}</span>
                             <div class="qty-control">
-                                <el-button :icon="Remove" circle size="small" @click="updateQuantity(item, -1)" />
-                                <span class="qty-text">{{ item.quantity }}</span>
-                                <el-button :icon="CirclePlus" circle size="small" @click="updateQuantity(item, 1)" />
+                                <el-button :icon="Remove" circle size="small" @click="changeCartQuantity(item, -1)" />
+                                <span class="qty-text">{{ item.cAmount }}</span>
+                                <el-button :icon="CirclePlus" circle size="small" @click="addToCart(item, 1)" />
                             </div>
                         </div>
                     </div>
-                    <el-button type="danger" link :icon="Delete" @click="removeFromCart(item.pID)" />
+                    <el-button type="danger" link :icon="Delete" @click="removeLineFromCart(item)" />
                 </div>
             </div>
-
             <template #footer>
                 <div class="cart-footer">
                     <div class="total-text">总计: <span>¥ {{ cartTotal }}</span></div>
@@ -130,205 +201,288 @@
             </template>
         </el-drawer>
 
-        <!-- 交互功能 2: 商品详情弹窗 (点击商品后显示) -->
-        <el-dialog v-model="detailVisible" :title="selectedProduct.pName" width="500px" align-center>
-            <div v-if="selectedProduct" class="product-detail-container">
-                <img :src="getProductImage(selectedProduct.pImagePath)" class="detail-img" />
-
-                <el-descriptions :column="1" border>
-                    <el-descriptions-item label="生产厂商">{{ selectedProduct.pProducer }}</el-descriptions-item>
-                    <el-descriptions-item label="发布日期">{{ selectedProduct.pReleaseDate }}</el-descriptions-item>
-                    <el-descriptions-item label="当前库存">{{ selectedProduct.pInventory }}</el-descriptions-item>
-                    <el-descriptions-item label="商品类型">
-                        <el-tag size="small">{{ selectedProduct.pType }}</el-tag>
-                    </el-descriptions-item>
-                </el-descriptions>
-
-                <div class="detail-desc">
-                    <h4>商品介绍</h4>
-                    <p>{{ selectedProduct.pInfo }}</p>
+        <!-- 收藏夹抽屉 -->
+        <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
+            <div v-if="favorites.length === 0" class="empty-cart">
+                <el-empty description="暂无收藏" />
+            </div>
+            <div v-else class="cart-list" v-loading="favLoading">
+                <div v-for="item in favorites" :key="item.pID" class="cart-item">
+                    <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
+                    <div class="cart-item-info">
+                        <h4>{{ item.pName }}</h4>
+                        <div class="cart-controls">
+                            <span class="price">¥ {{ item.pPrice }}</span>
+                            <el-tag size="small">{{ item.pType }}</el-tag>
+                        </div>
+                    </div>
+                    <div class="fav-actions">
+                        <el-button type="primary" circle :icon="ShoppingCart" size="small"
+                            @click="addToCart(item, 1)" />
+                        <el-button type="danger" circle :icon="Delete" size="small" @click="toggleFavorite(item)" />
+                    </div>
                 </div>
             </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <span class="detail-price">¥ {{ selectedProduct.pPrice }}</span>
-                    <el-button @click="detailVisible = false">关闭</el-button>
-                    <el-button type="primary" @click="addToCart(selectedProduct); detailVisible = false">
-                        加入购物车
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        </el-drawer>
 
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import {
-    ShoppingCart, Search, User, Delete, CirclePlus, Remove
+    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Filter, Star, StarFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
-// --- 配置项 ---
-// 后端服务器地址，用于拼接图片路径和 API 请求
 const BASE_URL = 'http://192.168.66.94:8082'
+const router = useRouter()
+const route = useRoute()
 
-// --- 1. 状态定义 ---
-const products = ref([]) // 存放从后端获取的商品数据
-const isLoading = ref(false) // 加载状态
+// --- 状态定义 ---
+const currentUserID = ref('')
+const products = ref([])
+const isLoading = ref(false)
+const isRecommendMode = ref(false) // 标记当前是否处于推荐模式（用于UI显示）
+
+// 搜索参数
 const searchQuery = ref('')
 const activeCategory = ref('全部')
+const showFilter = ref(false)
+const filterForm = reactive({
+    pID: '',
+    pProducer: '',
+    pType: '',
+    pInfo: '',
+    minPrice: undefined,
+    maxPrice: undefined,
+    dateRange: null
+})
 
-// 购物车相关
+// 购物车与收藏
 const cartVisible = ref(false)
 const cart = ref([])
+const cartLoading = ref(false)
+const favVisible = ref(false)
+const favorites = ref([])
+const favLoading = ref(false)
 
-// 详情弹窗相关
-const detailVisible = ref(false)
-const selectedProduct = ref({}) // 当前选中的商品
+// --- 生命周期 ---
+onMounted(() => {
+    const storedUID = sessionStorage.getItem('uID')
+    if (!storedUID) {
+        ElMessage.error('请先登录')
+        router.push('/')
+        return
+    }
+    currentUserID.value = storedUID
 
-// --- 2. API 交互逻辑 ---
+    // --- 修改点：判断是否需要搜索 ---
+    if (route.query.q) {
+        searchQuery.value = route.query.q
+        handleSearch() // 路由带参数，执行搜索
+    } else {
+        handleRecommend() // 默认无参数，执行推荐
+    }
 
-// 获取推荐商品
-const fetchProducts = async () => {
+    fetchCart()
+    fetchFavorites()
+})
+
+// --- 路由跳转 ---
+const goToDetail = (id) => {
+    router.push({ name: 'ProductDetailView', params: { pID:id } })
+}
+
+const handleLogout = () => {
+    sessionStorage.removeItem('uID')
+    router.push('/')
+}
+
+// --- 修改点：新增推荐逻辑 ---
+const handleRecommend = async () => {
     isLoading.value = true
+    isRecommendMode.value = true // 标记为推荐模式
     try {
-        const response = await axios.get(`${BASE_URL}/api/ProductRecommend`)
+        const res = await axios.post(`${BASE_URL}/api/ProductRecommend`, {
+            uID: currentUserID.value
+        })
 
-        // --- 核心修改部分 ---
-        let productArray = []
-        // 假设数据结构是 { code: 200, data: [...] }
-        if (response.data && Array.isArray(response.data.data)) {
-            // 成功取到嵌套在 data 字段中的数组
-            productArray = response.data.data
-        } else if (response.status === 200 && Array.isArray(response.data)) {
-            // 如果后端直接返回裸数组（兼容旧逻辑）
-            productArray = response.data
-        }
-
-        if (productArray.length > 0 || response.status === 200) {
-            products.value = productArray
-            console.log('获取商品成功:', products.value)
+        if (res.data && res.data.data) {
+            products.value = res.data.data
         } else {
-            // 只有当响应状态码不是 200 或者数据结构仍然无法解析时，才报警告
-            ElMessage.warning('获取商品数据为空或格式异常')
+            products.value = []
         }
-        // --- 核心修改结束 ---
-
     } catch (error) {
-        console.error('API Error:', error)
-        ElMessage.error('获取商品列表失败，请检查网络')
+        console.error(error)
+        ElMessage.error('获取推荐失败，请稍后再试')
     } finally {
         isLoading.value = false
     }
 }
 
-// 页面挂载时调用 API
-onMounted(() => {
-    fetchProducts()
-})
+// --- 搜索逻辑 ---
+const handleSearch = async () => {
+    isLoading.value = true
+    isRecommendMode.value = false // 标记为搜索模式
+    try {
+        const payload = {
+            SearchDesciption: searchQuery.value,
+            pID: filterForm.pID,
+            pType: activeCategory.value !== '全部' ? activeCategory.value : filterForm.pType,
+            pPrice_f: filterForm.minPrice || 0.0,
+            pPrice_r: filterForm.maxPrice || 0.0,
+            pProducer: filterForm.pProducer,
+            pReleaseDate_f: filterForm.dateRange ? filterForm.dateRange[0] : "",
+            pReleaseDate_r: filterForm.dateRange ? filterForm.dateRange[1] : "",
+            pInfo: filterForm.pInfo
+        }
+        // alert(payload.SearchDesciption);
 
-// 图片路径处理函数
+        const res = await axios.post(`${BASE_URL}/api/ProductSearch`, payload)
+
+        if (res.data && res.data.data) {
+            products.value = res.data.data
+        } else {
+            products.value = []
+        }
+    } catch (error) {
+        console.error(error)
+        ElMessage.error('搜索失败')
+    } finally {
+        isLoading.value = false
+    }
+}
+
+const handleCategoryChange = () => {
+    // 切换分类 Tab 视为一种搜索筛选
+    handleSearch()
+}
+
+// --- 修改点：重置逻辑 ---
+const resetFilters = () => {
+    searchQuery.value = ''
+    activeCategory.value = '全部'
+    filterForm.pID = ''
+    filterForm.pProducer = ''
+    filterForm.pType = ''
+    filterForm.pInfo = ''
+    filterForm.minPrice = undefined
+    filterForm.maxPrice = undefined
+    filterForm.dateRange = null
+    
+    // 重置后回到推荐页
+    handleRecommend()
+}
+
+// --- API 通用与购物车/收藏逻辑 ---
+
 const getProductImage = (path) => {
     if (!path) return 'https://via.placeholder.com/300x300?text=No+Image'
-    // 如果路径已经是 http 开头（网络图片），直接返回
-    if (path.startsWith('http') || path.startsWith('https')) {
-        return path
-    }
-
-    const serverUrl = 'http://192.168.66.94:8082'
-
-    // 4. 处理斜杠：如果 path 不是以 '/' 开头，则为其添加一个前导斜杠
+    if (path.startsWith('http')) return path
     const cleanPath = path.startsWith('/') ? path : '/' + path
-
-    // 5. 拼接返回
-    return `${serverUrl}${cleanPath}`
+    return `${BASE_URL}${cleanPath}`
 }
 
-// --- 3. 计算属性与筛选 ---
-
-// 动态计算所有存在的分类 (去重)
-const categoryList = computed(() => {
-    const types = products.value.map(p => p.pType)
-    return [...new Set(types)] // ES6 Set 去重
-})
-
-// 过滤逻辑
-const filteredProducts = computed(() => {
-    return products.value.filter(product => {
-        const categoryMatch = activeCategory.value === '全部' || product.pType === activeCategory.value
-        const searchMatch = product.pName.toLowerCase().includes(searchQuery.value.toLowerCase())
-        return categoryMatch && searchMatch
-    })
-})
-
-// 购物车计算
-const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0))
-const cartTotal = computed(() => cart.value.reduce((total, item) => total + (item.pPrice * item.quantity), 0))
-
-// --- 4. 交互逻辑 ---
-
-// 打开详情弹窗
-const showProductDetails = (product) => {
-    selectedProduct.value = product
-    detailVisible.value = true
+const fetchCart = async () => {
+    if (!currentUserID.value) return
+    cartLoading.value = true
+    try {
+        const res = await axios.post(`${BASE_URL}/api/ShoppingCartRecords`, { uID: currentUserID.value })
+        cart.value = res.data && res.data.data ? res.data.data : []
+    } catch (e) { console.error(e) }
+    finally { cartLoading.value = false }
 }
 
-// 加入购物车
-const addToCart = (product) => {
-    // 确保从后端拿到的库存是数字类型
-    const inventory = Number(product.pInventory); 
-    
-    // 状态和库存检查
-    if (inventory <= 0 || product.pStatus !== '上架') {
-        ElMessage.warning('该商品暂时缺货或状态异常')
+const fetchFavorites = async () => {
+    if (!currentUserID.value) return
+    favLoading.value = true
+    try {
+        const res = await axios.post(`${BASE_URL}/api/FavouriteRecords`, { uID: currentUserID.value })
+        favorites.value = res.data && res.data.data ? res.data.data : []
+    } catch (e) { console.error(e) }
+    finally { favLoading.value = false }
+}
+
+const addToCart = async (item, amount = 1) => {
+    if (item.pInventory !== undefined && Number(item.pInventory) <= 0) {
+        ElMessage.warning('商品已缺货')
         return
     }
+    try {
+        await axios.post(`${BASE_URL}/api/ShoppingCartAdd`, {
+            uID: currentUserID.value,
+            pID: item.pID,
+            cAmount: amount
+        })
+        ElMessage.success('已加入购物车')
+        fetchCart()
+    } catch (e) { ElMessage.error('操作失败') }
+}
 
-    const existingItem = cart.value.find(item => item.pID === product.pID)
-
-    // 检查库存限制：确保将购物车数量与库存的数字形式进行比较
-    if (existingItem && existingItem.quantity >= inventory) { // 使用转换后的 inventory
-        ElMessage.warning('购物车数量已达库存上限')
-        return
-    }
-
-    if (existingItem) {
-        existingItem.quantity++
+const changeCartQuantity = async (item, change) => {
+    if (change > 0) {
+        await addToCart(item, change)
     } else {
-        cart.value.push({ ...product, quantity: 1 })
+        if (item.cAmount <= 1) {
+            await removeLineFromCart(item)
+            return
+        }
+        try {
+            await axios.post(`${BASE_URL}/api/ShoppingCartRemove`, {
+                uID: currentUserID.value, pID: item.pID, cAmount: Math.abs(change)
+            })
+            fetchCart()
+        } catch (e) { ElMessage.error('操作失败') }
     }
-    ElMessage.success(`已将 "${product.pName}" 加入购物车`)
 }
 
-const removeFromCart = (id) => {
-    cart.value = cart.value.filter(item => item.pID !== id)
+const removeLineFromCart = async (item) => {
+    try {
+        await axios.post(`${BASE_URL}/api/ShoppingCartRemove`, {
+            uID: currentUserID.value, pID: item.pID, cAmount: item.cAmount
+        })
+        fetchCart()
+    } catch (e) { ElMessage.error('移除失败') }
 }
 
-const updateQuantity = (item, change) => {
-    if (change === -1 && item.quantity <= 1) return
-    if (change === 1 && item.quantity >= item.pInventory) {
-        ElMessage.warning('库存不足')
-        return
-    }
-    item.quantity += change
+const openCart = () => { cartVisible.value = true; fetchCart() }
+const openFavorites = () => { favVisible.value = true; fetchFavorites() }
+
+const isFavorite = (pID) => favorites.value.some(fav => fav.pID === pID)
+
+const toggleFavorite = async (product) => {
+    const exist = isFavorite(product.pID)
+    try {
+        if (exist) {
+            await axios.post(`${BASE_URL}/api/FavouriteRemove`, { uID: currentUserID.value, pID: product.pID })
+            ElMessage.success('已取消收藏')
+        } else {
+            await axios.post(`${BASE_URL}/api/FavouriteAdd`, { uID: currentUserID.value, pID: product.pID })
+            ElMessage.success('已加入收藏')
+        }
+        fetchFavorites()
+    } catch (e) { ElMessage.error('操作失败') }
 }
+
+const categoryList = computed(() => ['电子产品', '日用品', '书籍', '服装', '食品'])
+const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
+const cartTotal = computed(() => cart.value.reduce((total, item) => total + (item.pPrice * item.cAmount), 0))
 </script>
 
 <style scoped>
-/* 布局样式 */
+/* 此处保留原有样式 */
 .shop-layout {
     min-height: 100vh;
     background-color: #f5f7fa;
 }
 
 .header {
-    background-color: #fff;
+    background: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 0;
-    height: 60px;
     z-index: 100;
 }
 
@@ -350,14 +504,14 @@ const updateQuantity = (item, change) => {
 }
 
 .search-bar {
-    width: 40%;
+    width: 30%;
     max-width: 400px;
 }
 
 .actions {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .main-content {
@@ -367,21 +521,37 @@ const updateQuantity = (item, change) => {
     width: 100%;
 }
 
-/* 分类栏 */
+.filter-panel {
+    background: #fff;
+    padding: 20px 20px 0 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-bottom: 20px;
+}
+
+.range-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 .category-bar {
-    background-color: #fff;
+    background: #fff;
     padding: 10px 20px 0 20px;
     border-radius: 8px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
-.category-tabs :deep(.el-tabs__item) {
-    font-size: 16px;
-    font-weight: 500;
+.product-section {
+    margin-top: 20px;
 }
 
-/* 商品卡片 */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -406,14 +576,13 @@ const updateQuantity = (item, change) => {
 
 .product-card {
     transition: transform 0.3s;
-    border: none;
+    position: relative;
 }
 
 .product-card:hover {
     transform: translateY(-5px);
 }
 
-/* 图片区域 */
 .image-wrapper {
     height: 200px;
     overflow: hidden;
@@ -441,11 +610,25 @@ const updateQuantity = (item, change) => {
     position: absolute;
     top: 10px;
     right: 10px;
-    background-color: #f56c6c;
+    background: #f56c6c;
     color: white;
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 12px;
+}
+
+.fav-icon-wrapper {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .out-of-stock-mask {
@@ -461,10 +644,8 @@ const updateQuantity = (item, change) => {
     font-size: 20px;
     font-weight: bold;
     color: #909399;
-    z-index: 10;
 }
 
-/* 卡片内容 */
 .card-body {
     padding: 14px;
 }
@@ -476,11 +657,6 @@ const updateQuantity = (item, change) => {
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    transition: color 0.2s;
-}
-
-.product-title:hover {
-    color: #409EFF;
 }
 
 .simple-info {
@@ -519,52 +695,6 @@ const updateQuantity = (item, change) => {
     font-weight: bold;
 }
 
-/* 详情弹窗样式 */
-.product-detail-container {
-    text-align: center;
-}
-
-.detail-img {
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.detail-desc {
-    margin-top: 20px;
-    text-align: left;
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 4px;
-}
-
-.detail-desc h4 {
-    margin: 0 0 10px;
-    color: #303133;
-}
-
-.detail-desc p {
-    margin: 0;
-    color: #606266;
-    line-height: 1.6;
-}
-
-.dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 15px;
-}
-
-.detail-price {
-    font-size: 24px;
-    color: #f56c6c;
-    font-weight: bold;
-    margin-right: auto;
-}
-
-/* 购物车 */
 .cart-list {
     height: calc(100vh - 200px);
     overflow-y: auto;
@@ -590,6 +720,13 @@ const updateQuantity = (item, change) => {
     flex: 1;
 }
 
+.cart-controls {
+    margin-top: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .cart-footer {
     border-top: 1px solid #e4e7ed;
     padding-top: 20px;
@@ -605,6 +742,12 @@ const updateQuantity = (item, change) => {
 
 .checkout-btn {
     width: 100%;
+}
+
+.fav-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .footer {
