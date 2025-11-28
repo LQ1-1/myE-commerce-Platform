@@ -4,11 +4,9 @@
         <el-affix :offset="0">
             <el-header class="header">
                 <div class="header-content">
-                    <!-- 点击 Logo 重置回推荐页 -->
                     <div class="logo" @click="resetFilters">EBuyPlt</div>
 
                     <div class="search-bar">
-                        <!-- 搜索框：按下回车触发搜索 -->
                         <el-input v-model="searchQuery" placeholder="搜索商品名称/描述..." class="search-input"
                             :prefix-icon="Search" clearable @keyup.enter="handleSearch" @clear="handleSearch" />
                     </div>
@@ -40,7 +38,6 @@
         </el-affix>
 
         <el-main class="main-content" v-loading="isLoading">
-
             <!-- 高级筛选面板 -->
             <el-collapse-transition>
                 <div v-show="showFilter" class="filter-panel">
@@ -98,11 +95,10 @@
                 </div>
             </el-collapse-transition>
 
-            <!-- 快捷分类栏 (点击直接搜索该类型) -->
+            <!-- 快捷分类栏 -->
             <div class="category-bar">
                 <el-tabs v-model="activeCategory" class="category-tabs" @tab-change="handleCategoryChange">
                     <el-tab-pane label="全部" name="全部" />
-                    <!-- 可以在这里修改为你实际的分类 -->
                     <el-tab-pane label="电子产品" name="电子产品" />
                     <el-tab-pane label="书籍" name="书籍" />
                     <el-tab-pane label="服装" name="服装" />
@@ -113,7 +109,6 @@
             <!-- 商品展示区 -->
             <div class="product-section">
                 <div class="section-header">
-                    <!-- 根据当前是否是推荐模式，可以动态显示标题 -->
                     <h2 class="section-title">
                         {{ isRecommendMode ? '为您推荐' : '商品列表' }}
                     </h2>
@@ -124,7 +119,6 @@
                     <el-col v-for="product in products" :key="product.pID" :xs="24" :sm="12" :md="8" :lg="6"
                         class="product-col">
                         <el-card class="product-card" shadow="hover">
-                            <!-- 点击图片跳转详情页 -->
                             <div class="image-wrapper" @click="goToDetail(product.pID)">
                                 <img :src="getProductImage(product.pImagePath)" class="product-image" />
                                 <el-tag class="category-tag" size="small" effect="dark">{{ product.pType }}</el-tag>
@@ -177,29 +171,98 @@
                 <el-empty description="购物车是空的" />
             </div>
             <div v-else class="cart-list" v-loading="cartLoading">
-                <div v-for="item in cart" :key="item.pID" class="cart-item">
+                <!-- 关键修复：补全了这里的代码，确保 Remove 和 CirclePlus 被使用 -->
+                <div v-for="item in cart" :key="item.pID" class="cart-item clickable-item"
+                    @click="goToDetail(item.pID)">
                     <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                     <div class="cart-item-info">
                         <h4>{{ item.pName }}</h4>
                         <div class="cart-controls">
                             <span class="price">¥ {{ item.pPrice }}</span>
                             <div class="qty-control">
-                                <el-button :icon="Remove" circle size="small" @click="changeCartQuantity(item, -1)" />
+                                <el-button :icon="Remove" circle size="small"
+                                    @click.stop="changeCartQuantity(item, -1)" />
                                 <span class="qty-text">{{ item.cAmount }}</span>
-                                <el-button :icon="CirclePlus" circle size="small" @click="addToCart(item, 1)" />
+                                <el-button :icon="CirclePlus" circle size="small"
+                                    @click.stop="addToCart(item, 1)" />
                             </div>
                         </div>
                     </div>
-                    <el-button type="danger" link :icon="Delete" @click="removeLineFromCart(item)" />
+                    <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
                 </div>
             </div>
+
             <template #footer>
-                <div class="cart-footer">
-                    <div class="total-text">总计: <span>¥ {{ cartTotal }}</span></div>
-                    <el-button type="primary" size="large" class="checkout-btn">去结算</el-button>
+                <div class="cart-footer-bar">
+                    <div class="total-info">
+                        <span>总计:</span>
+                        <span class="total-price">¥ {{ cartTotal.toFixed(2) }}</span>
+                    </div>
+                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="cart.length === 0">
+                        结算
+                    </el-button>
                 </div>
             </template>
         </el-drawer>
+
+        <!-- 结算流程弹窗 -->
+        <el-dialog v-model="checkoutVisible" title="确认收货信息" width="500px" destroy-on-close>
+            <div v-loading="checkoutLoading">
+                <div v-if="existingAddresses.length > 0 && !isAddingNewAddress">
+                    <p class="dialog-tip">请选择收货地址：</p>
+                    <div class="address-list">
+                        <div v-for="(addr, index) in existingAddresses" :key="index"
+                            :class="['address-card', selectedAddressIndex === index ? 'active' : '']"
+                            @click="selectedAddressIndex = index">
+                            <div class="addr-user">{{ addr.uContactPersonName }} ({{ addr.uContactPersonPhone }})</div>
+                            <div class="addr-detail">{{ addr.uDeliveryAddress }}</div>
+                            <div class="addr-note" v-if="addr.oDeliveryNote">备注: {{ addr.oDeliveryNote }}</div>
+                        </div>
+                    </div>
+                    <el-button link type="primary" @click="isAddingNewAddress = true">使用新地址 +</el-button>
+                </div>
+
+                <div v-else>
+                    <p class="dialog-tip">{{ existingAddresses.length === 0 ? '暂无收货记录，请填写：' : '新增收货地址：' }}</p>
+                    <el-form :model="newAddressForm" label-width="80px" size="small">
+                        <el-form-item label="收货人">
+                            <el-input v-model="newAddressForm.uContactPersonName" />
+                        </el-form-item>
+                        <el-form-item label="电话">
+                            <el-input v-model="newAddressForm.uContactPersonPhone" />
+                        </el-form-item>
+                        <el-form-item label="性别">
+                            <el-radio-group v-model="newAddressForm.uContactPersonGender">
+                                <el-radio label="男">男</el-radio>
+                                <el-radio label="女">女</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="邮箱">
+                            <el-input v-model="newAddressForm.uContactPersonEmail" />
+                        </el-form-item>
+                        <el-form-item label="地址">
+                            <el-input v-model="newAddressForm.uDeliveryAddress" type="textarea" />
+                        </el-form-item>
+                        <el-form-item label="邮编">
+                            <el-input v-model="newAddressForm.oPostalCode" />
+                        </el-form-item>
+                        <el-form-item label="备注">
+                            <el-input v-model="newAddressForm.oDeliveryNote" />
+                        </el-form-item>
+                    </el-form>
+                    <el-button link type="info" v-if="existingAddresses.length > 0"
+                        @click="isAddingNewAddress = false">返回选择列表</el-button>
+                </div>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="checkoutVisible = false">取消</el-button>
+                    <el-button type="primary" @click="confirmOrderGeneration" :loading="checkoutLoading">
+                        确认订单
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
 
         <!-- 收藏夹抽屉 -->
         <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
@@ -207,7 +270,8 @@
                 <el-empty description="暂无收藏" />
             </div>
             <div v-else class="cart-list" v-loading="favLoading">
-                <div v-for="item in favorites" :key="item.pID" class="cart-item">
+                <div v-for="item in favorites" :key="item.pID" class="cart-item clickable-item"
+                    @click="goToDetail(item.pID)">
                     <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                     <div class="cart-item-info">
                         <h4>{{ item.pName }}</h4>
@@ -218,8 +282,9 @@
                     </div>
                     <div class="fav-actions">
                         <el-button type="primary" circle :icon="ShoppingCart" size="small"
-                            @click="addToCart(item, 1)" />
-                        <el-button type="danger" circle :icon="Delete" size="small" @click="toggleFavorite(item)" />
+                            @click.stop="addToCart(item, 1)" />
+                        <el-button type="danger" circle :icon="Delete" size="small"
+                            @click.stop="toggleFavorite(item)" />
                     </div>
                 </div>
             </div>
@@ -234,7 +299,8 @@ import { useRouter, useRoute } from 'vue-router'
 import {
     ShoppingCart, Search, User, Delete, CirclePlus, Remove, Filter, Star, StarFilled
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+// 关键修复：引入 ElMessageBox，防止支付弹窗报错
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
 const BASE_URL = 'http://192.168.66.94:8082'
@@ -245,7 +311,7 @@ const route = useRoute()
 const currentUserID = ref('')
 const products = ref([])
 const isLoading = ref(false)
-const isRecommendMode = ref(false) // 标记当前是否处于推荐模式（用于UI显示）
+const isRecommendMode = ref(false) 
 
 // 搜索参数
 const searchQuery = ref('')
@@ -269,6 +335,22 @@ const favVisible = ref(false)
 const favorites = ref([])
 const favLoading = ref(false)
 
+// 结算相关状态
+const checkoutVisible = ref(false)
+const checkoutLoading = ref(false)
+const existingAddresses = ref([])
+const selectedAddressIndex = ref(0)
+const isAddingNewAddress = ref(false)
+const newAddressForm = reactive({
+    uContactPersonName: '',
+    uContactPersonPhone: '',
+    uContactPersonGender: '男',
+    uContactPersonEmail: '',
+    uDeliveryAddress: '',
+    oPostalCode: '',
+    oDeliveryNote: ''
+})
+
 // --- 生命周期 ---
 onMounted(() => {
     const storedUID = sessionStorage.getItem('uID')
@@ -279,12 +361,11 @@ onMounted(() => {
     }
     currentUserID.value = storedUID
 
-    // --- 修改点：判断是否需要搜索 ---
     if (route.query.q) {
         searchQuery.value = route.query.q
-        handleSearch() // 路由带参数，执行搜索
+        handleSearch()
     } else {
-        handleRecommend() // 默认无参数，执行推荐
+        handleRecommend()
     }
 
     fetchCart()
@@ -293,7 +374,7 @@ onMounted(() => {
 
 // --- 路由跳转 ---
 const goToDetail = (id) => {
-    router.push({ name: 'ProductDetailView', params: { pID:id } })
+    router.push({ name: 'ProductDetailView', params: { pID: id } })
 }
 
 const handleLogout = () => {
@@ -301,10 +382,10 @@ const handleLogout = () => {
     router.push('/')
 }
 
-// --- 修改点：新增推荐逻辑 ---
+// --- 推荐逻辑 ---
 const handleRecommend = async () => {
     isLoading.value = true
-    isRecommendMode.value = true // 标记为推荐模式
+    isRecommendMode.value = true
     try {
         const res = await axios.post(`${BASE_URL}/api/ProductRecommend`, {
             uID: currentUserID.value
@@ -326,7 +407,7 @@ const handleRecommend = async () => {
 // --- 搜索逻辑 ---
 const handleSearch = async () => {
     isLoading.value = true
-    isRecommendMode.value = false // 标记为搜索模式
+    isRecommendMode.value = false
     try {
         const payload = {
             SearchDesciption: searchQuery.value,
@@ -339,7 +420,6 @@ const handleSearch = async () => {
             pReleaseDate_r: filterForm.dateRange ? filterForm.dateRange[1] : "",
             pInfo: filterForm.pInfo
         }
-        // alert(payload.SearchDesciption);
 
         const res = await axios.post(`${BASE_URL}/api/ProductSearch`, payload)
 
@@ -357,11 +437,9 @@ const handleSearch = async () => {
 }
 
 const handleCategoryChange = () => {
-    // 切换分类 Tab 视为一种搜索筛选
     handleSearch()
 }
 
-// --- 修改点：重置逻辑 ---
 const resetFilters = () => {
     searchQuery.value = ''
     activeCategory.value = '全部'
@@ -372,8 +450,6 @@ const resetFilters = () => {
     filterForm.minPrice = undefined
     filterForm.maxPrice = undefined
     filterForm.dateRange = null
-    
-    // 重置后回到推荐页
     handleRecommend()
 }
 
@@ -469,7 +545,143 @@ const toggleFavorite = async (product) => {
 
 const categoryList = computed(() => ['电子产品', '日用品', '书籍', '服装', '食品'])
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
-const cartTotal = computed(() => cart.value.reduce((total, item) => total + (item.pPrice * item.cAmount), 0))
+const cartTotal = computed(() => {
+    return cart.value.reduce((total, item) => {
+        return total + (Number(item.pPrice) * Number(item.cAmount))
+    }, 0)
+})
+
+// --- 结算核心逻辑 ---
+
+const handleCheckout = async () => {
+    if (!currentUserID.value) return ElMessage.error("未登录")
+    checkoutVisible.value = true
+    checkoutLoading.value = true
+    isAddingNewAddress.value = false
+    
+    try {
+        const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
+            uID: currentUserID.value
+        })
+        
+        if (res.data && res.data.data && res.data.data.DeliveryInfos && res.data.data.DeliveryInfos.length > 0) {
+            existingAddresses.value = res.data.data.DeliveryInfos
+            selectedAddressIndex.value = 0
+        } else {
+            existingAddresses.value = []
+            isAddingNewAddress.value = true
+        }
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('获取收货信息失败')
+    } finally {
+        checkoutLoading.value = false
+    }
+}
+
+const confirmOrderGeneration = async () => {
+    let finalDeliveryInfo = null
+
+    if (isAddingNewAddress.value || existingAddresses.value.length === 0) {
+        if (!newAddressForm.uContactPersonName || !newAddressForm.uDeliveryAddress || !newAddressForm.uContactPersonPhone) {
+            return ElMessage.warning('请填写完整的收货信息')
+        }
+        
+        finalDeliveryInfo = {
+            uID: currentUserID.value,
+            ...newAddressForm
+        }
+        
+        try {
+            checkoutLoading.value = true
+            const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
+            if (addrRes.data !== 'Request Accept') {
+                throw new Error('地址保存失败')
+            }
+        } catch (e) {
+            checkoutLoading.value = false
+            return ElMessage.error('保存收货地址失败，请重试')
+        }
+    } else {
+        finalDeliveryInfo = existingAddresses.value[selectedAddressIndex.value]
+    }
+
+    try {
+        checkoutLoading.value = true
+        
+        const orderPayload = {
+            uID: currentUserID.value,
+            oDeliveryInfo: finalDeliveryInfo,
+            pProducts: cart.value.map(item => ({
+                pID: String(item.pID),
+                pAmount: Number(item.cAmount),
+                oPrice: Number(item.pPrice)
+            }))
+        }
+
+        const orderRes = await axios.post(`${BASE_URL}/api/OrderConfirm_OrderGenerate`, orderPayload)
+        
+        checkoutVisible.value = false
+        
+        const feedback = orderRes.data.data
+        const failedItems = feedback.pProducts.filter(p => p.pFeedback === 'Inventory Insufficient')
+        
+        if (failedItems.length > 0) {
+            ElMessage.error(`部分商品库存不足，订单创建失败`)
+            return
+        }
+        
+        cart.value = [] 
+        
+        const newOrderID = feedback.oOrderID
+        if(!newOrderID) {
+             ElMessage.error('订单生成异常，未获取到订单号')
+             return
+        }
+        
+        ElMessageBox.confirm(
+            '订单已生成！是否立即支付？',
+            '支付确认',
+            {
+                confirmButtonText: '立即支付',
+                cancelButtonText: '稍后支付',
+                type: 'success',
+            }
+        )
+        .then(async () => {
+            await updateOrderStatus(newOrderID, 'Paid')
+        })
+        .catch(() => {
+            ElMessage.info('您可以稍后在订单中心支付')
+        })
+
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('订单生成失败')
+    } finally {
+        checkoutLoading.value = false
+        fetchCart() 
+    }
+}
+
+const updateOrderStatus = async (orderID, statusStr) => {
+    try {
+        const res = await axios.post(`${BASE_URL}/api/OrderStatus_Update`, {
+            oOrderID: orderID,
+            NewStatus: statusStr
+        })
+        
+        if (res.data === 'Update Accept') {
+            ElMessage.success('支付成功！')
+        } else {
+            ElMessage.warning('支付状态更新失败')
+        }
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('网络错误，支付失败')
+    }
+}
+
 </script>
 
 <style scoped>
@@ -754,5 +966,86 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
     text-align: center;
     color: #909399;
     padding: 20px;
+}
+
+.clickable-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.clickable-item:hover {
+    background-color: #f5f7fa;
+}
+
+/* 购物车底部栏 */
+.cart-footer-bar {
+    border-top: 1px solid #ebeef5;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-info {
+    font-size: 16px;
+    color: #333;
+}
+
+.total-price {
+    font-size: 24px;
+    color: #f56c6c;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+/* 结算弹窗样式 */
+.dialog-tip {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.address-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.address-card {
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.address-card:hover {
+    border-color: #409EFF;
+    background-color: #ecf5ff;
+}
+
+.address-card.active {
+    border-color: #409EFF;
+    background-color: #ecf5ff;
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+}
+
+.addr-user {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.addr-detail {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 5px;
+}
+
+.addr-note {
+    font-size: 12px;
+    color: #909399;
 }
 </style>

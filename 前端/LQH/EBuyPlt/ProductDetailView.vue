@@ -1,26 +1,22 @@
 <template>
     <div class="detail-layout">
-        <!-- 复用顶部导航 (为了能在详情页也使用购物车和搜索) -->
+        <!-- 顶部导航栏 (保持不变) -->
         <el-affix :offset="0">
             <el-header class="header">
                 <div class="header-content">
                     <div class="logo" @click="goHome">EBuyPlt</div>
 
                     <div class="search-bar">
-                        <!-- 在详情页搜索，回车后跳回主页进行搜索 -->
                         <el-input v-model="searchQuery" placeholder="搜索其他商品..." class="search-input"
                             :prefix-icon="Search" @keyup.enter="handleSearchRedirect" />
                     </div>
 
                     <div class="actions">
-                        <el-button @click="goHome">返回列表</el-button>
-
+                        <el-button @click="goHome">继续购物</el-button>
                         <el-button :icon="Star" circle size="large" @click="openFavorites" title="我的收藏" />
-
                         <el-badge :value="cartCount" :hidden="cartCount === 0" class="item-badge">
-                            <el-button :icon="ShoppingCart" circle size="large" @click="openCart" />
+                            <el-button :icon="ShoppingCart" circle size="large" @click="openCart" title="我的购物车" />
                         </el-badge>
-
                         <el-dropdown>
                             <el-avatar :icon="User" class="user-avatar" />
                             <template #dropdown>
@@ -35,20 +31,21 @@
             </el-header>
         </el-affix>
 
+        <!-- 主内容区 -->
         <el-main class="main-container" v-loading="isLoading">
             <div v-if="product" class="product-detail-wrapper">
-                <el-row :gutter="40">
+                <!-- 第一部分：上方的主图与基本信息 -->
+                <el-row :gutter="40" class="main-info-row">
                     <!-- 左侧：图片轮播 -->
                     <el-col :xs="24" :md="12">
                         <div class="carousel-container">
-                            <el-carousel trigger="click" height="400px" :autoplay="false" arrow="always">
-                                <!-- 遍历 pImagePaths 数组 -->
+                            <el-carousel trigger="click" height="450px" :autoplay="false" arrow="always"
+                                indicator-position="outside">
                                 <el-carousel-item v-for="(img, index) in product.pImagePaths" :key="index">
-                                    <!-- getProductImage 会处理相对路径 -->
-                                    <img :src="getProductImage(img)" class="carousel-img" />
+                                    <div class="img-box">
+                                        <img :src="getProductImage(img)" class="carousel-img" />
+                                    </div>
                                 </el-carousel-item>
-
-                                <!-- 处理没有图片的情况 -->
                                 <el-carousel-item v-if="!product.pImagePaths || product.pImagePaths.length === 0">
                                     <div class="no-image">暂无图片</div>
                                 </el-carousel-item>
@@ -56,110 +53,210 @@
                         </div>
                     </el-col>
 
-                    <!-- 右侧：商品信息 -->
+                    <!-- 右侧：商品核心参数与操作 -->
                     <el-col :xs="24" :md="12">
                         <div class="info-container">
-                            <div class="info-header">
-                                <el-tag effect="dark">{{ product.pType }}</el-tag>
-                                <span class="producer">厂商: {{ product.pProducer }}</span>
+                            <div class="info-top">
+                                <div class="info-header">
+                                    <el-tag effect="dark" size="large">{{ product.pType }}</el-tag>
+                                    <span class="producer">厂商: {{ product.pProducer }}</span>
+                                </div>
+
+                                <h1 class="product-name">{{ product.pName }}</h1>
+                                <p class="product-id">Product ID: {{ product.pID }}</p>
+
+                                <div class="price-section">
+                                    <div class="price-box">
+                                        <span class="currency">¥</span>
+                                        <span class="amount">{{ product.pPrice }}</span>
+                                    </div>
+                                    <div v-if="product.pDiscount && product.pDiscount !== '无' && product.pDiscount > 0"
+                                        class="discount-badge">
+                                        Discount: {{ product.pDiscount }}
+                                    </div>
+                                </div>
+
+                                <div class="meta-info">
+                                    <div class="meta-row">
+                                        <span class="label">库存状态:</span>
+                                        <span :class="product.pInventory > 0 ? 'text-green' : 'text-red'">
+                                            {{ product.pInventory > 0 ? `有货 (剩余 ${product.pInventory})` : '暂时缺货' }}
+                                        </span>
+                                    </div>
+                                    <div class="meta-row"><span class="label">发布日期:</span> {{ product.pReleaseDate }}
+                                    </div>
+                                    <div class="meta-row"><span class="label">商品状态:</span> {{ product.pStatus }}</div>
+                                </div>
                             </div>
 
-                            <h1 class="product-name">{{ product.pName }}</h1>
-                            <p class="product-id">Product ID: {{ product.pID }}</p>
-
-                            <div class="price-box">
-                                <span class="currency">¥</span>
-                                <span class="amount">{{ product.pPrice }}</span>
-                                <span v-if="product.pDiscount > 0" class="discount-tag">
-                                    Discount: {{ product.pDiscount }}
-                                </span>
-                            </div>
-
-                            <div class="meta-info">
-                                <p><strong>库存状态:</strong>
-                                    <span :class="product.pInventory > 0 ? 'text-green' : 'text-red'">
-                                        {{ product.pInventory > 0 ? `有货 (剩余${product.pInventory})` : '缺货' }}
-                                    </span>
-                                </p>
-                                <p><strong>发布日期:</strong> {{ product.pReleaseDate }}</p>
-                                <p><strong>商品状态:</strong> {{ product.pStatus }}</p>
-                            </div>
-
-                            <div class="description-box">
-                                <h3>商品详情</h3>
-                                <p>{{ product.pInfo }}</p>
-                            </div>
-
+                            <!-- 操作按钮区 -->
                             <div class="action-buttons">
-                                <el-input-number v-model="buyQuantity" :min="1" :max="product.pInventory"
-                                    :disabled="product.pInventory <= 0" style="margin-right: 15px;" />
+                                <div class="qty-wrapper">
+                                    <span class="qty-label">数量</span>
+                                    <el-input-number v-model="buyQuantity" :min="1"
+                                        :max="product.pInventory > 0 ? product.pInventory : 1"
+                                        :disabled="product.pInventory <= 0" size="large" />
+                                </div>
 
-                                <el-button type="primary" size="large" :icon="ShoppingCart"
-                                    :disabled="product.pInventory <= 0" @click="addToCart(product, buyQuantity)">
-                                    加入购物车
-                                </el-button>
+                                <div class="btn-group">
+                                    <el-button type="primary" size="large" :icon="ShoppingCart" class="add-btn"
+                                        :disabled="product.pInventory <= 0" @click="addToCart(product, buyQuantity)">
+                                        加入购物车
+                                    </el-button>
 
-                                <el-button size="large" :icon="isFavorite(product.pID) ? StarFilled : Star"
-                                    :type="isFavorite(product.pID) ? 'warning' : 'default'"
-                                    @click="toggleFavorite(product)">
-                                    {{ isFavorite(product.pID) ? '已收藏' : '收藏' }}
-                                </el-button>
+                                    <el-button size="large" class="fav-btn"
+                                        :type="isFavorite(product.pID) ? 'warning' : 'default'"
+                                        :icon="isFavorite(product.pID) ? StarFilled : Star"
+                                        @click="toggleFavorite(product)">
+                                        {{ isFavorite(product.pID) ? '已收藏' : '收藏' }}
+                                    </el-button>
+                                </div>
                             </div>
                         </div>
                     </el-col>
                 </el-row>
+
+                <el-divider class="section-divider" />
+
+                <!-- 第二部分：底部独立的商品详情描述 -->
+                <div class="description-section">
+                    <div class="desc-title">
+                        <h3>商品详情</h3>
+                        <div class="title-underline"></div>
+                    </div>
+                    <div class="desc-content">
+                        <!-- 使用 pre-line 样式保留后端文本的换行符 -->
+                        <p>{{ product.pInfo || '暂无详细描述' }}</p>
+                    </div>
+                </div>
+
             </div>
-            <el-empty v-else description="加载商品信息失败或商品不存在"></el-empty>
+
+            <el-empty v-else-if="!isLoading" description="未找到商品信息">
+                <el-button type="primary" @click="goHome">返回首页</el-button>
+            </el-empty>
         </el-main>
 
-        <!-- 购物车抽屉 (复用逻辑) -->
+        <!-- 购物车抽屉 -->
         <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="450px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
             </div>
             <div v-else class="cart-list" v-loading="cartLoading">
-                <div v-for="item in cart" :key="item.pID" class="cart-item">
+                <div v-for="item in cart" :key="item.pID" class="cart-item clickable-item"
+                    @click="goToDetail(item.pID)">
                     <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                     <div class="cart-item-info">
                         <h4>{{ item.pName }}</h4>
                         <div class="cart-controls">
-                            <span class="price">¥ {{ item.pPrice }}</span>
+                            <span class="cart-price">¥ {{ item.pPrice }}</span>
+                            <!-- 修复点：添加加减按钮 -->
                             <div class="qty-control">
-                                <el-button :icon="Remove" circle size="small" @click="changeCartQuantity(item, -1)" />
+                                <el-button :icon="Remove" circle size="small"
+                                    @click.stop="changeCartQuantity(item, -1)" />
                                 <span class="qty-text">{{ item.cAmount }}</span>
-                                <el-button :icon="CirclePlus" circle size="small" @click="addToCart(item, 1)" />
+                                <el-button :icon="CirclePlus" circle size="small"
+                                    @click.stop="changeCartQuantity(item, 1)" />
                             </div>
                         </div>
                     </div>
-                    <el-button type="danger" link :icon="Delete" @click="removeLineFromCart(item)" />
+                    <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
                 </div>
             </div>
+
             <template #footer>
-                <div class="cart-footer">
-                    <div class="total-text">总计: <span>¥ {{ cartTotal }}</span></div>
-                    <el-button type="primary" size="large" class="checkout-btn">去结算</el-button>
+                <div class="cart-footer-bar">
+                    <div class="total-info">
+                        <span>总计:</span>
+                        <span class="total-price">¥ {{ cartTotal.toFixed(2) }}</span>
+                    </div>
+                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="cart.length === 0">
+                        结算
+                    </el-button>
                 </div>
             </template>
         </el-drawer>
 
-        <!-- 收藏夹抽屉 (复用逻辑) -->
-        <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
-            <div v-if="favorites.length === 0" class="empty-cart">
-                <el-empty description="暂无收藏" />
+        <!-- 结算流程弹窗 -->
+        <el-dialog v-model="checkoutVisible" title="确认收货信息" width="500px" destroy-on-close>
+            <div v-loading="checkoutLoading">
+                <!-- 情况A: 有历史地址 -->
+                <div v-if="existingAddresses.length > 0 && !isAddingNewAddress">
+                    <p class="dialog-tip">请选择收货地址：</p>
+                    <div class="address-list">
+                        <div v-for="(addr, index) in existingAddresses" :key="index"
+                            :class="['address-card', selectedAddressIndex === index ? 'active' : '']"
+                            @click="selectedAddressIndex = index">
+                            <div class="addr-user">{{ addr.uContactPersonName }} ({{ addr.uContactPersonPhone }})</div>
+                            <div class="addr-detail">{{ addr.uDeliveryAddress }}</div>
+                            <div class="addr-note" v-if="addr.oDeliveryNote">备注: {{ addr.oDeliveryNote }}</div>
+                        </div>
+                    </div>
+                    <el-button link type="primary" @click="isAddingNewAddress = true">使用新地址 +</el-button>
+                </div>
+
+                <!-- 情况B: 无地址 或 用户点击使用新地址 -->
+                <div v-else>
+                    <p class="dialog-tip">{{ existingAddresses.length === 0 ? '暂无收货记录，请填写：' : '新增收货地址：' }}</p>
+                    <el-form :model="newAddressForm" label-width="80px" size="small">
+                        <el-form-item label="收货人">
+                            <el-input v-model="newAddressForm.uContactPersonName" />
+                        </el-form-item>
+                        <el-form-item label="电话">
+                            <el-input v-model="newAddressForm.uContactPersonPhone" />
+                        </el-form-item>
+                        <el-form-item label="性别">
+                            <el-radio-group v-model="newAddressForm.uContactPersonGender">
+                                <el-radio label="男">男</el-radio>
+                                <el-radio label="女">女</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="邮箱">
+                            <el-input v-model="newAddressForm.uContactPersonEmail" />
+                        </el-form-item>
+                        <el-form-item label="地址">
+                            <el-input v-model="newAddressForm.uDeliveryAddress" type="textarea" />
+                        </el-form-item>
+                        <el-form-item label="邮编">
+                            <el-input v-model="newAddressForm.oPostalCode" />
+                        </el-form-item>
+                        <el-form-item label="备注">
+                            <el-input v-model="newAddressForm.oDeliveryNote" />
+                        </el-form-item>
+                    </el-form>
+                    <el-button link type="info" v-if="existingAddresses.length > 0"
+                        @click="isAddingNewAddress = false">返回选择列表</el-button>
+                </div>
             </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="checkoutVisible = false">取消</el-button>
+                    <el-button type="primary" @click="confirmOrderGeneration" :loading="checkoutLoading">
+                        确认订单
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 收藏夹抽屉 -->
+        <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
+            <div v-if="favorites.length === 0" class="empty-cart">...</div>
             <div v-else class="cart-list" v-loading="favLoading">
-                <div v-for="item in favorites" :key="item.pID" class="cart-item">
+                <div v-for="item in favorites" :key="item.pID" class="cart-item clickable-item"
+                    @click="goToDetail(item.pID)">
                     <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                     <div class="cart-item-info">
                         <h4>{{ item.pName }}</h4>
                         <div class="cart-controls">
-                            <span class="price">¥ {{ item.pPrice }}</span>
+                            <span class="cart-price">¥ {{ item.pPrice }}</span>
+                            <el-tag size="small">{{ item.pType }}</el-tag>
                         </div>
                     </div>
                     <div class="fav-actions">
                         <el-button type="primary" circle :icon="ShoppingCart" size="small"
-                            @click="addToCart(item, 1)" />
-                        <el-button type="danger" circle :icon="Delete" size="small" @click="toggleFavorite(item)" />
+                            @click.stop="addToCart(item, 1)" title="加入购物车" />
+                        <el-button type="danger" circle :icon="Delete" size="small" @click.stop="toggleFavorite(item)"
+                            title="删除" />
                     </div>
                 </div>
             </div>
@@ -168,23 +265,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+// 修复点：引入 reactive
+import { ref, onMounted, computed, watch, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+// 修复点：引入 ElMessageBox
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ShoppingCart, Search, User, Delete, CirclePlus, Remove, Star, StarFilled } from '@element-plus/icons-vue'
 
 const BASE_URL = 'http://192.168.66.94:8082'
 const route = useRoute()
 const router = useRouter()
 
+// 核心数据
 const currentUserID = ref('')
 const isLoading = ref(false)
-const product = ref(null) // 存放商品详情对象 (ProductClick_jsonSend)
+const product = ref(null)
 const searchQuery = ref('')
 const buyQuantity = ref(1)
 
-// 购物车与收藏
+// 购物车与收藏状态
 const cartVisible = ref(false)
 const cart = ref([])
 const cartLoading = ref(false)
@@ -192,36 +292,75 @@ const favVisible = ref(false)
 const favorites = ref([])
 const favLoading = ref(false)
 
-onMounted(() => {
-   const pID = route.params.pID
-    
-    if (pID) {
-        // 2. 发起请求
-        fetchProductDetail(pID)
-    } else {
-        ElMessage.error('参数错误：缺少商品ID')
-        router.push('/ShoppingnbView') // 如果没有ID，跳回主页
-    }
-
-    // 后台加载购物车和收藏，为了按钮状态显示正确
-    fetchCart()
-    fetchFavorites()
+// 结算相关状态
+const checkoutVisible = ref(false)
+const checkoutLoading = ref(false)
+const existingAddresses = ref([])
+const selectedAddressIndex = ref(0)
+const isAddingNewAddress = ref(false)
+const newAddressForm = reactive({
+    uContactPersonName: '',
+    uContactPersonPhone: '',
+    uContactPersonGender: '男',
+    uContactPersonEmail: '',
+    uDeliveryAddress: '',
+    oPostalCode: '',
+    oDeliveryNote: ''
 })
 
-// --- 核心逻辑：获取商品详情 (/api/ProductClick) ---
+// --- 生命周期 ---
+onMounted(async () => {
+    const storedUID = sessionStorage.getItem('uID')
+    if (!storedUID) {
+        ElMessage.error('请先登录')
+        router.push('/')
+        return
+    }
+    currentUserID.value = storedUID
+
+    const pID = route.params.pID
+
+    if (pID) {
+        await Promise.all([
+            fetchProductDetail(pID),
+            fetchCart(),
+            fetchFavorites()
+        ])
+    } else {
+        ElMessage.error('参数错误：缺少商品ID')
+        router.push('/ShoppingnbView')
+    }
+})
+
+const goToDetail = (id) => {
+    if (product.value && String(product.value.pID) === String(id)) {
+        cartVisible.value = false
+        favVisible.value = false
+        return
+    }
+    cartVisible.value = false
+    favVisible.value = false
+    router.push({ name: 'ProductDetailView', params: { pID: id } })
+}
+
+watch(
+    () => route.params.pID,
+    (newID, oldID) => {
+        if (newID && newID !== oldID) {
+            fetchProductDetail(newID)
+            buyQuantity.value = 1
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+    }
+)
+
+// --- API 方法 ---
 const fetchProductDetail = async (id) => {
     isLoading.value = true
     try {
-        // 注意：这里发送给后端的参数名必须和后端接收的一致
-        // 假设后端接口接收 {"pID": "..."}
-        const payload = { pID: id }
-        
-        const res = await axios.post(`${BASE_URL}/api/ProductClick`, payload)
-
+        const res = await axios.post(`${BASE_URL}/api/ProductClick`, { pID: id })
         if (res.data && res.data.data) {
-            // 赋值给 product 响应式对象
-            // 此时 product.value.pImagePaths 就是一个数组 ['/img/1.jpg', '/img/2.jpg']
-            product.value = res.data.data 
+            product.value = res.data.data
         } else {
             ElMessage.error('未找到该商品信息')
         }
@@ -233,10 +372,15 @@ const fetchProductDetail = async (id) => {
     }
 }
 
-// --- 导航逻辑 ---
-const goHome = () => {
-    router.push('/ShoppingnbView')
+const getProductImage = (path) => {
+    if (!path) return 'https://via.placeholder.com/400x400?text=No+Image'
+    let cleanPath = path.replace(/\\/g, '/')
+    if (cleanPath.startsWith('http')) return cleanPath
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
+    return `${BASE_URL}${cleanPath}`
 }
+
+const goHome = () => router.push('/ShoppingnbView')
 
 const handleSearchRedirect = () => {
     if (searchQuery.value.trim()) {
@@ -249,15 +393,7 @@ const handleLogout = () => {
     router.push('/')
 }
 
-// --- 通用工具 ---
-const getProductImage = (path) => {
-    if (!path) return 'https://via.placeholder.com/400x400?text=No+Image'
-    if (path.startsWith('http')) return path
-    const cleanPath = path.startsWith('/') ? path : '/' + path
-    return `${BASE_URL}${cleanPath}`
-}
-
-// --- 购物车与收藏逻辑 (与主页一致，为了功能完整性复制) ---
+// --- 购物车与收藏夹逻辑 ---
 const fetchCart = async () => {
     if (!currentUserID.value) return
     cartLoading.value = true
@@ -266,16 +402,6 @@ const fetchCart = async () => {
         cart.value = res.data && res.data.data ? res.data.data : []
     } catch (e) { console.error(e) }
     finally { cartLoading.value = false }
-}
-
-const fetchFavorites = async () => {
-    if (!currentUserID.value) return
-    favLoading.value = true
-    try {
-        const res = await axios.post(`${BASE_URL}/api/FavouriteRecords`, { uID: currentUserID.value })
-        favorites.value = res.data && res.data.data ? res.data.data : []
-    } catch (e) { console.error(e) }
-    finally { favLoading.value = false }
 }
 
 const addToCart = async (item, amount = 1) => {
@@ -318,6 +444,19 @@ const removeLineFromCart = async (item) => {
     } catch (e) { ElMessage.error('移除失败') }
 }
 
+const openCart = () => { cartVisible.value = true; fetchCart() }
+const openFavorites = () => { favVisible.value = true; fetchFavorites() }
+
+const fetchFavorites = async () => {
+    if (!currentUserID.value) return
+    favLoading.value = true
+    try {
+        const res = await axios.post(`${BASE_URL}/api/FavouriteRecords`, { uID: currentUserID.value })
+        favorites.value = res.data && res.data.data ? res.data.data : []
+    } catch (e) { console.error(e) }
+    finally { favLoading.value = false }
+}
+
 const isFavorite = (pID) => favorites.value.some(fav => fav.pID === pID)
 
 const toggleFavorite = async (item) => {
@@ -334,15 +473,153 @@ const toggleFavorite = async (item) => {
     } catch (e) { ElMessage.error('操作失败') }
 }
 
-const openCart = () => { cartVisible.value = true; fetchCart() }
-const openFavorites = () => { favVisible.value = true; fetchFavorites() }
-
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
-const cartTotal = computed(() => cart.value.reduce((total, item) => total + (item.pPrice * item.cAmount), 0))
+const cartTotal = computed(() => {
+    return cart.value.reduce((total, item) => {
+        return total + (Number(item.pPrice) * Number(item.cAmount))
+    }, 0)
+})
+
+// --- 结算核心逻辑 ---
+
+const handleCheckout = async () => {
+    if (!currentUserID.value) return ElMessage.error("未登录")
+    checkoutVisible.value = true
+    checkoutLoading.value = true
+    isAddingNewAddress.value = false
+    
+    try {
+        const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
+            uID: currentUserID.value
+        })
+        
+        if (res.data && res.data.data && res.data.data.DeliveryInfos && res.data.data.DeliveryInfos.length > 0) {
+            existingAddresses.value = res.data.data.DeliveryInfos
+            selectedAddressIndex.value = 0
+        } else {
+            existingAddresses.value = []
+            isAddingNewAddress.value = true
+        }
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('获取收货信息失败')
+    } finally {
+        checkoutLoading.value = false
+    }
+}
+
+const confirmOrderGeneration = async () => {
+    let finalDeliveryInfo = null
+
+    if (isAddingNewAddress.value || existingAddresses.value.length === 0) {
+        if (!newAddressForm.uContactPersonName || !newAddressForm.uDeliveryAddress || !newAddressForm.uContactPersonPhone) {
+            return ElMessage.warning('请填写完整的收货信息')
+        }
+        
+        finalDeliveryInfo = {
+            uID: currentUserID.value,
+            ...newAddressForm
+        }
+        
+        try {
+            checkoutLoading.value = true
+            const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
+            if (addrRes.data !== 'Request Accept') {
+                throw new Error('地址保存失败')
+            }
+        } catch (e) {
+            checkoutLoading.value = false
+            return ElMessage.error('保存收货地址失败，请重试')
+        }
+    } else {
+        finalDeliveryInfo = existingAddresses.value[selectedAddressIndex.value]
+    }
+
+    try {
+        checkoutLoading.value = true
+        
+        const orderPayload = {
+            uID: currentUserID.value,
+            oDeliveryInfo: finalDeliveryInfo,
+            pProducts: cart.value.map(item => ({
+                pID: String(item.pID),
+                pAmount: Number(item.cAmount),
+                oPrice: Number(item.pPrice)
+            }))
+        }
+
+        const orderRes = await axios.post(`${BASE_URL}/api/OrderConfirm_OrderGenerate`, orderPayload)
+        
+        checkoutVisible.value = false
+        
+        const feedback = orderRes.data.data
+        const failedItems = feedback.pProducts.filter(p => p.pFeedback === 'Inventory Insufficient')
+        
+        if (failedItems.length > 0) {
+            ElMessage.error(`部分商品库存不足，订单创建失败`)
+            return
+        }
+        
+        cart.value = [] 
+        
+        const newOrderID = feedback.oOrderID
+        if(!newOrderID) {
+             ElMessage.error('订单生成异常，未获取到订单号')
+             return
+        }
+        
+        ElMessageBox.confirm(
+            '订单已生成！是否立即支付？',
+            '支付确认',
+            {
+                confirmButtonText: '立即支付',
+                cancelButtonText: '稍后支付',
+                type: 'success',
+            }
+        )
+        .then(async () => {
+            await updateOrderStatus(newOrderID, 'Paid')
+        })
+        .catch(() => {
+            ElMessage.info('您可以稍后在订单中心支付')
+        })
+
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('订单生成失败')
+    } finally {
+        checkoutLoading.value = false
+        fetchCart() 
+    }
+}
+
+const updateOrderStatus = async (orderID, statusStr) => {
+    try {
+        const res = await axios.post(`${BASE_URL}/api/OrderStatus_Update`, {
+            oOrderID: orderID,
+            NewStatus: statusStr
+        })
+        
+        if (res.data === 'Update Accept') {
+            ElMessage.success('支付成功！')
+        } else {
+            ElMessage.warning('支付状态更新失败')
+        }
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('网络错误，支付失败')
+    }
+}
+
 </script>
 
 <style scoped>
-/* 复用部分 Header 样式 */
+.detail-layout {
+    min-height: 100vh;
+    background-color: #f5f7fa;
+}
+
+/* Header */
 .header {
     background: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -378,7 +655,7 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
     gap: 15px;
 }
 
-/* 详情页特有样式 */
+/* Main Container */
 .main-container {
     max-width: 1100px;
     margin: 20px auto;
@@ -388,24 +665,35 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
 .product-detail-wrapper {
     background: #fff;
     border-radius: 8px;
-    padding: 30px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.main-info-row {
+    margin-bottom: 20px;
 }
 
 /* 轮播图 */
 .carousel-container {
-    background: #f9f9f9;
+    background: #fff;
     border-radius: 8px;
+    border: 1px solid #ebeef5;
     overflow: hidden;
-    height: 400px;
+    height: 450px;
+}
+
+.img-box {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #f9f9f9;
 }
 
 .carousel-img {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
 }
 
@@ -417,15 +705,26 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
     color: #999;
 }
 
-/* 信息区 */
+/* 右侧信息栏布局调整 */
 .info-container {
-    padding-left: 20px;
+    padding-left: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 450px;
+    /* 与轮播图等高 */
+    justify-content: space-between;
+    /* 顶部信息和底部按钮分离 */
+}
+
+/* 顶部信息块 */
+.info-top {
+    flex: 1;
 }
 
 .info-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     margin-bottom: 10px;
 }
 
@@ -436,85 +735,149 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
 
 .product-name {
     font-size: 28px;
-    margin: 0 0 10px 0;
+    font-weight: 600;
     color: #303133;
+    margin: 0 0 10px 0;
+    line-height: 1.3;
 }
 
 .product-id {
     font-size: 13px;
     color: #C0C4CC;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+}
+
+.price-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f2f5;
 }
 
 .price-box {
     color: #f56c6c;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: flex-end;
 }
 
 .currency {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
-    margin-bottom: 4px;
 }
 
 .amount {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: bold;
     margin-left: 5px;
 }
 
-.discount-tag {
-    margin-left: 15px;
+.discount-badge {
     background: #f56c6c;
     color: #fff;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    height: 20px;
-    line-height: 20px;
-    margin-bottom: 8px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 14px;
 }
 
 .meta-info {
+    margin-bottom: 10px;
+}
+
+.meta-row {
     font-size: 14px;
     color: #606266;
-    line-height: 1.8;
-    margin-bottom: 25px;
-    border-bottom: 1px solid #ebeef5;
-    padding-bottom: 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.meta-row .label {
+    width: 80px;
+    color: #909399;
 }
 
 .text-green {
     color: #67C23A;
+    font-weight: bold;
 }
 
 .text-red {
     color: #F56C6C;
+    font-weight: bold;
 }
 
-.description-box h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-}
-
-.description-box p {
-    color: #606266;
-    line-height: 1.6;
-    margin-bottom: 30px;
-}
-
+/* 底部操作区 */
 .action-buttons {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.qty-wrapper {
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #606266;
+}
+
+.btn-group {
+    display: flex;
     gap: 15px;
 }
 
-/* 抽屉复用样式 */
+.add-btn {
+    flex: 2;
+    font-weight: bold;
+}
+
+.fav-btn {
+    flex: 1;
+}
+
+/* 分割线 */
+.section-divider {
+    margin: 40px 0;
+}
+
+/* 底部独立详情描述栏 */
+.description-section {
+    padding: 0 10px;
+}
+
+.desc-title {
+    margin-bottom: 20px;
+}
+
+.desc-title h3 {
+    font-size: 20px;
+    color: #303133;
+    margin: 0 0 8px 0;
+}
+
+.title-underline {
+    width: 60px;
+    height: 4px;
+    background: #409EFF;
+    border-radius: 2px;
+}
+
+.desc-content {
+    font-size: 16px;
+    color: #606266;
+    line-height: 1.8;
+    white-space: pre-line;
+    /* 保留换行符 */
+    min-height: 100px;
+}
+
+/* 抽屉内样式 */
 .cart-list {
     height: calc(100vh - 200px);
     overflow-y: auto;
+    padding-right: 5px;
 }
 
 .cart-item {
@@ -527,21 +890,48 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
 }
 
 .cart-item-img {
-    width: 60px;
-    height: 60px;
-    border-radius: 4px;
+    width: 64px;
+    height: 64px;
+    border-radius: 6px;
     object-fit: cover;
+    border: 1px solid #eee;
 }
 
 .cart-item-info {
     flex: 1;
+    overflow: hidden;
+}
+
+.cart-name {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .cart-controls {
-    margin-top: 5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.cart-price {
+    color: #f56c6c;
+    font-weight: bold;
+}
+
+.qty-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qty-text {
+    width: 20px;
+    text-align: center;
+    font-size: 14px;
 }
 
 .cart-footer {
@@ -554,6 +944,13 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
     margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    color: #303133;
+}
+
+.total-price {
+    font-size: 22px;
+    color: #f56c6c;
     font-weight: bold;
 }
 
@@ -565,5 +962,103 @@ const cartTotal = computed(() => cart.value.reduce((total, item) => total + (ite
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+/* 响应式 */
+@media screen and (max-width: 768px) {
+    .info-container {
+        padding-left: 0;
+        padding-top: 20px;
+        height: auto;
+    }
+
+    .carousel-container {
+        height: 300px;
+    }
+
+    .btn-group {
+        flex-direction: column;
+    }
+}
+
+.clickable-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.clickable-item:hover {
+    background-color: #f5f7fa;
+}
+
+/* 购物车底部栏 */
+.cart-footer-bar {
+    border-top: 1px solid #ebeef5;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-info {
+    font-size: 16px;
+    color: #333;
+}
+
+.total-price {
+    font-size: 24px;
+    color: #f56c6c;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+/* 结算弹窗样式 */
+.dialog-tip {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.address-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.address-card {
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.address-card:hover {
+    border-color: #409EFF;
+    background-color: #ecf5ff;
+}
+
+.address-card.active {
+    border-color: #409EFF;
+    background-color: #ecf5ff;
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+}
+
+.addr-user {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.addr-detail {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 5px;
+}
+
+.addr-note {
+    font-size: 12px;
+    color: #909399;
 }
 </style>
