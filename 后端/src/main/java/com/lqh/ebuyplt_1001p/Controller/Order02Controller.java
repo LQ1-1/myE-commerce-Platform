@@ -29,6 +29,19 @@ public class Order02Controller
     @RequestMapping("/api/OrderConfirm_DeliveryCheck")
     public ApiResult<ExistDeliveryRecords> OrderConfirm_DeliveryCheck(@RequestBody OrderItem  orderItem)    //只需要用到uID,返回用户已经写过了的收货记录
     {
+        {
+            System.out.println("************OrderConfirm_DeliveryCheck************");
+            System.out.println(orderItem.getuID());
+            for(int i=0;i<orderItem.pProducts.size();i++)
+            {
+                System.out.println(orderItem.pProducts.get(i).getpID());
+                System.out.println(orderItem.pProducts.get(i).getoPrice());
+                System.out.println(orderItem.pProducts.get(i).getpAmount());
+            }
+            System.out.println(orderItem.getoDeliveryInfo());
+            System.out.println("************OrderConfirm_DeliveryCheck************");
+        }
+
         return ApiResult.success(OrderConfirm_DeliveryCheckResult(orderItem));
     }
     private ExistDeliveryRecords OrderConfirm_DeliveryCheckResult(OrderItem  orderItem)
@@ -74,6 +87,19 @@ public class Order02Controller
     @RequestMapping("/api/OrderConfirm_NewDeliveryRecord")
     public String OrderConfirm_NewDeliveryRecord(@RequestBody DeliveryInfo  deliveryInfo)           //用户发来收货地址信息
     {
+        {
+            System.out.println("************OrderConfirm_NewDeliveryRecord************");
+            System.out.println(deliveryInfo.getuID());
+            System.out.println(deliveryInfo.getuDeliveryAddress());
+            System.out.println(deliveryInfo.getoDeliveryNote());
+            System.out.println(deliveryInfo.getoPostalCode());
+            System.out.println(deliveryInfo.getuContactPersonEmail());
+            System.out.println(deliveryInfo.getuContactPersonName());
+            System.out.println(deliveryInfo.getuContactPersonPhone());
+            System.out.println(deliveryInfo.getuContactPersonGender());
+            System.out.println("************OrderConfirm_NewDeliveryRecord************");
+        }
+
         if(OrderConfirm_NewDeliveryRecordResult(deliveryInfo))
         {
             return OrderPack2StatusCheck.RequestAccept;
@@ -128,6 +154,19 @@ public class Order02Controller
     @RequestMapping("/api/OrderConfirm_OrderGenerate")
     public ApiResult<OrderItem_Feedback> OrderConfirm_OrderGenerate(@RequestBody OrderItem  orderItem)
     {
+        {
+            System.out.println("************OrderConfirm_OrderGenerate************");
+            System.out.println(orderItem.getuID());
+            System.out.println(orderItem.pProducts.size());
+            for(int i=0;i<orderItem.pProducts.size();i++)
+            {
+                System.out.println(orderItem.pProducts.get(i).getpID());
+                System.out.println(orderItem.pProducts.get(i).getoPrice());
+                System.out.println(orderItem.pProducts.get(i).getpAmount());
+            }
+            System.out.println("************OrderConfirm_OrderGenerate************");
+        }
+
         return ApiResult.success(OrderConfirm_OrderGenerateResult(orderItem));
     }
     public OrderItem_Feedback OrderConfirm_OrderGenerateResult(OrderItem  orderItem)
@@ -143,7 +182,8 @@ public class Order02Controller
         res.setuID(orderItem.getuID());
         for(int i=0;i<orderItem.pProducts.size();i++)//res.setpProducts
         {
-            res.pProducts.add(null);
+            ProductItem_jsonSend iniItem=new ProductItem_jsonSend();
+            res.pProducts.add(iniItem);
         }
         res.setoDeliveryInfo(orderItem.getoDeliveryInfo());
 
@@ -158,11 +198,11 @@ public class Order02Controller
             {
                 if(i==orderItem.pProducts.size()-1)
                 {
-                    sql1.append("ProductTable.pID="+orderItem.pProducts.get(i).getpID()+";");
+                    sql1.append("ProductTable.pID="+"'"+orderItem.pProducts.get(i).getpID()+"'"+";");
                 }
                 else
                 {
-                    sql1.append("ProductTable.pID="+orderItem.pProducts.get(i).getpID()+" OR ");
+                    sql1.append("ProductTable.pID="+"'"+orderItem.pProducts.get(i).getpID()+"'"+" OR ");
                 }
             }
 
@@ -231,7 +271,8 @@ public class Order02Controller
             boolean OrdererInfoResult=InsertOrdererInfoTable(OrderID.toString(),orderItem.getoDeliveryInfo().getuContactPersonName(),orderItem.getoDeliveryInfo().getuContactPersonGender(),orderItem.getoDeliveryInfo().getuContactPersonEmail());
             boolean OrderDeliveryInfoResult=InsertOrderDeliveryInfo(OrderID.toString(),orderItem.getoDeliveryInfo().getuDeliveryAddress(),orderItem.getoDeliveryInfo().getoPostalCode(),orderItem.getoDeliveryInfo().getuContactPersonPhone(),orderItem.getoDeliveryInfo().getoDeliveryNote());
             boolean OrderProductInfoTableResult=InsertOrderProductInfoTable(OrderID.toString(),orderItem);
-
+            res.setoOrderID(OrderID.toString());
+            System.out.println("最终订单号 : "+res.getoOrderID());
         }
         catch(SQLException e)
         {
@@ -260,7 +301,7 @@ public class Order02Controller
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="INSERT INTO OrderGeneralInfo (OrderID,OrdererID) VALUES (?,?);";
+            String sql1="INSERT INTO OrderGeneralInfoTable (oOrderID,oOrdererID) VALUES (?,?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1, OrderID);
             prepare.setString(2, OrdererID);
@@ -288,7 +329,7 @@ public class Order02Controller
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="INSERT INTO OrderBasicInfo (OrderID,oDate,oStatus) VALUES (?,?,?);";
+            String sql1="INSERT INTO OrderBasicInfoTable (oOrderID,oDate,oStatus) VALUES (?,?,?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1, OrderID);
             prepare.setString(2, oDate);
@@ -348,7 +389,7 @@ public class Order02Controller
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="INSERT INTO OrderDeliveryInfo()VALUES(?,?,?,?,?);";
+            String sql1="INSERT INTO OrderDeliveryInfo(oOrderID,oDeliveryAddress,oPostalCode,oContactPhone,oDeliveryNote)VALUES(?,?,?,?,?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1, OrderID);
             prepare.setString(2, oDeliveryAddress);
@@ -385,11 +426,11 @@ public class Order02Controller
             {
                 if(i==content.pProducts.size()-1)
                 {
-                    sql1.append("("+OrderID+","+content.pProducts.get(i).getpID()+","+content.pProducts.get(i).getoPrice()+","+content.pProducts.get(i).getpAmount()+");");
+                    sql1.append("("+"'"+OrderID+"'"+","+"'"+content.pProducts.get(i).getpID()+"'"+","+content.pProducts.get(i).getoPrice()+","+content.pProducts.get(i).getpAmount()+");");
                 }
                 else
                 {
-                    sql1.append("("+OrderID+","+content.pProducts.get(i).getpID()+","+content.pProducts.get(i).getoPrice()+","+content.pProducts.get(i).getpAmount()+"),");
+                    sql1.append("("+"'"+OrderID+"'"+","+"'"+content.pProducts.get(i).getpID()+"'"+","+content.pProducts.get(i).getoPrice()+","+content.pProducts.get(i).getpAmount()+"),");
                 }
             }
         }
@@ -434,6 +475,13 @@ public class Order02Controller
     @RequestMapping("/api/OrderStatus_Update")              //用户通过这个更新是否支付的状态，配送的时候也可以通过这个来更新状态
     public String OrderStatus_Update(@RequestBody OrderStatusUpdate_jsonGet orderStatusUpdate)
     {
+        {
+            System.out.println("************OrderStatus_Update************");
+            System.out.println(orderStatusUpdate);
+            System.out.println("************OrderStatus_Update************");
+        }
+
+
         if(OrderStatus_UpdateResult(orderStatusUpdate))
         {
             return OrderPack2StatusCheck.UpdateAccept;

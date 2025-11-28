@@ -9,7 +9,10 @@ public class ExistDeliveryRecords
     @JsonProperty("DeliveryInfos")
     public ArrayList<DeliveryInfo> DeliveryInfos;
 
-    public ExistDeliveryRecords(){}
+    public ExistDeliveryRecords()
+    {
+        DeliveryInfos=new ArrayList<>();
+    }
 
     public void setDeliveryInfos(ArrayList<DeliveryInfo> ideliveryInfos)
     {

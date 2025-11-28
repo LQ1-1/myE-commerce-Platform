@@ -16,7 +16,10 @@ public class OrderItem
     @JsonProperty("oDeliveryInfo")
     private DeliveryInfo oDeliveryInfo;                 //收货的信息
 
-    public OrderItem(){}
+    public OrderItem()
+    {
+        pProducts=new ArrayList<>();
+    }
 
     public String  getuID() {
         return uID;
@@ -32,7 +35,7 @@ public class OrderItem
     }
     public void setpProducts (ArrayList<ProductItem> ipProducts)
     {
-        for(ProductItem productItem:pProducts)
+        for(ProductItem productItem:ipProducts)
         {
             this.pProducts.add(productItem);
         }

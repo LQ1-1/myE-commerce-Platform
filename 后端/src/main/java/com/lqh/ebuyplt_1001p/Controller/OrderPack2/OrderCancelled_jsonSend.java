@@ -12,7 +12,10 @@ public class OrderCancelled_jsonSend
     @JsonProperty("oOrderIDs")
     public ArrayList<CancelledFeedBackItem> oOrderIDs;
 
-    public OrderCancelled_jsonSend() {}
+    public OrderCancelled_jsonSend()
+    {
+        oOrderIDs=new  ArrayList<>();
+    }
 
     public String getuID()
     {

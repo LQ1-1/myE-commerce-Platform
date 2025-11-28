@@ -19,6 +19,14 @@ public class OrderItem_Feedback
     @JsonProperty("Status")                             //判断该订单是否可接收
     private String Status;
 
+    @JsonProperty("oOrderID")
+    private String oOrderID;
+
+    public OrderItem_Feedback()
+    {
+        pProducts=new ArrayList<>();
+    }
+
     public String getuID()
     {
         return uID;
@@ -56,5 +64,14 @@ public class OrderItem_Feedback
     public void setStatus(String Status)
     {
         this.Status = Status;
+    }
+
+    public String getoOrderID()
+    {
+        return oOrderID;
+    }
+    public void setoOrderID(String OrderID)
+    {
+        this.oOrderID = OrderID;
     }
 }
