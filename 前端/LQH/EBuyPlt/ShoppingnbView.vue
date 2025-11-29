@@ -17,6 +17,10 @@
                             {{ showFilter ? '收起筛选' : '高级筛选' }}
                         </el-button>
 
+                        <!-- 新增：订单列表跳转按钮 -->
+                        <el-button :icon="Tickets" circle size="large" @click="router.push('/OrderListView')"
+                            title="我的订单" />
+
                         <el-button :icon="Star" circle size="large" @click="openFavorites" title="我的收藏" />
 
                         <el-badge :value="cartCount" :hidden="cartCount === 0" class="item-badge">
@@ -28,6 +32,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
+                                    <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
@@ -98,11 +103,11 @@
             <!-- 快捷分类栏 -->
             <div class="category-bar">
                 <el-tabs v-model="activeCategory" class="category-tabs" @tab-change="handleCategoryChange">
+                    <!-- "全部" 选项手动保留 -->
                     <el-tab-pane label="全部" name="全部" />
-                    <el-tab-pane label="电子产品" name="电子产品" />
-                    <el-tab-pane label="书籍" name="书籍" />
-                    <el-tab-pane label="服装" name="服装" />
-                    <el-tab-pane label="家具" name="家具" />
+
+                    <!-- 修改部分：使用 v-for 循环渲染接口返回的类型 -->
+                    <el-tab-pane v-for="type in categoryList" :key="type" :label="type" :name="type" />
                 </el-tabs>
             </div>
 
@@ -166,39 +171,56 @@
         </el-footer>
 
         <!-- 购物车抽屉 -->
-        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="450px">
+        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="480px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
+                <div class="drawer-link-box">
+                    <el-button type="primary" link @click="router.push('/OrderListView')">查看历史订单 ></el-button>
+                </div>
             </div>
-            <div v-else class="cart-list" v-loading="cartLoading">
-                <!-- 关键修复：补全了这里的代码，确保 Remove 和 CirclePlus 被使用 -->
-                <div v-for="item in cart" :key="item.pID" class="cart-item clickable-item"
-                    @click="goToDetail(item.pID)">
-                    <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
-                    <div class="cart-item-info">
-                        <h4>{{ item.pName }}</h4>
-                        <div class="cart-controls">
-                            <span class="price">¥ {{ item.pPrice }}</span>
-                            <div class="qty-control">
-                                <el-button :icon="Remove" circle size="small"
-                                    @click.stop="changeCartQuantity(item, -1)" />
-                                <span class="qty-text">{{ item.cAmount }}</span>
-                                <el-button :icon="CirclePlus" circle size="small"
-                                    @click.stop="addToCart(item, 1)" />
+            <div v-else class="cart-container" v-loading="cartLoading">
+                <!-- 全选栏 -->
+                <div class="cart-header-actions">
+                    <el-checkbox v-model="isAllSelected" @change="toggleSelectAll">全选</el-checkbox>
+                    <el-button type="primary" link @click="router.push('/OrderListView')">我的订单 ></el-button>
+                </div>
+
+                <div class="cart-list">
+                    <div v-for="item in cart" :key="item.pID" class="cart-item">
+                        <!-- 单选框 -->
+                        <div class="checkbox-wrapper">
+                            <el-checkbox v-model="item.isSelected" />
+                        </div>
+
+                        <!-- 商品信息 -->
+                        <div class="cart-content-wrapper clickable-item" @click="goToDetail(item.pID)">
+                            <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
+                            <div class="cart-item-info">
+                                <h4 class="cart-item-title">{{ item.pName }}</h4>
+                                <div class="cart-controls">
+                                    <span class="price">¥ {{ item.pPrice }}</span>
+                                    <div class="qty-control">
+                                        <el-button :icon="Remove" circle size="small"
+                                            @click.stop="changeCartQuantity(item, -1)" />
+                                        <span class="qty-text">{{ item.cAmount }}</span>
+                                        <el-button :icon="CirclePlus" circle size="small"
+                                            @click.stop="addToCart(item, 1)" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
                     </div>
-                    <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
                 </div>
             </div>
 
             <template #footer>
                 <div class="cart-footer-bar">
                     <div class="total-info">
-                        <span>总计:</span>
-                        <span class="total-price">¥ {{ cartTotal.toFixed(2) }}</span>
+                        <span>已选 ({{ selectedCount }}):</span>
+                        <span class="total-price">¥ {{ selectedTotal.toFixed(2) }}</span>
                     </div>
-                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="cart.length === 0">
+                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="selectedCount === 0">
                         结算
                     </el-button>
                 </div>
@@ -296,10 +318,10 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+// 新增引入 Tickets 图标
 import {
-    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Filter, Star, StarFilled
+    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Filter, Star, StarFilled, Tickets
 } from '@element-plus/icons-vue'
-// 关键修复：引入 ElMessageBox，防止支付弹窗报错
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
@@ -307,13 +329,11 @@ const BASE_URL = 'http://192.168.66.94:8082'
 const router = useRouter()
 const route = useRoute()
 
-// --- 状态定义 ---
+// 状态定义
 const currentUserID = ref('')
 const products = ref([])
 const isLoading = ref(false)
-const isRecommendMode = ref(false) 
-
-// 搜索参数
+const isRecommendMode = ref(false)
 const searchQuery = ref('')
 const activeCategory = ref('全部')
 const showFilter = ref(false)
@@ -351,7 +371,7 @@ const newAddressForm = reactive({
     oDeliveryNote: ''
 })
 
-// --- 生命周期 ---
+// 生命周期
 onMounted(() => {
     const storedUID = sessionStorage.getItem('uID')
     if (!storedUID) {
@@ -360,29 +380,22 @@ onMounted(() => {
         return
     }
     currentUserID.value = storedUID
-
+    fetchCategories()
     if (route.query.q) {
         searchQuery.value = route.query.q
         handleSearch()
     } else {
         handleRecommend()
     }
-
     fetchCart()
     fetchFavorites()
 })
 
-// --- 路由跳转 ---
-const goToDetail = (id) => {
-    router.push({ name: 'ProductDetailView', params: { pID: id } })
-}
+// 路由跳转
+const goToDetail = (id) => { router.push({ name: 'ProductDetailView', params: { pID: id } }) }
+const handleLogout = () => { sessionStorage.removeItem('uID'); router.push('/') }
 
-const handleLogout = () => {
-    sessionStorage.removeItem('uID')
-    router.push('/')
-}
-
-// --- 推荐逻辑 ---
+// 推荐逻辑
 const handleRecommend = async () => {
     isLoading.value = true
     isRecommendMode.value = true
@@ -404,7 +417,7 @@ const handleRecommend = async () => {
     }
 }
 
-// --- 搜索逻辑 ---
+// 搜索逻辑
 const handleSearch = async () => {
     isLoading.value = true
     isRecommendMode.value = false
@@ -453,8 +466,6 @@ const resetFilters = () => {
     handleRecommend()
 }
 
-// --- API 通用与购物车/收藏逻辑 ---
-
 const getProductImage = (path) => {
     if (!path) return 'https://via.placeholder.com/300x300?text=No+Image'
     if (path.startsWith('http')) return path
@@ -462,25 +473,43 @@ const getProductImage = (path) => {
     return `${BASE_URL}${cleanPath}`
 }
 
+// 购物车逻辑
 const fetchCart = async () => {
     if (!currentUserID.value) return
     cartLoading.value = true
     try {
         const res = await axios.post(`${BASE_URL}/api/ShoppingCartRecords`, { uID: currentUserID.value })
-        cart.value = res.data && res.data.data ? res.data.data : []
+        const rawList = res.data && res.data.data ? res.data.data : []
+
+        // 保留勾选状态逻辑
+        const oldMap = new Map(cart.value.map(i => [i.pID, i.isSelected]))
+
+        cart.value = rawList.map(item => ({
+            ...item,
+            isSelected: oldMap.has(item.pID) ? oldMap.get(item.pID) : false
+        }))
     } catch (e) { console.error(e) }
     finally { cartLoading.value = false }
 }
 
-const fetchFavorites = async () => {
-    if (!currentUserID.value) return
-    favLoading.value = true
-    try {
-        const res = await axios.post(`${BASE_URL}/api/FavouriteRecords`, { uID: currentUserID.value })
-        favorites.value = res.data && res.data.data ? res.data.data : []
-    } catch (e) { console.error(e) }
-    finally { favLoading.value = false }
+const isAllSelected = computed({
+    get: () => cart.value.length > 0 && cart.value.every(item => item.isSelected),
+    set: (val) => {
+        cart.value.forEach(item => item.isSelected = val)
+    }
+})
+
+const toggleSelectAll = (val) => {
+    cart.value.forEach(item => item.isSelected = val)
 }
+
+const selectedCount = computed(() => cart.value.filter(i => i.isSelected).length)
+
+const selectedTotal = computed(() => {
+    return cart.value
+        .filter(item => item.isSelected)
+        .reduce((total, item) => total + (Number(item.pPrice) * Number(item.cAmount)), 0)
+})
 
 const addToCart = async (item, amount = 1) => {
     if (item.pInventory !== undefined && Number(item.pInventory) <= 0) {
@@ -495,7 +524,7 @@ const addToCart = async (item, amount = 1) => {
         })
         ElMessage.success('已加入购物车')
         fetchCart()
-    } catch (e) { ElMessage.error('操作失败') }
+    } catch (e) { console.error(e); ElMessage.error('操作失败') }
 }
 
 const changeCartQuantity = async (item, change) => {
@@ -511,7 +540,7 @@ const changeCartQuantity = async (item, change) => {
                 uID: currentUserID.value, pID: item.pID, cAmount: Math.abs(change)
             })
             fetchCart()
-        } catch (e) { ElMessage.error('操作失败') }
+        } catch (e) { console.error(e); ElMessage.error('操作失败') }
     }
 }
 
@@ -521,10 +550,22 @@ const removeLineFromCart = async (item) => {
             uID: currentUserID.value, pID: item.pID, cAmount: item.cAmount
         })
         fetchCart()
-    } catch (e) { ElMessage.error('移除失败') }
+    } catch (e) { console.error(e); ElMessage.error('移除失败') }
 }
 
 const openCart = () => { cartVisible.value = true; fetchCart() }
+
+// 收藏夹逻辑
+const fetchFavorites = async () => {
+    if (!currentUserID.value) return
+    favLoading.value = true
+    try {
+        const res = await axios.post(`${BASE_URL}/api/FavouriteRecords`, { uID: currentUserID.value })
+        favorites.value = res.data && res.data.data ? res.data.data : []
+    } catch (e) { console.error(e) }
+    finally { favLoading.value = false }
+}
+
 const openFavorites = () => { favVisible.value = true; fetchFavorites() }
 
 const isFavorite = (pID) => favorites.value.some(fav => fav.pID === pID)
@@ -540,30 +581,28 @@ const toggleFavorite = async (product) => {
             ElMessage.success('已加入收藏')
         }
         fetchFavorites()
-    } catch (e) { ElMessage.error('操作失败') }
+    } catch (e) { console.error(e); ElMessage.error('操作失败') }
 }
 
-const categoryList = computed(() => ['电子产品', '日用品', '书籍', '服装', '食品'])
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
-const cartTotal = computed(() => {
-    return cart.value.reduce((total, item) => {
-        return total + (Number(item.pPrice) * Number(item.cAmount))
-    }, 0)
-})
+// const categoryList = computed(() => ['电子产品', '日用品', '书籍', '服装', '食品'])
 
-// --- 结算核心逻辑 ---
-
+// 结算逻辑
 const handleCheckout = async () => {
     if (!currentUserID.value) return ElMessage.error("未登录")
+    if (selectedCount.value === 0) {
+        return ElMessage.warning('请先勾选要结算的商品')
+    }
+
     checkoutVisible.value = true
     checkoutLoading.value = true
     isAddingNewAddress.value = false
-    
+
     try {
         const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
             uID: currentUserID.value
         })
-        
+
         if (res.data && res.data.data && res.data.data.DeliveryInfos && res.data.data.DeliveryInfos.length > 0) {
             existingAddresses.value = res.data.data.DeliveryInfos
             selectedAddressIndex.value = 0
@@ -586,12 +625,12 @@ const confirmOrderGeneration = async () => {
         if (!newAddressForm.uContactPersonName || !newAddressForm.uDeliveryAddress || !newAddressForm.uContactPersonPhone) {
             return ElMessage.warning('请填写完整的收货信息')
         }
-        
+
         finalDeliveryInfo = {
             uID: currentUserID.value,
             ...newAddressForm
         }
-        
+
         try {
             checkoutLoading.value = true
             const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
@@ -599,6 +638,7 @@ const confirmOrderGeneration = async () => {
                 throw new Error('地址保存失败')
             }
         } catch (e) {
+            console.error(e)
             checkoutLoading.value = false
             return ElMessage.error('保存收货地址失败，请重试')
         }
@@ -608,11 +648,13 @@ const confirmOrderGeneration = async () => {
 
     try {
         checkoutLoading.value = true
-        
+
+        const selectedItems = cart.value.filter(item => item.isSelected)
+
         const orderPayload = {
             uID: currentUserID.value,
             oDeliveryInfo: finalDeliveryInfo,
-            pProducts: cart.value.map(item => ({
+            pProducts: selectedItems.map(item => ({
                 pID: String(item.pID),
                 pAmount: Number(item.cAmount),
                 oPrice: Number(item.pPrice)
@@ -620,25 +662,26 @@ const confirmOrderGeneration = async () => {
         }
 
         const orderRes = await axios.post(`${BASE_URL}/api/OrderConfirm_OrderGenerate`, orderPayload)
-        
+
         checkoutVisible.value = false
-        
+
         const feedback = orderRes.data.data
         const failedItems = feedback.pProducts.filter(p => p.pFeedback === 'Inventory Insufficient')
-        
+
         if (failedItems.length > 0) {
             ElMessage.error(`部分商品库存不足，订单创建失败`)
             return
         }
-        
-        cart.value = [] 
-        
+
+        // 本地移除已购买商品
+        cart.value = cart.value.filter(item => !item.isSelected)
+
         const newOrderID = feedback.oOrderID
-        if(!newOrderID) {
-             ElMessage.error('订单生成异常，未获取到订单号')
-             return
+        if (!newOrderID) {
+            ElMessage.error('订单生成异常，未获取到订单号')
+            return
         }
-        
+
         ElMessageBox.confirm(
             '订单已生成！是否立即支付？',
             '支付确认',
@@ -648,19 +691,19 @@ const confirmOrderGeneration = async () => {
                 type: 'success',
             }
         )
-        .then(async () => {
-            await updateOrderStatus(newOrderID, 'Paid')
-        })
-        .catch(() => {
-            ElMessage.info('您可以稍后在订单中心支付')
-        })
+            .then(async () => {
+                await updateOrderStatus(newOrderID, 'Paid')
+            })
+            .catch(() => {
+                ElMessage.info('您可以稍后在订单中心支付')
+            })
 
     } catch (e) {
         console.error(e)
         ElMessage.error('订单生成失败')
     } finally {
         checkoutLoading.value = false
-        fetchCart() 
+        // 不自动刷新购物车以免拉回刚删除的商品(如果后端没删的话)
     }
 }
 
@@ -670,7 +713,7 @@ const updateOrderStatus = async (orderID, statusStr) => {
             oOrderID: orderID,
             NewStatus: statusStr
         })
-        
+
         if (res.data === 'Update Accept') {
             ElMessage.success('支付成功！')
         } else {
@@ -682,10 +725,28 @@ const updateOrderStatus = async (orderID, statusStr) => {
     }
 }
 
+const categoryList = ref([]) // 改为响应式数组
+
+const fetchCategories = async () => {
+    try {
+        // 根据你的描述，参数为空，且沿用该项目的 POST 风格
+        const res = await axios.post(`${BASE_URL}/api/GetAllProductType`, {})
+
+        // 假设后端返回结构为 { code: 200, data: ["电子产品", "服装", ...] }
+        if (res.data && res.data.data) {
+            categoryList.value = res.data.data
+        }
+    } catch (e) {
+        console.error('获取商品分类失败', e)
+        // 发生错误时可以给个默认值，或者保持为空
+        // categoryList.value = ['电子产品', '书籍'] 
+    }
+}
+
 </script>
 
 <style scoped>
-/* 此处保留原有样式 */
+/* 样式保留 */
 .shop-layout {
     min-height: 100vh;
     background-color: #f5f7fa;
@@ -939,29 +1000,6 @@ const updateOrderStatus = async (orderID, statusStr) => {
     align-items: center;
 }
 
-.cart-footer {
-    border-top: 1px solid #e4e7ed;
-    padding-top: 20px;
-}
-
-.total-text {
-    font-size: 18px;
-    margin-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-}
-
-.checkout-btn {
-    width: 100%;
-}
-
-.fav-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
 .footer {
     text-align: center;
     color: #909399;
@@ -979,7 +1017,6 @@ const updateOrderStatus = async (orderID, statusStr) => {
     background-color: #f5f7fa;
 }
 
-/* 购物车底部栏 */
 .cart-footer-bar {
     border-top: 1px solid #ebeef5;
     padding-top: 20px;
@@ -1000,7 +1037,6 @@ const updateOrderStatus = async (orderID, statusStr) => {
     margin-left: 8px;
 }
 
-/* 结算弹窗样式 */
 .dialog-tip {
     font-size: 16px;
     font-weight: bold;
@@ -1047,5 +1083,41 @@ const updateOrderStatus = async (orderID, statusStr) => {
 .addr-note {
     font-size: 12px;
     color: #909399;
+}
+
+/* 购物车新样式 */
+.cart-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.cart-content-wrapper {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 15px;
+}
+
+.cart-item-title {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.drawer-link-box {
+    text-align: center;
+    margin-top: 10px;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
     <div class="detail-layout">
-        <!-- 顶部导航栏 (保持不变) -->
+        <!-- 顶部导航栏 -->
         <el-affix :offset="0">
             <el-header class="header">
                 <div class="header-content">
@@ -13,15 +13,23 @@
 
                     <div class="actions">
                         <el-button @click="goHome">继续购物</el-button>
+
+                        <!-- 新增：订单列表跳转按钮 -->
+                        <el-button :icon="Tickets" circle size="large" @click="router.push('/OrderListView')" title="我的订单" />
+
                         <el-button :icon="Star" circle size="large" @click="openFavorites" title="我的收藏" />
+
                         <el-badge :value="cartCount" :hidden="cartCount === 0" class="item-badge">
                             <el-button :icon="ShoppingCart" circle size="large" @click="openCart" title="我的购物车" />
                         </el-badge>
+
                         <el-dropdown>
                             <el-avatar :icon="User" class="user-avatar" />
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
+                                    <!-- 新增：下拉菜单中的订单入口 -->
+                                    <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
@@ -125,7 +133,6 @@
                         <div class="title-underline"></div>
                     </div>
                     <div class="desc-content">
-                        <!-- 使用 pre-line 样式保留后端文本的换行符 -->
                         <p>{{ product.pInfo || '暂无详细描述' }}</p>
                     </div>
                 </div>
@@ -138,39 +145,52 @@
         </el-main>
 
         <!-- 购物车抽屉 -->
-        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="450px">
+        <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="480px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
-            </div>
-            <div v-else class="cart-list" v-loading="cartLoading">
-                <div v-for="item in cart" :key="item.pID" class="cart-item clickable-item"
-                    @click="goToDetail(item.pID)">
-                    <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
-                    <div class="cart-item-info">
-                        <h4>{{ item.pName }}</h4>
-                        <div class="cart-controls">
-                            <span class="cart-price">¥ {{ item.pPrice }}</span>
-                            <!-- 修复点：添加加减按钮 -->
-                            <div class="qty-control">
-                                <el-button :icon="Remove" circle size="small"
-                                    @click.stop="changeCartQuantity(item, -1)" />
-                                <span class="qty-text">{{ item.cAmount }}</span>
-                                <el-button :icon="CirclePlus" circle size="small"
-                                    @click.stop="changeCartQuantity(item, 1)" />
-                            </div>
-                        </div>
-                    </div>
-                    <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
+                <div class="drawer-link-box" style="text-align: center;">
+                    <el-button type="primary" link @click="router.push('/OrderListView')">查看历史订单 ></el-button>
                 </div>
             </div>
+            <div v-else class="cart-container" v-loading="cartLoading">
+                <div class="cart-header-actions"
+                    style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                    <el-checkbox v-model="isAllSelected" @change="toggleSelectAll">全选</el-checkbox>
+                    <el-button type="primary" link @click="router.push('/OrderListView')">我的订单 ></el-button>
+                </div>
 
+                <div class="cart-list">
+                    <div v-for="item in cart" :key="item.pID" class="cart-item"
+                        style="display: flex; align-items: center; gap: 10px;">
+                        <el-checkbox v-model="item.isSelected" />
+                        <div class="cart-content-wrapper clickable-item" @click="goToDetail(item.pID)"
+                            style="flex: 1; display: flex; gap: 10px; align-items: center;">
+                            <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
+                            <div class="cart-item-info">
+                                <h4 style="margin: 0 0 5px 0;">{{ item.pName }}</h4>
+                                <div class="cart-controls">
+                                    <span class="cart-price">¥ {{ item.pPrice }}</span>
+                                    <div class="qty-control">
+                                        <el-button :icon="Remove" circle size="small"
+                                            @click.stop="changeCartQuantity(item, -1)" />
+                                        <span class="qty-text">{{ item.cAmount }}</span>
+                                        <el-button :icon="CirclePlus" circle size="small"
+                                            @click.stop="changeCartQuantity(item, 1)" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <el-button type="danger" link :icon="Delete" @click.stop="removeLineFromCart(item)" />
+                    </div>
+                </div>
+            </div>
             <template #footer>
                 <div class="cart-footer-bar">
                     <div class="total-info">
-                        <span>总计:</span>
-                        <span class="total-price">¥ {{ cartTotal.toFixed(2) }}</span>
+                        <span>已选 ({{ selectedCount }}):</span>
+                        <span class="total-price">¥ {{ selectedTotal.toFixed(2) }}</span>
                     </div>
-                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="cart.length === 0">
+                    <el-button type="primary" size="large" @click="handleCheckout" :disabled="selectedCount === 0">
                         结算
                     </el-button>
                 </div>
@@ -180,7 +200,6 @@
         <!-- 结算流程弹窗 -->
         <el-dialog v-model="checkoutVisible" title="确认收货信息" width="500px" destroy-on-close>
             <div v-loading="checkoutLoading">
-                <!-- 情况A: 有历史地址 -->
                 <div v-if="existingAddresses.length > 0 && !isAddingNewAddress">
                     <p class="dialog-tip">请选择收货地址：</p>
                     <div class="address-list">
@@ -195,7 +214,6 @@
                     <el-button link type="primary" @click="isAddingNewAddress = true">使用新地址 +</el-button>
                 </div>
 
-                <!-- 情况B: 无地址 或 用户点击使用新地址 -->
                 <div v-else>
                     <p class="dialog-tip">{{ existingAddresses.length === 0 ? '暂无收货记录，请填写：' : '新增收货地址：' }}</p>
                     <el-form :model="newAddressForm" label-width="80px" size="small">
@@ -240,7 +258,9 @@
 
         <!-- 收藏夹抽屉 -->
         <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
-            <div v-if="favorites.length === 0" class="empty-cart">...</div>
+            <div v-if="favorites.length === 0" class="empty-cart">
+                <el-empty description="暂无收藏" />
+            </div>
             <div v-else class="cart-list" v-loading="favLoading">
                 <div v-for="item in favorites" :key="item.pID" class="cart-item clickable-item"
                     @click="goToDetail(item.pID)">
@@ -265,13 +285,14 @@
 </template>
 
 <script setup>
-// 修复点：引入 reactive
 import { ref, onMounted, computed, watch, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-// 修复点：引入 ElMessageBox
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ShoppingCart, Search, User, Delete, CirclePlus, Remove, Star, StarFilled } from '@element-plus/icons-vue'
+// 修改：引入 Tickets 图标
+import {
+    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Star, StarFilled, Tickets
+} from '@element-plus/icons-vue'
 
 const BASE_URL = 'http://192.168.66.94:8082'
 const route = useRoute()
@@ -399,10 +420,25 @@ const fetchCart = async () => {
     cartLoading.value = true
     try {
         const res = await axios.post(`${BASE_URL}/api/ShoppingCartRecords`, { uID: currentUserID.value })
-        cart.value = res.data && res.data.data ? res.data.data : []
+        const rawList = res.data && res.data.data ? res.data.data : []
+        const oldMap = new Map(cart.value.map(i => [i.pID, i.isSelected]))
+        cart.value = rawList.map(item => ({
+            ...item,
+            isSelected: oldMap.has(item.pID) ? oldMap.get(item.pID) : false
+        }))
     } catch (e) { console.error(e) }
     finally { cartLoading.value = false }
 }
+
+const isAllSelected = computed({
+    get: () => cart.value.length > 0 && cart.value.every(i => i.isSelected),
+    set: (val) => cart.value.forEach(i => i.isSelected = val)
+})
+const toggleSelectAll = (val) => cart.value.forEach(i => i.isSelected = val)
+const selectedCount = computed(() => cart.value.filter(i => i.isSelected).length)
+const selectedTotal = computed(() => {
+    return cart.value.filter(i => i.isSelected).reduce((total, item) => total + (Number(item.pPrice) * Number(item.cAmount)), 0)
+})
 
 const addToCart = async (item, amount = 1) => {
     if (item.pInventory !== undefined && Number(item.pInventory) <= 0) {
@@ -474,25 +510,21 @@ const toggleFavorite = async (item) => {
 }
 
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
-const cartTotal = computed(() => {
-    return cart.value.reduce((total, item) => {
-        return total + (Number(item.pPrice) * Number(item.cAmount))
-    }, 0)
-})
 
 // --- 结算核心逻辑 ---
 
 const handleCheckout = async () => {
     if (!currentUserID.value) return ElMessage.error("未登录")
+    if (selectedCount.value === 0) return ElMessage.warning('请先勾选要结算的商品')
     checkoutVisible.value = true
     checkoutLoading.value = true
     isAddingNewAddress.value = false
-    
+
     try {
         const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
             uID: currentUserID.value
         })
-        
+
         if (res.data && res.data.data && res.data.data.DeliveryInfos && res.data.data.DeliveryInfos.length > 0) {
             existingAddresses.value = res.data.data.DeliveryInfos
             selectedAddressIndex.value = 0
@@ -515,12 +547,12 @@ const confirmOrderGeneration = async () => {
         if (!newAddressForm.uContactPersonName || !newAddressForm.uDeliveryAddress || !newAddressForm.uContactPersonPhone) {
             return ElMessage.warning('请填写完整的收货信息')
         }
-        
+
         finalDeliveryInfo = {
             uID: currentUserID.value,
             ...newAddressForm
         }
-        
+
         try {
             checkoutLoading.value = true
             const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
@@ -537,11 +569,11 @@ const confirmOrderGeneration = async () => {
 
     try {
         checkoutLoading.value = true
-        
+
         const orderPayload = {
             uID: currentUserID.value,
             oDeliveryInfo: finalDeliveryInfo,
-            pProducts: cart.value.map(item => ({
+            pProducts: cart.value.filter(item => item.isSelected).map(item => ({
                 pID: String(item.pID),
                 pAmount: Number(item.cAmount),
                 oPrice: Number(item.pPrice)
@@ -549,25 +581,25 @@ const confirmOrderGeneration = async () => {
         }
 
         const orderRes = await axios.post(`${BASE_URL}/api/OrderConfirm_OrderGenerate`, orderPayload)
-        
+
         checkoutVisible.value = false
-        
+
         const feedback = orderRes.data.data
         const failedItems = feedback.pProducts.filter(p => p.pFeedback === 'Inventory Insufficient')
-        
+
         if (failedItems.length > 0) {
             ElMessage.error(`部分商品库存不足，订单创建失败`)
             return
         }
-        
-        cart.value = [] 
-        
+
+        cart.value = cart.value.filter(i => !i.isSelected)
+
         const newOrderID = feedback.oOrderID
-        if(!newOrderID) {
-             ElMessage.error('订单生成异常，未获取到订单号')
-             return
+        if (!newOrderID) {
+            ElMessage.error('订单生成异常，未获取到订单号')
+            return
         }
-        
+
         ElMessageBox.confirm(
             '订单已生成！是否立即支付？',
             '支付确认',
@@ -577,19 +609,19 @@ const confirmOrderGeneration = async () => {
                 type: 'success',
             }
         )
-        .then(async () => {
-            await updateOrderStatus(newOrderID, 'Paid')
-        })
-        .catch(() => {
-            ElMessage.info('您可以稍后在订单中心支付')
-        })
+            .then(async () => {
+                await updateOrderStatus(newOrderID, 'Paid')
+            })
+            .catch(() => {
+                ElMessage.info('您可以稍后在订单中心支付')
+            })
 
     } catch (e) {
         console.error(e)
         ElMessage.error('订单生成失败')
     } finally {
         checkoutLoading.value = false
-        fetchCart() 
+        fetchCart()
     }
 }
 
@@ -599,7 +631,7 @@ const updateOrderStatus = async (orderID, statusStr) => {
             oOrderID: orderID,
             NewStatus: statusStr
         })
-        
+
         if (res.data === 'Update Accept') {
             ElMessage.success('支付成功！')
         } else {
@@ -610,6 +642,8 @@ const updateOrderStatus = async (orderID, statusStr) => {
         ElMessage.error('网络错误，支付失败')
     }
 }
+
+
 
 </script>
 
