@@ -11,6 +11,7 @@ public class OrderCancelled_jsonGet
 
     @JsonProperty("oOrderIDs")
     public ArrayList<CancelledItem>oOrderIDs;
+
     public OrderCancelled_jsonGet()
     {
         oOrderIDs=new  ArrayList<>();

@@ -140,7 +140,7 @@ public class UIController
 
         if(SearchpReleaseDate_f.length()==0)
         {
-            SearchpReleaseDate_f=new StringBuilder("0000-01-01").toString();
+            SearchpReleaseDate_f=new StringBuilder("0001-01-01").toString();
         }
         if(SearchpReleaseDate_r.length()==0)
         {
@@ -272,18 +272,18 @@ public class UIController
                 while(rs.next())
                 {
                     ProductSearch_jsonSend item=new ProductSearch_jsonSend();
-                    item.setpID(rs.getString("ProductTable.pID"));
-                    item.setpName(rs.getString("ProductTable.pName"));
-                    item.setpType(rs.getString("ProductTable.pType"));
-                    item.setpProducer(rs.getString("ProductTable.pProducer"));
-                    item.setpDiscount(rs.getDouble("ProductTable.pDiscount"));
-                    item.setpPrice(rs.getDouble("ProductTable.pPrice"));
-                    item.setpReleaseDate(rs.getString("ProductTable.pReleaseDate"));
-                    item.setpInfo(rs.getString("ProductTable.pInfo"));
-                    item.setpInventory(rs.getInt("ProductTable.pInventory"));
-                    item.setpStatus(rs.getString("ProductTable.pStatus"));
+                    item.setpID(rs.getString("pID"));
+                    item.setpName(rs.getString("pName"));
+                    item.setpType(rs.getString("pType"));
+                    item.setpProducer(rs.getString("pProducer"));
+                    item.setpDiscount(rs.getDouble("pDiscount"));
+                    item.setpPrice(rs.getDouble("pPrice"));
+                    item.setpReleaseDate(rs.getString("pReleaseDate"));
+                    item.setpInfo(rs.getString("pInfo"));
+                    item.setpInventory(rs.getInt("pInventory"));
+                    item.setpStatus(rs.getString("pStatus"));
 
-                    item.setpImagePath(rs.getString("ProductImagesTable.pImagePath"));
+                    item.setpImagePath(rs.getString("pImagePath"));
 
                     ResultList.put(item.getpID(),item);
                     res.add(item);
@@ -420,6 +420,39 @@ public class UIController
         }
 
         return result;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GetAllProductType")
+    public ApiResult<ArrayList<String>> GetAllProductType()
+    {
+        return ApiResult.success(GetAllProductTypeResult());
+    }
+    private ArrayList<String> GetAllProductTypeResult()
+    {
+        ArrayList<String>res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT DISTINCT ProductTable.pType FROM ProductTable WHERE ProductTable.pStatus='上架';";
+            ResultSet rs=con.prepareStatement(sql1).executeQuery();
+            while(rs.next())
+            {
+                String pType=rs.getString("pType");
+                res.add(pType);
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
     }
 
 }

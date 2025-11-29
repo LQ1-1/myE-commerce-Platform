@@ -20,6 +20,7 @@ public class OrderRecordItem
     public OrderRecordItem()
     {
         this.pProducts = new ArrayList<>();
+        this.DeliveryInfo=new DeliveryInfo();
     }
     public String getoOrderID()
     {

@@ -622,13 +622,14 @@ public class Order02Controller
             StringBuilder sql1=new StringBuilder("SELECT oOrderID,oDate FROM OrderBasicInfoTable WHERE ");
             for(int i=0;i<orderCancelled.oOrderIDs.size();i++)
             {
+                System.out.println("订单编号 : "+orderCancelled.oOrderIDs.get(i).getoOrderID());
                 if(i==orderCancelled.oOrderIDs.size()-1)
                 {
-                    sql1.append("oOrderID="+orderCancelled.oOrderIDs.get(i).getoOrderID()+" AND ");
+                    sql1.append("oOrderID="+"'"+orderCancelled.oOrderIDs.get(i).getoOrderID()+"'"+" ; ");
                 }
                 else
                 {
-                    sql1.append("oOrderID="+orderCancelled.oOrderIDs.get(i).getoOrderID()+" ;");
+                    sql1.append("oOrderID="+"'"+orderCancelled.oOrderIDs.get(i).getoOrderID()+"'"+" AND");
                 }
             }
             ResultSet rs=con.createStatement().executeQuery(sql1.toString());
@@ -641,7 +642,7 @@ public class Order02Controller
                 long hoursDiff= ChronoUnit.HOURS.between(orderDateTime,currentDateTime);
                 if(Math.abs(hoursDiff)==0)          //差距在一个小时之内，该订单可以取消
                 {
-                    String sql2="UPDATE OrderBasicInfoTable SET oState='Cancelled' WHERE oOrderID=?;";
+                    String sql2="UPDATE OrderBasicInfoTable SET oStatus='Cancelled' WHERE oOrderID=?;";
                     PreparedStatement prepare=con.prepareStatement(sql2);
                     prepare.setString(1,oID);
                     int row=prepare.executeUpdate();                                    //将这个订单的订单状态更新为取消
@@ -662,10 +663,7 @@ public class Order02Controller
                             prepare3.setString(1,pID);
                             prepare3.setInt(2,oAmount);
                             ResultSet rs3=prepare3.executeQuery();                  //将这个订单中这个商品的订购数量重新加回库存里面
-                            if(rs3.next())
-                            {
-                                boolean AscendResult=rs3.getBoolean(1);
-                            }
+                            if(rs3.next()) {}
                         }
                         CancelledFeedBackItem item=new CancelledFeedBackItem();
                         item.setoOrderID(oID);
@@ -707,7 +705,7 @@ public class Order02Controller
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="SELECT oOrderID FROM OrderGeneralInfoTable WHERE oOrderID=?;";
+            String sql1="SELECT oOrderID FROM OrderGeneralInfoTable WHERE oOrdererID=?;";
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1,obj.getuID());
             ResultSet rs=prepare.executeQuery();
@@ -719,15 +717,15 @@ public class Order02Controller
                 item.setoOrderID(oOrderID);//给item设置订单号
 
                 //查询该订单的下单时间，下单状态
-                String sql2="SELECT oDate,oStatus FROM OrderBasicInfoTable WHERE oOrderID=?;";
+                String sql2="SELECT * FROM OrderBasicInfoTable WHERE oOrderID=?;";
                 PreparedStatement prepare2=con.prepareStatement(sql2);
                 prepare2.setString(1,oOrderID);
                 ResultSet rs2=prepare2.executeQuery();
                 if(rs2.next())
                 {
-                    String oDate=rs.getString("oDate");
+                    String oDate=rs2.getString("oDate");
                     item.setoDate(oDate);//给item设置下单时间
-                    String oStatus=rs.getString("oStatus");
+                    String oStatus=rs2.getString("oStatus");
                     item.setoStatus(oStatus);//给item设置订单状态
                 }
 
@@ -791,6 +789,29 @@ public class Order02Controller
         {
             e.printStackTrace();
         }
+
+        {
+            System.out.println("***********GetOrderRecordsResult***********");
+            System.out.println(obj.getuID());
+            for(int i=0;i<res.OrderRecordList.size();i++)
+            {
+                System.out.println(res.OrderRecordList.get(i).getoOrderID());
+                for(int j=0;j<res.OrderRecordList.get(i).pProducts.size();j++)
+                {
+                    System.out.println(res.OrderRecordList.get(i).pProducts.get(j).getpID());
+                    System.out.println(res.OrderRecordList.get(i).pProducts.get(j).getoPrice());
+                    System.out.println(res.OrderRecordList.get(i).pProducts.get(j).getpAmount());
+                }
+                System.out.println(res.OrderRecordList.get(i).DeliveryInfo.getuContactPersonPhone());
+                System.out.println(res.OrderRecordList.get(i).DeliveryInfo.getuContactPersonEmail());
+                System.out.println(res.OrderRecordList.get(i).DeliveryInfo.getoDeliveryNote());
+                System.out.println(res.OrderRecordList.get(i).DeliveryInfo.getuDeliveryAddress());
+                System.out.println(".........");
+            }
+            System.out.println("***********GetOrderRecordsResult***********");
+        }
+
+
         return res;
     }
 
