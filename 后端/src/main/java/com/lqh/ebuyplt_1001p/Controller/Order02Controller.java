@@ -3,6 +3,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 import com.lqh.ebuyplt_1001p.Controller.OrderCheckPack.OrderCheckStatus;
 import com.lqh.ebuyplt_1001p.Controller.OrderCheckPack.OrderStatus;
 import com.lqh.ebuyplt_1001p.Controller.OrderPack2.ExistDeliveryRecords;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -271,7 +272,15 @@ public class Order02Controller
             boolean OrdererInfoResult=InsertOrdererInfoTable(OrderID.toString(),orderItem.getoDeliveryInfo().getuContactPersonName(),orderItem.getoDeliveryInfo().getuContactPersonGender(),orderItem.getoDeliveryInfo().getuContactPersonEmail());
             boolean OrderDeliveryInfoResult=InsertOrderDeliveryInfo(OrderID.toString(),orderItem.getoDeliveryInfo().getuDeliveryAddress(),orderItem.getoDeliveryInfo().getoPostalCode(),orderItem.getoDeliveryInfo().getuContactPersonPhone(),orderItem.getoDeliveryInfo().getoDeliveryNote());
             boolean OrderProductInfoTableResult=InsertOrderProductInfoTable(OrderID.toString(),orderItem);
+            boolean RemoveCartRecords=RemoveCartRecords(orderItem);
             res.setoOrderID(OrderID.toString());
+
+            System.out.println(OrderGeneralInfoResult);
+            System.out.println(OrderBasicInfoResult);
+            System.out.println(OrdererInfoResult);
+            System.out.println(OrderDeliveryInfoResult);
+            System.out.println(OrderProductInfoTableResult);
+            System.out.println(RemoveCartRecords);
             System.out.println("最终订单号 : "+res.getoOrderID());
         }
         catch(SQLException e)
@@ -415,6 +424,27 @@ public class Order02Controller
     }
     private boolean InsertOrderProductInfoTable(String OrderID,OrderItem content)
     {
+        {
+            System.out.println("****************InsertOrderProductInfoTable******************");
+            System.out.println(content.getuID());
+            for(int i=0;i<content.pProducts.size();i++)
+            {
+                System.out.println(content.pProducts.get(i).getpID());
+                System.out.println(content.pProducts.get(i).getoPrice());
+                System.out.println(content.pProducts.get(i).getpAmount());
+            }
+            System.out.println(content.getoDeliveryInfo().getuID());
+            System.out.println(content.getoDeliveryInfo().getoDeliveryNote());
+            System.out.println(content.getoDeliveryInfo().getoPostalCode());
+            System.out.println(content.getoDeliveryInfo().getuDeliveryAddress());
+            System.out.println(content.getoDeliveryInfo().getuContactPersonName());
+            System.out.println(content.getoDeliveryInfo().getuContactPersonGender());
+            System.out.println(content.getoDeliveryInfo().getuContactPersonEmail());
+            System.out.println(content.getoDeliveryInfo().getuContactPersonPhone());
+            System.out.println("****************InsertOrderProductInfoTable******************");
+        }
+
+
         boolean res=false;
         try                             //往OrderProductInfoTable里面填入记录
         {
@@ -432,6 +462,11 @@ public class Order02Controller
                 {
                     sql1.append("("+"'"+OrderID+"'"+","+"'"+content.pProducts.get(i).getpID()+"'"+","+content.pProducts.get(i).getoPrice()+","+content.pProducts.get(i).getpAmount()+"),");
                 }
+            }
+            int row=con.prepareStatement(sql1.toString()).executeUpdate();
+            if(!(row>0))
+            {
+                return false;
             }
         }
         catch(SQLException e)
@@ -458,6 +493,7 @@ public class Order02Controller
                 prepare.setString(1, pID);
                 prepare.setInt(2, pAmount);
                 ResultSet rs=prepare.executeQuery();
+                if(rs.next()){}
             }
         }
         catch(SQLException e)
@@ -469,6 +505,42 @@ public class Order02Controller
             e.printStackTrace();
         }
         return res;
+    }
+    private boolean RemoveCartRecords(OrderItem content)
+    {
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            StringBuilder sql1=new StringBuilder("DELETE FROM UserShoppingCartTable WHERE ");
+            sql1.append("uID="+"'"+content.getuID()+"' "+"AND "+"pID "+"IN (");
+            for(int i=0;i<content.pProducts.size();i++)
+            {
+                if(i==content.pProducts.size()-1)
+                {
+                    sql1.append("'"+content.pProducts.get(i).getpID()+"'"+");");
+                }
+                else
+                {
+                    sql1.append("'"+content.pProducts.get(i).getpID()+"'"+",");
+                }
+            }
+            int row=con.prepareStatement(sql1.toString()).executeUpdate();
+            if(row>0)
+            {
+                return true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     @CrossOrigin(origins = "*")
@@ -491,7 +563,7 @@ public class Order02Controller
             return OrderPack2StatusCheck.UpdateFail;
         }
     }
-    private boolean OrderStatus_UpdateResult(OrderStatusUpdate_jsonGet orderStatusUpdate)
+    private boolean OrderStatus_UpdateResult(OrderStatusUpdate_jsonGet orderStatusUpdate)           //从当前购物中下单的商品要从购物表中删除该商品记录
     {
         try
         {
@@ -500,8 +572,8 @@ public class Order02Controller
 
             String sql1="UPDATE OrderBasicInfoTable SET oStatus=? WHERE oOrderID=?;";
             PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1,orderStatusUpdate.getoOrderID());
-            prepare.setString(2,orderStatusUpdate.getNewStatus());
+            prepare.setString(1,orderStatusUpdate.getNewStatus());
+            prepare.setString(2,orderStatusUpdate.getoOrderID());
 
             int row=prepare.executeUpdate();
             if(row>0)
@@ -620,5 +692,107 @@ public class Order02Controller
         }
         return res;
     }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GetOrderRecords")
+    public ApiResult<OrderRecord_jsonSend> GetOrderRecords(@RequestBody OrderRecord_jsonGet obj)
+    {
+        return ApiResult.success(GetOrderRecordsResult(obj));
+    }
+    private OrderRecord_jsonSend GetOrderRecordsResult(OrderRecord_jsonGet obj)
+    {
+        OrderRecord_jsonSend res=new OrderRecord_jsonSend();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT oOrderID FROM OrderGeneralInfoTable WHERE oOrderID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,obj.getuID());
+            ResultSet rs=prepare.executeQuery();
+            while(rs.next())
+            {
+                OrderRecordItem item=new OrderRecordItem();
+
+                String  oOrderID=rs.getString("oOrderID");
+                item.setoOrderID(oOrderID);//给item设置订单号
+
+                //查询该订单的下单时间，下单状态
+                String sql2="SELECT oDate,oStatus FROM OrderBasicInfoTable WHERE oOrderID=?;";
+                PreparedStatement prepare2=con.prepareStatement(sql2);
+                prepare2.setString(1,oOrderID);
+                ResultSet rs2=prepare2.executeQuery();
+                if(rs2.next())
+                {
+                    String oDate=rs.getString("oDate");
+                    item.setoDate(oDate);//给item设置下单时间
+                    String oStatus=rs.getString("oStatus");
+                    item.setoStatus(oStatus);//给item设置订单状态
+                }
+
+                //查询该订单的收货人信息表
+                String sql3="SELECT * FROM OrdererInfoTable WHERE oOrderID=?;";
+                PreparedStatement prepare3=con.prepareStatement(sql3);
+                prepare3.setString(1,oOrderID);
+                ResultSet rs3=prepare3.executeQuery();
+                if(rs3.next())
+                {
+                    String oReceiverName=rs3.getString("oReceiverName");
+                    item.DeliveryInfo.setuContactPersonName(oReceiverName);
+                    String oReceieverGender=rs3.getString("oReceieverGender");
+                    item.DeliveryInfo.setuContactPersonGender(oReceieverGender);
+                    String oReceieverEmail=rs3.getString("oReceieverEmail");
+                    item.DeliveryInfo.setuContactPersonEmail(oReceieverEmail);
+                }
+
+                //查询该订单的订单配送信息
+                String sql4="SELECT * FROM OrderDeliveryInfo WHERE oOrderID=?;";
+                PreparedStatement prepare4=con.prepareStatement(sql4);
+                prepare4.setString(1,oOrderID);
+                ResultSet rs4=prepare4.executeQuery();
+                if(rs4.next())
+                {
+                    String oDeliveryAddress=rs4.getString("oDeliveryAddress");
+                    item.DeliveryInfo.setuDeliveryAddress(oDeliveryAddress);
+                    String oPostalCode=rs4.getString("oPostalCode");
+                    item.DeliveryInfo.setoPostalCode(oPostalCode);
+                    String oContactPhone=rs4.getString("oContactPhone");
+                    item.DeliveryInfo.setuContactPersonPhone(oContactPhone);
+                    String oDeliveryNote=rs4.getString("oDeliveryNote");
+                    item.DeliveryInfo.setoDeliveryNote(oDeliveryNote);
+                }
+
+                //查询该订单的产品信息表
+                String sql5="SELECT * FROM OrderProductInfoTable WHERE oOrderID=?;";
+                PreparedStatement prepare5=con.prepareStatement(sql5);
+                prepare5.setString(1,oOrderID);
+                ResultSet rs5=prepare5.executeQuery();
+                while(rs5.next())
+                {
+                    ProductItem productItem=new ProductItem();
+                    String pID=rs5.getString("pID");
+                    productItem.setpID(pID);
+                    double oPrice=rs5.getDouble("oPrice");
+                    productItem.setoPrice(oPrice);
+                    int oAmount=rs5.getInt("oAmount");
+                    productItem.setpAmount(oAmount);
+
+                    item.pProducts.add(productItem);
+                }
+                res.OrderRecordList.add(item);
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
 
 }

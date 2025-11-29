@@ -35,6 +35,8 @@ ALTER TABLE UserDeliveryInfoTable ADD COLUMN oPostalCode varchar(16) NOT NULL ;
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN oDeliveryNote varchar(512);
 --若UserAccountTable中的账号被注销后，则在UserDeliveryInfoTable的收货信息记录也要被删除，所以uID仅作为外键
 
+
+
 --用户购物车记录
 CREATE TABLE UserShoppingCartTable
 (
@@ -125,6 +127,9 @@ ALTER TABLE OrderGeneralInfoTable ADD CONSTRAINT OrderGeneralInfoTableForeignKey
 --oOrdererID这个是下单的账号
 --oOrdererID作为外键但是不用delete on cascade级联删除,账号不真的从数据库上面删除，保存下单记录，以及下单者的信息
 
+SELECT * FROM OrderGeneralInfoTable;
+DELETE FROM OrderGeneralInfoTable WHERE oOrderID='20251129100000000';
+
 --订单序列表以(8位YYYYmmDD)日期为主键
 --存储当日的下单序列
 CREATE TABLE OrderSequenceTable
@@ -163,6 +168,8 @@ oStatus varchar(20) NOT NULL 							--COMMENT '订单状态'
 ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOREIGN KEY (OOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 --一次订单可以有多个商品，多个收货人
 
+SELECT * FROM OrderBasicInfoTable;
+DELETE FROM OrderBasicInfoTable WHERE oOrderID='20251129110000000';
 
 --订单收货人信息表
 CREATE TABLE OrdererInfoTable
@@ -174,6 +181,9 @@ oReceieverEmail varchar(32) DEFAULT NULL				--COMMENT '收货人邮箱',
 );
 ALTER TABLE OrdererInfoTable ADD CONSTRAINT OrdererInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 
+SELECT * FROM OrdererInfoTable;
+DELETE FROM OrdererInfoTable WHERE oOrderID='20251129900000000';
+DELETE FROM OrdererInfoTable WHERE oReceiverName='蓝钱后';
 
 --订单配送信息表
 CREATE TABLE OrderDeliveryInfo
@@ -186,6 +196,8 @@ oDeliveryNote varchar(512) DEFAULT NULL 				--COMMENT '配送备注',
 );
 ALTER TABLE OrderDeliveryInfo ADD CONSTRAINT OrderDeliveryInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 
+SELECT * FROM OrderDeliveryInfo;
+DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129100000000';
 
 --订单产品信息表
 CREATE TABLE OrderProductInfoTable
@@ -201,6 +213,15 @@ oAmount int16 NOT NULL									--COMMENT '购买数量',
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
 
+SELECT * FROM OrderProductInfoTable;
+
+CREATE TABLE MerchantManagementTable
+(
+uID varchar(32),						--COMMENT'商人账户'
+pID varchar(32)							--COMMENT'商人上架的商品的编号'
+);
+CREATE INDEX index_uID_MerchantManagementTable ON MerchantManagementTable(uID);
+CREATE INDEX index_pID_MerchantManagementTable ON MerchantManagementTable(pID);
 
 --添加账号信息
 INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES
@@ -260,6 +281,7 @@ INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate
 ;
 
 SELECT * FROM ProductTable;
+UPDATE ProductTable SET ProductTable.pInventory=2 WHERE ProductTable.pID='0000000000000020';
 
 
 
@@ -481,3 +503,40 @@ SELECT * FROM UserShoppingCartTable;
 SELECT * FROM UserFavoritesTable;
 
 SELECT UserShoppingCartTable.pID,UserShoppingCartTable.cAmount,ProductTable.pName,ProductTable.pType,ProductTable.pPrice,ProductImagesTable.pImagePath FROM UserShoppingCartTable,ProductTable,ProductImagesTable WHERE UserShoppingCartTable.pID=ProductTable.pID AND ProductImagesTable.pID=UserShoppingCartTable.pID AND ProductImagesTable.pImgType='缩略图' AND uID='18775332736';
+
+--上架商品函数
+CREATE OR REPLACE FUNCTION NewProductOnSaleFunction(ipName varchar(128),ipType varchar(32),
+ipDiscount double,ipPrice double,ipProducer varchar(64),
+ipRelease date,ipInfo varchar(512),ipInventory int16,ipStatus varchar(16))
+RETURN boolean AS 
+DECLARE 
+	lock_id INT:=12345;
+	New_pID varchar(32);
+BEGIN 
+		PERFORM pg_advisory_lock(lock_id);		--开启锁
+		
+		SELECT lpad(to_number(MAX(pID)+1)::TEXT,16,'0') INTO New_pID FROM ProductTable;
+		 RAISE NOTICE '生成的New_pID为：%', New_pID;  
+		 INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate,pInfo,pInventory,pStatus)
+		 values(New_pID,ipName,ipType,ipDiscount,ipPrice,ipProducer,ipRelease,ipInfo,ipInventory,ipStatus);
+		
+		PERFORM pg_advisory_unlock(lock_id);	--关闭锁
+		RETURN TRUE;
+	EXCEPTION 
+		WHEN OTHERS THEN
+		PERFORM pg_advisory_unlock(lock_id);	--异常释放锁
+        RAISE;
+		RETURN FALSE;
+END
+
+--商品上架函数测试
+SELECT NewProductOnSaleFunction('test1','test1',1.0,1.0,'test1','2025-11-28 21:55:10','test',10,'上架');
+SELECT * FROM ProductTable;
+DELETE FROM ProductTable WHERE pID='0000000000000021';
+
+
+SELECT * FROM UserDeliveryInfoTable;
+DELETE FROM UserDeliveryInfoTable WHERE uID='18775332736';
+
+
+
