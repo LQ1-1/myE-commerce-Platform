@@ -1,11 +1,13 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
 
+import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import org.springframework.web.bind.annotation.*;
 
 import com.lqh.ebuyplt_1001p.Controller.MerchantPack.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.sql.*;
 
 @RestController
@@ -18,18 +20,11 @@ public class MerchantController
 
     @CrossOrigin(origins = "*")
     @RequestMapping("/api/ProductOnSale")
-    public String ProductOnSale(@RequestBody ProductOnSale_jsonGet productOnSale)
+    public ApiResult<ProductOnSale_jsonSend> ProductOnSale(@RequestBody ProductOnSale_jsonGet productOnSale)   //这里应该返回订单号回去的
     {
-        if(ProductOnSaleResult(productOnSale))
-        {
-            return PutOnSaleStatus.OnSaleSuccess;
-        }
-        else
-        {
-            return PutOnSaleStatus.OnSaleFail;
-        }
+        return ApiResult.success(ProductOnSaleResult(productOnSale))
     }
-    private boolean ProductOnSaleResult(ProductOnSale_jsonGet productOnSale)
+    private ProductOnSale_jsonSend ProductOnSaleResult(ProductOnSale_jsonGet productOnSale)
     {
         try
         {
@@ -67,19 +62,22 @@ public class MerchantController
         return false;
     }
 
-//    @CrossOrigin(origins = "*")
-//    @RequestMapping("/api/ProductImagesUpload")
-//    public String ProductImagesUpload(@ModelAttribute ProductImagesUpload form)
-//    {
-//
-//    }
-//    private boolean ProductImagesUploadResult(ProductImagesUpload form)
-//    {
-//        // 获取封面
-//        MultipartFile cover = form.getcover();
-//
-//        // 获取展示图
-//        MultipartFile[] gallery = form.getgallery();
-//    }
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/api/ProductImagesUpload")
+    public String ProductImagesUpload(@ModelAttribute ProductImagesUpload form)
+    {
+
+    }
+    private boolean ProductImagesUploadResult(ProductImagesUpload form)
+    {
+        // 获取封面
+        MultipartFile cover = form.getcover();
+
+        // 获取展示图
+        MultipartFile[] gallery = form.getgallery();
+
+        String projectRoot=System.getProperty("user.dir");
+        String assetsRoot=projectRoot+ File.separator+"assets"+File.separator;
+    }
 
 }
