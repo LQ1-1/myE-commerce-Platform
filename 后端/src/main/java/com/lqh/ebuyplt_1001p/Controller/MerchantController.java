@@ -35,7 +35,7 @@ public class MerchantController
 
         try
         {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT NewProductOnSaleFunction(?,?,?," +
@@ -112,6 +112,15 @@ public class MerchantController
                 coverUrl="/assets/images/"+saveFile(cover,finalRoot,form.getpID());
 
                 //保存到数据库里面的图片URL:coverUrl
+                boolean insertResult=insertIntoProductImagesTable(form.getpID(),"缩略图",coverUrl);
+                if(insertResult)
+                {
+                    System.out.println("缩略图插入成功 : "+coverUrl);
+                }
+                else
+                {
+                    System.out.println("缩略图插入失败");
+                }
             }
 
             //处理展示图
@@ -126,9 +135,21 @@ public class MerchantController
                         galleryUrls.add(galleryUrl);
                     }
                 }
-            }
 
-            //将这些展示图的URL添加进数据库里面
+                //将这些展示图的URL添加进数据库里面
+                for(String str : galleryUrls)
+                {
+                    boolean insertResult=insertIntoProductImagesTable(form.getpID(),"展示图",str);
+                    if(insertResult)
+                    {
+                        System.out.println("展示图插入成功 : "+str);
+                    }
+                    else
+                    {
+                        System.out.println("展示图插入失败");
+                    }
+                }
+            }
 
             //检查URL地址
             System.out.println("**************ProductImagesUploadResult*************");
@@ -146,7 +167,7 @@ public class MerchantController
         }
         return false;
     }
-    private String saveFile(MultipartFile file,String saveDir,String pID) throws IOException
+    private String saveFile(MultipartFile file,String saveDir,String pID) throws IOException    //返回加工过的文件名，函数里面将图片文件保存至磁盘里面
     {
         String originalFilename = file.getOriginalFilename();//文件名(带后缀)
         String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));//文件后缀名
@@ -159,5 +180,57 @@ public class MerchantController
 
         return webPath;
     }
+    private boolean insertIntoProductImagesTable(String ipID,String ipImgType,String ipImagePath)
+    {
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
 
+            String sql1="INSERT INTO ProductImagesTable(pID,pImgType,pImagePath)VALUES(?,?,?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,ipID);
+            prepare.setString(2,ipImgType);
+            prepare.setString(3,ipImagePath);
+
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                return true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/ProductInfoUpdate")
+    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)
+    {
+
+    }
+    private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo)
+    {
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
 }
