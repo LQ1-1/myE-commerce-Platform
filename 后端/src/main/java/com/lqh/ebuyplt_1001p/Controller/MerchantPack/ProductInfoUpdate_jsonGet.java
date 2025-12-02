@@ -36,15 +36,27 @@ public class ProductInfoUpdate_jsonGet
     @JsonProperty("pStatus")
     private String pStatus;
 
-    @JsonProperty("pThumbnail")
+    @JsonProperty("oldThumbnailPicURL")
+    private String oldThumbnailPicURL;//新的等于旧的就是没有改变
+    @JsonProperty("newThumbnailPicURL")
+    private String newThumbnailPicURL;//如果用户删除目前的缩略图换上新的缩略图的话，这里就是空的，新的图片放在pThumbnail
+
+    @JsonProperty("pThumbnail") //如果用户上传新的缩略图就是这个
     public ProductImageItem pThumbnail;
 
-    @JsonProperty("pShowcaseImageList")
+    @JsonProperty("oldShowcaseImagesURL")
+    public ArrayList<String>oldShowcaseImagesURL;//用来确定哪些是要被删除的图片
+    @JsonProperty("newShowcaseImagesURL")
+    public ArrayList<String>newShowcaseImagesURL;//旧有新没有则表明该图片被移除，新的图片直接放在pShowcaseImageList里面
+
+    @JsonProperty("pShowcaseImageList") //如果用户有上传新的展示图就放在这里
     public ArrayList<ProductImageItem> pShowcaseImageList;
 
     public ProductInfoUpdate_jsonGet()
     {
         this.pShowcaseImageList = new ArrayList<>();
+        this.oldShowcaseImagesURL = new ArrayList<>();
+        this.newShowcaseImagesURL = new ArrayList<>();
     }
 
     public String getpID()
@@ -153,6 +165,44 @@ public class ProductInfoUpdate_jsonGet
         for(ProductImageItem item : ipShowcaseImageList)
         {
             this.pShowcaseImageList.add(item);
+        }
+    }
+    public String getOldThumbnailPicURL()
+    {
+        return oldThumbnailPicURL;
+    }
+    public void setOldThumbnailPicURL(String oldThumbnailPicURL)
+    {
+        this.oldThumbnailPicURL = oldThumbnailPicURL;
+    }
+    public String getNewThumbnailPicURL()
+    {
+        return newThumbnailPicURL;
+    }
+    public void setNewThumbnailPicURL(String newThumbnailPicURL)
+    {
+        this.newThumbnailPicURL = newThumbnailPicURL;
+    }
+    public ArrayList<String> getoldShowcaseImagesURL()
+    {
+        return this.oldShowcaseImagesURL;
+    }
+    public void setOldShowcaseImagesURL(ArrayList<String> oldShowcaseImagesURL)
+    {
+        for(String s : oldShowcaseImagesURL)
+        {
+            this.oldShowcaseImagesURL.add(s);
+        }
+    }
+    public ArrayList<String> getNewShowcaseImagesURL()
+    {
+        return this.newShowcaseImagesURL;
+    }
+    public void setNewShowcaseImagesURL(ArrayList<String> newShowcaseImagesURL)
+    {
+        for(String s : newShowcaseImagesURL)
+        {
+            this.newShowcaseImagesURL.add(s);
         }
     }
 }

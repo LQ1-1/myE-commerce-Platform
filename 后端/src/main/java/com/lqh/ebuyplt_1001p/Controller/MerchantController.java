@@ -210,19 +210,73 @@ public class MerchantController
         return false;
     }
 
+    //从后端返回该用户的所有商品的所有信息给前端
     @CrossOrigin(origins="*")
-    @RequestMapping("/api/ProductInfoUpdate")
-    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)
+    @RequestMapping("/api/ProductAllInfo")
+    public ApiResult<ProductAllInfo_jsonSend> ProductAllInfo(@RequestBody ProductRecord_jsonGet recordCall)
     {
-
+        return ApiResult.success(ProductAllInfoResult(recordCall));
     }
-    private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo)
+    private ProductAllInfo_jsonSend ProductAllInfoResult(ProductRecord_jsonGet recordCall)
     {
+        ProductAllInfo_jsonSend res=new ProductAllInfo_jsonSend();
+        ArrayList<String>pIDs=new ArrayList<>();
         try
         {
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
+            String sql1="SELECT * FROM MerchantsProductTable WHERE uID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,recordCall.getuID());
+            ResultSet rs=prepare.executeQuery();
+            while(rs.next())
+            {
+                String pID=rs.getString("pID");
+                pIDs.add(pID);
+            }
+
+            for(String pID : pIDs)
+            {
+                ProductIAllnfoItem item=new ProductIAllnfoItem();
+
+                String sub_sql="SELECT * FROM ProductTable WHERE pID=?;";
+                PreparedStatement prepare2=con.prepareStatement(sub_sql);
+                prepare2.setString(1,pID);
+                ResultSet rs2=prepare2.executeQuery();
+                if(rs2.next())  //设置文本类型的信息
+                {
+                    item.setpID(rs2.getString("pID"));
+                    item.setpName(rs2.getString("pName"));
+                    item.setpType(rs2.getString("pType"));
+                    item.setpDiscount(rs2.getDouble("pDiscount"));
+                    item.setpPrice(rs2.getDouble("pPrice"));
+                    item.setpInfo(rs2.getString("pInfo"));
+                    item.setpInventory(rs2.getInt("pInventory"));
+                    item.setpStatus(rs2.getString("pStatus"));
+                }
+
+                String sub_sql2="SELECT * FROM ProductImagesTable WHERE pID=?;";
+                PreparedStatement prepare3=con.prepareStatement(sub_sql2);
+                prepare3.setString(1,pID);
+                ResultSet rs3=prepare3.executeQuery();
+                while(rs3.next())
+                {
+                    String pImgType=rs3.getString("pImgType");
+                    String pImagePath=rs3.getString("pImagePath");
+
+                    if(pImgType.equals("缩略图"))
+                    {
+                        item.setpThumbnail(pImagePath);
+                    }
+                    else if(pImgType.equals("展示图"))
+                    {
+                        item.pShowcaseImageList.add(pImagePath);
+                    }
+                }
+
+                res.AllInfo.add(item);
+            }
         }
         catch(SQLException e)
         {
@@ -232,5 +286,81 @@ public class MerchantController
         {
             e.printStackTrace();
         }
+        return res;
     }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/ProductInfoUpdate")
+    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)//ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
+    {
+
+    }
+//    private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo)//可能需要删除一些照片
+//    {
+//        try
+//        {
+//            Class.forName("com.kingbase8.Driver");
+//            Connection con=DriverManager.getConnection(url,user,password);
+//
+//            //更新ProductTable表上的信息
+//            String sql1="UPDATE ProductTable SET ProductTable.pName=?, ProductTable.pType=?, ProductTable.pDiscount=?, " +
+//                    "ProductTable.pPrice=?, ProductTable.pProducer=?, ProductTable.pReleaseDate=?, " +
+//                    "ProductTable.pInfo=?, ProductTable.pInventory=?, ProductTable.pStatus=? " +
+//                    "WHERE ProductTable.pID=? ;";
+//            PreparedStatement prepare=con.prepareStatement(sql1);
+//            prepare.setString(1,updateInfo.getpName());
+//            prepare.setString(2,updateInfo.getpType());
+//            prepare.setDouble(3,updateInfo.getpDiscount());
+//            prepare.setDouble(4,updateInfo.getpPrice());
+//            prepare.setString(5,updateInfo.getpProducer());
+//            prepare.setString(6,updateInfo.getpReleaseDate());
+//            prepare.setString(7,updateInfo.getpInfo());
+//            prepare.setInt(8,updateInfo.getpInventory());
+//            prepare.setString(9,updateInfo.getpStatus());
+//
+//            int row=prepare.executeUpdate();
+//            if(row>0)
+//            {
+//                //更新ProductTable表成功
+//                System.out.println("更新ProductTable表成功");
+//            }
+//
+//        }
+//        catch(SQLException e)
+//        {
+//            e.printStackTrace();
+//        }
+//        catch(Exception e)
+//        {
+//            e.printStackTrace();
+//        }
+//
+//        HashMap<String,Integer>mapNew=new HashMap<String,Integer>();
+//        HashMap<String,Integer>mapOld=new HashMap<String,Integer>();
+//
+//        try
+//        {
+//            Class.forName("com.kingbase8.Driver");
+//            Connection con=DriverManager.getConnection(url,user,password);
+//
+//            //获取原来的ProductImagesTable上关于该商品的信息
+//            String sql1="SELECT * FROM ProductImagesTable WHERE pID=?;";
+//            PreparedStatement prepare=con.prepareStatement(sql1);
+//            prepare.setString(1,updateInfo.getpID());
+//            ResultSet rs=prepare.executeQuery();
+//            while(rs.next())
+//            {
+//
+//            }
+//
+//        }
+//        catch(SQLException e)
+//        {
+//            e.printStackTrace();
+//        }
+//        catch(Exception e)
+//        {
+//            e.printStackTrace();
+//        }
+//    }
 }
