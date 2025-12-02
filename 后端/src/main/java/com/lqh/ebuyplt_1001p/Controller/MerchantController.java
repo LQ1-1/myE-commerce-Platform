@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -291,76 +292,224 @@ public class MerchantController
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductInfoUpdate")
-    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)//ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
+    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)    //ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
     {
-
+        if(ProductStatusUpdateResult(updateInfo))
+        {
+            return PutOnSaleStatus.UpdateSuccess;
+        }
+        else
+        {
+            return PutOnSaleStatus.UpdateFail;
+        }
     }
-//    private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo)//可能需要删除一些照片
-//    {
-//        try
-//        {
-//            Class.forName("com.kingbase8.Driver");
-//            Connection con=DriverManager.getConnection(url,user,password);
-//
-//            //更新ProductTable表上的信息
-//            String sql1="UPDATE ProductTable SET ProductTable.pName=?, ProductTable.pType=?, ProductTable.pDiscount=?, " +
-//                    "ProductTable.pPrice=?, ProductTable.pProducer=?, ProductTable.pReleaseDate=?, " +
-//                    "ProductTable.pInfo=?, ProductTable.pInventory=?, ProductTable.pStatus=? " +
-//                    "WHERE ProductTable.pID=? ;";
-//            PreparedStatement prepare=con.prepareStatement(sql1);
-//            prepare.setString(1,updateInfo.getpName());
-//            prepare.setString(2,updateInfo.getpType());
-//            prepare.setDouble(3,updateInfo.getpDiscount());
-//            prepare.setDouble(4,updateInfo.getpPrice());
-//            prepare.setString(5,updateInfo.getpProducer());
-//            prepare.setString(6,updateInfo.getpReleaseDate());
-//            prepare.setString(7,updateInfo.getpInfo());
-//            prepare.setInt(8,updateInfo.getpInventory());
-//            prepare.setString(9,updateInfo.getpStatus());
-//
-//            int row=prepare.executeUpdate();
-//            if(row>0)
-//            {
-//                //更新ProductTable表成功
-//                System.out.println("更新ProductTable表成功");
-//            }
-//
-//        }
-//        catch(SQLException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        catch(Exception e)
-//        {
-//            e.printStackTrace();
-//        }
-//
-//        HashMap<String,Integer>mapNew=new HashMap<String,Integer>();
-//        HashMap<String,Integer>mapOld=new HashMap<String,Integer>();
-//
-//        try
-//        {
-//            Class.forName("com.kingbase8.Driver");
-//            Connection con=DriverManager.getConnection(url,user,password);
-//
-//            //获取原来的ProductImagesTable上关于该商品的信息
-//            String sql1="SELECT * FROM ProductImagesTable WHERE pID=?;";
-//            PreparedStatement prepare=con.prepareStatement(sql1);
-//            prepare.setString(1,updateInfo.getpID());
-//            ResultSet rs=prepare.executeQuery();
-//            while(rs.next())
-//            {
-//
-//            }
-//
-//        }
-//        catch(SQLException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        catch(Exception e)
-//        {
-//            e.printStackTrace();
-//        }
-//    }
+    private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo) //可能需要删除一些照片
+    {
+        boolean res1=false,res2=false,res3=false,res4=false;
+
+        //检查缩略图是否更新
+        boolean ThumbnailUpdate=true;
+        if(updateInfo.getNewThumbnailPicURL().equals(updateInfo.getOldThumbnailPicURL()))//缩略图未更新
+        {
+            ThumbnailUpdate=false;
+        }
+
+        //检查展示图是否有更新
+        HashMap<String,Boolean> mapNew=new HashMap<String,Boolean>();
+        for(String str:updateInfo.newShowcaseImagesURL)
+        {
+            mapNew.put(str,true);
+        }
+        ArrayList<String>NeedToDelete=new ArrayList<>();
+        for(String str:updateInfo.oldShowcaseImagesURL)
+        {
+            if(mapNew.get(str)==null)
+            {
+                NeedToDelete.add(str);
+            }
+        }
+
+        //更新ProductTable表上的信息
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            //更新ProductTable表上的信息
+            String sql1="UPDATE ProductTable SET ProductTable.pName=?, ProductTable.pType=?, ProductTable.pDiscount=?, " +
+                    "ProductTable.pPrice=?, ProductTable.pProducer=?, ProductTable.pReleaseDate=?, " +
+                    "ProductTable.pInfo=?, ProductTable.pInventory=?, ProductTable.pStatus=? " +
+                    "WHERE ProductTable.pID=? ;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,updateInfo.getpName());
+            prepare.setString(2,updateInfo.getpType());
+            prepare.setDouble(3,updateInfo.getpDiscount());
+            prepare.setDouble(4,updateInfo.getpPrice());
+            prepare.setString(5,updateInfo.getpProducer());
+            prepare.setString(6,updateInfo.getpReleaseDate());
+            prepare.setString(7,updateInfo.getpInfo());
+            prepare.setInt(8,updateInfo.getpInventory());
+            prepare.setString(9,updateInfo.getpStatus());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                System.out.println("商品"+updateInfo.getpID()+"信息更新成功");
+                res1=true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        //更新ProductImagesTable表上的图片信息-缩略图
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            if(ThumbnailUpdate==true)//缩略图需要更新
+            {
+                //服务器电脑硬盘上删除旧的图片
+                String projectRoot=System.getProperty("user.dir");
+                String oldImagePath=projectRoot+updateInfo.getOldThumbnailPicURL();
+                File file=new File(oldImagePath);
+                if(file.exists())
+                {
+                    boolean delRes=file.delete();
+                    if(delRes)
+                    {
+                        System.out.println("缩略图 : "+oldImagePath+"删除成功");
+                    }
+                    else
+                    {
+                        System.out.println("缩略图 : "+oldImagePath+"删除失败");
+                    }
+                }
+
+                //服务器电脑硬盘上保存新的图片
+                String newURL="/assets/images/"+saveFile(updateInfo.pThumbnail.getpImagePath(),projectRoot+"/assets/images/",updateInfo.getpID());
+
+                //更新数据库里的缩略图路径信息
+                String sql2="UPDATE ProductImagesTable SET ProductImagesTable.pImagePath=? WHERE ProductImagesTable.pID=? AND ProductImagesTable.pImgType='缩略图';";
+                PreparedStatement prepare2=con.prepareStatement(sql2);
+                prepare2.setString(1,newURL);
+                prepare2.setString(2,updateInfo.getpID());
+                int row=prepare2.executeUpdate();
+                if(row>0)
+                {
+                    System.out.println(newURL+" 已在数据库里面设置好");
+                    res2=true;
+                }
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        //服务器硬盘上移除用户放弃的图片，以及从数据库里移除该记录
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            for(String str:NeedToDelete)
+            {
+                //服务器硬盘上删除被用户放弃的展示图
+                String projectRoot=System.getProperty("user.dir");
+                String oldImagePath=projectRoot+str;
+                File file=new File(oldImagePath);
+                if(file.exists())
+                {
+                    boolean delRes=file.delete();
+                    if(delRes)
+                    {
+                        System.out.println("展示图 : "+oldImagePath+"删除成功");
+                    }
+                    else
+                    {
+                        System.out.println("展示图 : "+oldImagePath+"删除失败");
+                    }
+                }
+
+                //在数据库上面删除这条旧的记录
+                String sql3="DELETE FROM ProductImagesTable WHERE pID=? AND pImgType='展示图' AND pImagePath=?;";
+                PreparedStatement prepare3=con.prepareStatement(sql3);
+                prepare3.setString(1,updateInfo.getpID());
+                prepare3.setString(2,str);
+                int row=prepare3.executeUpdate();
+                if(row>0)
+                {
+                    System.out.println("旧展示图"+str+"在数据库里面删除成功");
+                }
+            }
+            res3=true;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        //如果有新添加的图片就在服务器硬盘上保存，并在数据库里面添加上该展示图的记录
+        if(updateInfo.pShowcaseImageList!=null && updateInfo.pShowcaseImageList.size()>0)
+        {
+            try
+            {
+                Class.forName("com.kingbase8.Driver");
+                Connection con=DriverManager.getConnection(url,user,password);
+
+                String projectRoot=System.getProperty("user.dir");
+                String targetFolder=projectRoot+"/assets/images/";
+
+                for(ProductImageItem item:updateInfo.pShowcaseImageList)
+                {
+                    //服务器硬盘上保存新的展示图片
+                    String newURL="/assets/images/"+saveFile(item.getpImagePath(), targetFolder,updateInfo.getpID());
+
+                    //往数据库里面添加新的记录
+                    String sql4="INSERT INTO (pID,pImgType,pImagePath)VALUES(?,?,?);";
+                    PreparedStatement prepare4=con.prepareStatement(sql4);
+                    prepare4.setString(1,updateInfo.getpID());
+                    prepare4.setString(2,"展示图");
+                    prepare4.setString(3,newURL);
+                    int row=prepare4.executeUpdate();
+                    if(row>0)
+                    {
+                        System.out.println("新的展示图"+newURL+"在数据库里保存成功");
+                    }
+                }
+                res4=true;
+            }
+            catch(SQLException e)
+            {
+                e.printStackTrace();
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+        if(res1==true && res2==true && res3==true && res4==true)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 }

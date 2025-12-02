@@ -49,6 +49,8 @@ ALTER TABLE UserShoppingCartTable ADD CONSTRAINT UUserShoppingCartTableForignKey
 ALTER TABLE UserShoppingCartTable ADD PRIMARY KEY (uID,pID);
 CREATE INDEX index_uID ON UserShoppingCartTable(uID);
 
+SELECT * FROM UserShoppingCartTable;
+
 
 --用户收藏表
 CREATE TABLE UserFavoritesTable
@@ -60,6 +62,15 @@ ALTER TABLE UserFavoritesTable ADD CONSTRAINT UserFavoritesTableForeignKey FOREI
 ALTER TABLE UserFavoritesTable ADD CONSTRAINT UUserFavoritesTableForeignKey FOREIGN KEY(pID) REFERENCES ProductTable(pID);
 ALTER TABLE UserFavoritesTable ADD PRIMARY KEY (uID,pID);
 CREATE INDEX index_uID_UFiT ON UserFavoritesTable(uID);
+
+CREATE TABLE MerchantsProductTable
+(
+uID varchar(32),										--COMMENT'商户账号'
+pID varchar(32)											--COMMENT'该商户上架的商品'
+);
+ALTER TABLE MerchantsProductTable ADD CONSTRAINT MerchantsProductTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
+CREATE INDEX index_uID_MerchantsProductTable ON MerchantsProductTable(uID);
+CREATE INDEX index_pID_MerchantsProductTable ON MerchantsProductTable(pID);
 
 --商品信息表
 CREATE TABLE ProductTable
@@ -128,7 +139,7 @@ ALTER TABLE OrderGeneralInfoTable ADD CONSTRAINT OrderGeneralInfoTableForeignKey
 --oOrdererID作为外键但是不用delete on cascade级联删除,账号不真的从数据库上面删除，保存下单记录，以及下单者的信息
 
 SELECT * FROM OrderGeneralInfoTable;
-DELETE FROM OrderGeneralInfoTable WHERE oOrderID='20251129100000000';
+DELETE FROM OrderGeneralInfoTable WHERE oOrdererID='18775332736';
 
 --订单序列表以(8位YYYYmmDD)日期为主键
 --存储当日的下单序列
@@ -169,7 +180,7 @@ ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOR
 --一次订单可以有多个商品，多个收货人
 
 SELECT * FROM OrderBasicInfoTable;
-DELETE FROM OrderBasicInfoTable WHERE oOrderID='20251129110000000';
+DELETE FROM OrderBasicInfoTable WHERE oOrderID='20251129160000000';
 
 --订单收货人信息表
 CREATE TABLE OrdererInfoTable
@@ -197,7 +208,7 @@ oDeliveryNote varchar(512) DEFAULT NULL 				--COMMENT '配送备注',
 ALTER TABLE OrderDeliveryInfo ADD CONSTRAINT OrderDeliveryInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 
 SELECT * FROM OrderDeliveryInfo;
-DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129100000000';
+DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129160000000';
 
 --订单产品信息表
 CREATE TABLE OrderProductInfoTable
@@ -214,6 +225,7 @@ ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
 
 SELECT * FROM OrderProductInfoTable;
+DELETE FROM OrderProductInfoTable WHERE oOrderID='20251129160000000';
 
 CREATE TABLE MerchantManagementTable
 (
@@ -281,7 +293,7 @@ INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate
 ;
 
 SELECT * FROM ProductTable;
-UPDATE ProductTable SET ProductTable.pInventory=2 WHERE ProductTable.pID='0000000000000020';
+UPDATE ProductTable SET ProductTable.pInventory=120 WHERE ProductTable.pID='0000000000000020';
 
 
 
@@ -508,7 +520,7 @@ SELECT UserShoppingCartTable.pID,UserShoppingCartTable.cAmount,ProductTable.pNam
 CREATE OR REPLACE FUNCTION NewProductOnSaleFunction(ipName varchar(128),ipType varchar(32),
 ipDiscount double,ipPrice double,ipProducer varchar(64),
 ipRelease date,ipInfo varchar(512),ipInventory int16,ipStatus varchar(16))
-RETURN boolean AS 
+RETURN varchar AS 
 DECLARE 
 	lock_id INT:=12345;
 	New_pID varchar(32);
@@ -521,13 +533,14 @@ BEGIN
 		 values(New_pID,ipName,ipType,ipDiscount,ipPrice,ipProducer,ipRelease,ipInfo,ipInventory,ipStatus);
 		
 		PERFORM pg_advisory_unlock(lock_id);	--关闭锁
-		RETURN TRUE;
+		RETURN New_pID;
 	EXCEPTION 
 		WHEN OTHERS THEN
 		PERFORM pg_advisory_unlock(lock_id);	--异常释放锁
         RAISE;
-		RETURN FALSE;
+		RETURN NULL ;
 END
+
 
 --商品上架函数测试
 SELECT NewProductOnSaleFunction('test1','test1',1.0,1.0,'test1','2025-11-28 21:55:10','test',10,'上架');
@@ -537,6 +550,8 @@ DELETE FROM ProductTable WHERE pID='0000000000000021';
 
 SELECT * FROM UserDeliveryInfoTable;
 DELETE FROM UserDeliveryInfoTable WHERE uID='18775332736';
+
+SELECT DISTINCT ProductTable.pType FROM ProductTable WHERE ProductTable.pStatus='上架';
 
 
 
