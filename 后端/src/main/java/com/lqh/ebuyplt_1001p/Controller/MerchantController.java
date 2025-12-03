@@ -24,7 +24,7 @@ public class MerchantController
 
 
     @CrossOrigin(origins = "*")
-    @RequestMapping("/api/ProductOnSale")
+    @RequestMapping("/api/ProductOnSale")//商户添加商品信息文本内容
     public ApiResult<ProductOnSale_jsonSend> ProductOnSale(@RequestBody ProductOnSale_jsonGet productOnSale)   //这里应该返回订单号回去的
     {
         return ApiResult.success(ProductOnSaleResult(productOnSale));
@@ -74,7 +74,7 @@ public class MerchantController
     }
 
     @CrossOrigin(origins = "*")
-    @RequestMapping("/api/ProductImagesUpload")
+    @RequestMapping("/api/ProductImagesUpload")//商户添加商品的图片信息
     public String ProductImagesUpload(@ModelAttribute ProductImagesUpload form)
     {
         if(ProductImagesUploadResult(form))
@@ -213,7 +213,7 @@ public class MerchantController
 
     //从后端返回该用户的所有商品的所有信息给前端
     @CrossOrigin(origins="*")
-    @RequestMapping("/api/ProductAllInfo")
+    @RequestMapping("/api/ProductAllInfo")//返回该用户上架的所有商品信息
     public ApiResult<ProductAllInfo_jsonSend> ProductAllInfo(@RequestBody ProductRecord_jsonGet recordCall)
     {
         return ApiResult.success(ProductAllInfoResult(recordCall));
@@ -291,7 +291,7 @@ public class MerchantController
     }
 
     @CrossOrigin(origins="*")
-    @RequestMapping("/api/ProductInfoUpdate")
+    @RequestMapping("/api/ProductInfoUpdate")//商户更新该商品的信息
     public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)    //ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
     {
         if(ProductStatusUpdateResult(updateInfo))
@@ -510,6 +510,80 @@ public class MerchantController
         {
             return false;
         }
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/ProductSaledInfo")//该用户售出的商品
+    public ApiResult<ProductSaledInfo_jsonSend> ProductSaledInfo(@RequestBody ProductRecord_jsonGet recordCall)
+    {
+        return ApiResult.success(ProductSaledInfoResult(recordCall));
+    }
+    private ProductSaledInfo_jsonSend ProductSaledInfoResult(ProductRecord_jsonGet recordCall)
+    {
+        ProductSaledInfo_jsonSend res=new ProductSaledInfo_jsonSend();
+
+        //筛选订购数量，订购价格信息，派送状态信息
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM OrderProductInfoTable WHERE pID=(SELECT MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID=?);";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,recordCall.getuID());
+            ResultSet rs1=prepare1.executeQuery();
+            while(rs1.next())
+            {
+                ProductSaledInfoItem item=new ProductSaledInfoItem();
+
+                String oOrderID=rs1.getString("oOrderID");//该售出商品所属的订单号
+
+                item.setoOrderID(oOrderID);
+                item.OrderProductInfoTableItem.setpID(rs1.getString("pID"));
+                item.OrderProductInfoTableItem.setoPrice(rs1.getDouble("oPrice"));
+                item.OrderProductInfoTableItem.setpAmount(rs1.getInt("oAmount"));
+
+                //再根据该订单号信息去查找收货信息
+                String sql2="SELECT * FROM OrdererInfoTable,OrderDeliveryInfo WHERE OrdererInfoTable.oOrderID=OrderDeliveryInfo.oOrderID AND OrdererInfoTable.oOrderID=?;";
+                PreparedStatement prepare2=con.prepareStatement(sql2);
+                prepare2.setString(1,oOrderID);
+                ResultSet rs2=prepare2.executeQuery();
+                if(rs2.next())
+                {
+                    item.DeliveryInfoItem.setoPostalCode(rs2.getString("oPostalCode"));
+                    item.DeliveryInfoItem.setuContactPersonEmail(rs2.getString("oReceieverEmail"));
+                    item.DeliveryInfoItem.setoDeliveryNote(rs2.getString("oDeliveryNote"));
+                    item.DeliveryInfoItem.setuContactPersonGender(rs2.getString("oReceieverGender"));
+                    item.DeliveryInfoItem.setuContactPersonName(rs2.getString("oReceiverName"));
+                    item.DeliveryInfoItem.setuContactPersonPhone(rs2.getString("oContactPhone"));
+                    item.DeliveryInfoItem.setuDeliveryAddress(rs2.getString("oDeliveryAddress"));
+                }
+
+                //再根据订单号信息去查找下单时间信息,以及下单者的账号，以及该订单的生成时间，以及该订单的状态
+                String sql3="SELECT * FROM OrderGeneralInfoTable,OrderBasicInfoTable WHERE OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID AND OrderGeneralInfoTable.oOrderID=?;";
+                PreparedStatement prepare3=con.prepareStatement(sql3);
+                prepare3.setString(1,oOrderID);
+                ResultSet rs3=prepare3.executeQuery();
+                if(rs3.next())
+                {
+                    item.DeliveryInfoItem.setuID(rs3.getString("oOrdererID"));
+                    item.setoDate(rs3.getString("oDate"));
+                    item.setoStatus(rs3.getString("oStatus"));
+                }
+
+                res.SaledItemList.add(item);
+            }
+
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
     }
 
 }

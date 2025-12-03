@@ -182,6 +182,9 @@ ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOR
 SELECT * FROM OrderBasicInfoTable;
 DELETE FROM OrderBasicInfoTable WHERE oOrderID='20251129160000000';
 
+SELECT * FROM OrderGeneralInfoTable,OrderBasicInfoTable WHERE OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID AND OrderGeneralInfoTable.oOrderID='20251129170000000';
+
+
 --订单收货人信息表
 CREATE TABLE OrdererInfoTable
 (
@@ -210,6 +213,8 @@ ALTER TABLE OrderDeliveryInfo ADD CONSTRAINT OrderDeliveryInfoForeignKey FOREIGN
 SELECT * FROM OrderDeliveryInfo;
 DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129160000000';
 
+SELECT * FROM OrdererInfoTable,OrderDeliveryInfo WHERE OrdererInfoTable.oOrderID=OrderDeliveryInfo.oOrderID AND OrdererInfoTable.oOrderID='20251129170000000';
+
 --订单产品信息表
 CREATE TABLE OrderProductInfoTable
 (
@@ -223,6 +228,7 @@ oAmount int16 NOT NULL									--COMMENT '购买数量',
 );
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
+ALTER TABLE OrderProductInfoTable ADD COLUMN oProductDeliveryStatus varchar(32) default'Submitted';		--单个商品的交付状态
 
 SELECT * FROM OrderProductInfoTable;
 DELETE FROM OrderProductInfoTable WHERE oOrderID='20251129160000000';

@@ -549,7 +549,8 @@ public class Order02Controller
     {
         {
             System.out.println("************OrderStatus_Update************");
-            System.out.println(orderStatusUpdate);
+            System.out.println(orderStatusUpdate.getoOrderID());
+            System.out.println(orderStatusUpdate.getNewStatus());
             System.out.println("************OrderStatus_Update************");
         }
 
@@ -591,6 +592,57 @@ public class Order02Controller
         }
         return false;
     }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/OrderSingularProductDeliveryStatus_Update")
+    public String OrderSingularProductDeliveryStatus_Update(@RequestBody OrderSingularProductDeliveryStatusUpdate_jsonGet newPStatus)
+    {
+        {
+            System.out.println("************OrderSingularProductDeliveryStatus_Update************");
+            System.out.println(newPStatus.getoOrderID());
+            System.out.println(newPStatus.getpID());
+            System.out.println(newPStatus.getNewStatus());
+            System.out.println("************OrderSingularProductDeliveryStatus_Update************");
+        }
+
+        if(OrderSingularProductDeliveryStatus_UpdateResult(newPStatus))
+        {
+            return OrderPack2StatusCheck.UpdateAccept;
+        }
+        else
+        {
+            return OrderPack2StatusCheck.UpdateFail;
+        }
+    }
+    private boolean OrderSingularProductDeliveryStatus_UpdateResult(OrderSingularProductDeliveryStatusUpdate_jsonGet newPStatus)
+    {
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE OrderProductInfoTable SET OrderProductInfoTable.oProductDeliveryStatus=? WHERE oOrderID=? AND pID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,newPStatus.getNewStatus());
+            prepare.setString(2,newPStatus.getoOrderID());
+            prepare.setString(3,newPStatus.getpID());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                return true;
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     @CrossOrigin(origins = "*")
     @RequestMapping("/api/OrderCancelled")
@@ -775,6 +827,8 @@ public class Order02Controller
                     productItem.setoPrice(oPrice);
                     int oAmount=rs5.getInt("oAmount");
                     productItem.setpAmount(oAmount);
+                    String oProductDeliveryStatus=rs5.getString("oProductDeliveryStatus");
+                    productItem.setoProductDeliveryStatus(oProductDeliveryStatus);
 
                     item.pProducts.add(productItem);
                 }

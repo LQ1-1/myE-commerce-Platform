@@ -14,6 +14,9 @@ public class ProductItem
     @JsonProperty("oPrice")
     private double oPrice;
 
+    @JsonProperty("oProductDeliveryStatus")
+    private String oProductDeliveryStatus;
+
     public String getpID()
     {
         return pID;
@@ -37,5 +40,13 @@ public class ProductItem
     public void setoPrice(double oPrice)
     {
         this.oPrice = oPrice;
+    }
+    public String getoProductDeliveryStatus()
+    {
+        return oProductDeliveryStatus;
+    }
+    public void setoProductDeliveryStatus(String oProductDeliveryStatus)
+    {
+        this.oProductDeliveryStatus = oProductDeliveryStatus;
     }
 }
