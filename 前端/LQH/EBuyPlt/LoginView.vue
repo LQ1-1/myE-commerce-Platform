@@ -246,21 +246,18 @@ const handleSubmit = async () => {
             //注册失败,后端的原因
             ElMessage.error(messageStr)
           } else if (messageStr.includes('管理员')) {
-            ElMessage.success(messageStr)
+            ElMessage.success('欢迎,用户'+formData.uID)
             sessionStorage.setItem('uID', formData.uID) 
-            //跳转到管理员界面
-            // router.push('/admin')
+            // router.push('/admin')//跳转到管理员界面
           } else if (messageStr.includes('普通用户')) {
             //欢迎
             ElMessage.success('欢迎,用户'+formData.uID)
-            sessionStorage.setItem('uID', formData.uID) 
-            //跳转到普通用户界面
-            router.push('/ShoppingnbView')
+            sessionStorage.setItem('uID', formData.uID) //将账号信息带入界面
+            router.push('/ShoppingnbView')//跳转到普通用户界面
           } else if (messageStr.includes('商户')) {
             ElMessage.success('欢迎,用户'+formData.uID)
-            sessionStorage.setItem('uID', formData.uID) 
-            //跳转到商户界面
-            // router.push('/merchant')
+            sessionStorage.setItem('uID', formData.uID) //将账号信息带入界面
+            router.push('/MerchantView')//跳转到商户界面
           } else if (messageStr.includes('无此类型账户')) {
             ElMessage.error(messageStr)
           }else if(messageStr.includes('No such Account')){
