@@ -88,7 +88,9 @@ ALTER TABLE ProductTable ADD COLUMN pInventory int16 DEFAULT 0;--COMMENT '商品
 ALTER TABLE ProductTable ADD COLUMN pStatus varchar(16)DEFAULT '上架';--COMMENT '商品状态'
 CREATE INDEX index_pReleaseDate_date ON ProductTable(date(pReleaseDate));
 CREATE INDEX index_pType ON ProductTable(pType);
---商品状态:(上架，下架)下架之后不再更新数据但是仍然会保留在数据库中
+ALTER TABLE ProductTable ALTER COLUMN pName TYPE varchar(1024);
+ALTER TABLE ProductTable ALTER COLUMN pInfo TYPE varchar(4096);
+--商品状态:(上架,缺货,下架)下架之后不再更新数据但是仍然会保留在数据库中
 --pReleaseDate的格式与下单时间的格式一致YYYY-MM-DD HH:mm:ss
 --0000000000000000 pID长16位
 
@@ -110,6 +112,7 @@ ALTER TABLE ProductImagesTable ADD CONSTRAINT ProductImagesTableForeignKey FOREI
 ALTER TABLE ProductImagesTable RENAME COLUMN pType TO pImgType;
 CREATE INDEX index_pID ON ProductImagesTable(pID);
 CREATE INDEX index_picType ON ProductImagesTable(pType);
+ALTER TABLE ProductImagesTable ALTER COLUMN pImagePath TYPE varchar(1024);
 --若ProductTable中的商品下架(这一版)缩略图保留,即使商品下架了收藏库里依然能看到该商品只是标记为下架
 --pType图片类型:缩略图，展示图
 --static目录是默认映射的根路径,images文件夹放在static文件夹下
@@ -299,8 +302,8 @@ INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate
 ;
 
 SELECT * FROM ProductTable;
-UPDATE ProductTable SET ProductTable.pInventory=120 WHERE ProductTable.pID='0000000000000020';
-
+UPDATE ProductTable SET ProductTable.pInventory=120 WHERE ProductTable.pID='0000000000000020';0000000000000021
+UPDATE ProductTable SET ProductTable.pStatus='上架' WHERE ProductTable.pID='0000000000000022';
 
 
 
@@ -390,6 +393,11 @@ INSERT INTO ProductImagesTable(pID,pImgType,pImagePath)VALUES
 ('0000000000000018','展示图','assets/images/Galaxy_2.png'),
 ('0000000000000019','展示图','assets/images/GalaxySultra_2.png'),
 ('0000000000000020','展示图','assets/images/TS-990S_2.png');
+INSERT INTO ProductImagesTable(pID,pImgType,pImagePath)VALUES 
+('0000000000000021','缩略图','/assets/images/0000000000000021_5e87f95e-7972-44a0-bb8c-4224d0b4dc92.jpg'),
+('0000000000000021','展示图','/assets/images/0000000000000021_44bfe769-c7eb-48f8-9784-091b6ab087c2.jpg'),
+('0000000000000021','展示图','/assets/images/0000000000000021_e8c3c5c0-9dd5-4550-bebe-886cd9c10f86.jpg');
+
 
 SELECT * FROM ProductImagesTable;
 
@@ -465,6 +473,7 @@ END
 --ProductInventoryAscend函数检查
 SELECT ProductInventoryAscend('0000000000000000',15);
 SELECT * FROM ProductTable;
+SELECT * FROM ProductImagesTable;
 
 SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID='';
 
@@ -523,9 +532,9 @@ SELECT * FROM UserFavoritesTable;
 SELECT UserShoppingCartTable.pID,UserShoppingCartTable.cAmount,ProductTable.pName,ProductTable.pType,ProductTable.pPrice,ProductImagesTable.pImagePath FROM UserShoppingCartTable,ProductTable,ProductImagesTable WHERE UserShoppingCartTable.pID=ProductTable.pID AND ProductImagesTable.pID=UserShoppingCartTable.pID AND ProductImagesTable.pImgType='缩略图' AND uID='18775332736';
 
 --上架商品函数
-CREATE OR REPLACE FUNCTION NewProductOnSaleFunction(ipName varchar(128),ipType varchar(32),
-ipDiscount double,ipPrice double,ipProducer varchar(64),
-ipRelease date,ipInfo varchar(512),ipInventory int16,ipStatus varchar(16))
+CREATE OR REPLACE FUNCTION NewProductOnSaleFunction(iuID UserAccountTable.uID%Type,ipName ProductTable.pName%Type,ipType ProductTable.pType%Type,
+ipDiscount ProductTable.pDiscount%Type,ipPrice ProductTable.pPrice%Type,ipProducer ProductTable.pProducer%Type,
+ipRelease ProductTable.pReleaseDate%Type,ipInfo ProductTable.pInfo%Type,ipInventory ProductTable.pInventory%Type,ipStatus ProductTable.pStatus%Type)
 RETURN varchar AS 
 DECLARE 
 	lock_id INT:=12345;
@@ -537,6 +546,7 @@ BEGIN
 		 RAISE NOTICE '生成的New_pID为：%', New_pID;  
 		 INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate,pInfo,pInventory,pStatus)
 		 values(New_pID,ipName,ipType,ipDiscount,ipPrice,ipProducer,ipRelease,ipInfo,ipInventory,ipStatus);
+		 INSERT INTO MerchantsProductTable(uID,pID)VALUES (iuID,New_pID);
 		
 		PERFORM pg_advisory_unlock(lock_id);	--关闭锁
 		RETURN New_pID;
@@ -549,7 +559,7 @@ END
 
 
 --商品上架函数测试
-SELECT NewProductOnSaleFunction('test1','test1',1.0,1.0,'test1','2025-11-28 21:55:10','test',10,'上架');
+SELECT NewProductOnSaleFunction('1522788291@163.com','test1','test1',1.0,1.0,'test1','2025-11-28 21:55:10','test',10,'上架');
 SELECT * FROM ProductTable;
 DELETE FROM ProductTable WHERE pID='0000000000000021';
 
@@ -558,6 +568,17 @@ SELECT * FROM UserDeliveryInfoTable;
 DELETE FROM UserDeliveryInfoTable WHERE uID='18775332736';
 
 SELECT DISTINCT ProductTable.pType FROM ProductTable WHERE ProductTable.pStatus='上架';
+
+
+INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES
+('1522788291@163.com','Merchant001','760508cf0e664fae4e28c9d837b4840ee6a21203d3894bbe18edbcc54378bd13',
+'18074948512','18074948512@gmail.com','male',
+'2025-12-04 20:04:00','正常','商户');
+
+
+SELECT * FROM MerchantsProductTable;
+INSERT INTO MerchantsProductTable(uID,pID)values('1522788291@163.com','0000000000000021');
+INSERT INTO MerchantsProductTable(uID,pID)values('1522788291@163.com','0000000000000022');
 
 
 

@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ProductOnSale_jsonGet
 {
+    @JsonProperty("uID")
+    private String uID;
+
     @JsonProperty("pName")
     private String pName;
 
@@ -33,6 +36,14 @@ public class ProductOnSale_jsonGet
 
     public ProductOnSale_jsonGet(){}
 
+    public String getuID()
+    {
+        return uID;
+    }
+    public void setuID(String uID)
+    {
+        this.uID = uID;
+    }
     public String getpName()
     {
         return pName;

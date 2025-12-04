@@ -39,19 +39,21 @@ public class MerchantController
             Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
 
-            String sql1="SELECT NewProductOnSaleFunction(?,?,?," +
+            String sql1="SELECT NewProductOnSaleFunction(?,?,?,?," +
                     "?,?,?," +
                     "?,?,?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
-            prepare.setString(1,productOnSale.getpName());
-            prepare.setString(2,productOnSale.getpType());
-            prepare.setDouble(3,productOnSale.getpDiscount());
-            prepare.setDouble(4,productOnSale.getpPrice());
-            prepare.setString(5,productOnSale.getpProducer());
-            prepare.setString(6,productOnSale.getpReleaseDate());
-            prepare.setString(7,productOnSale.getpInfo());
-            prepare.setInt(8,productOnSale.getpInventory());
-            prepare.setString(9,productOnSale.getpStatus());
+            System.out.println("第一个参数商户的账号"+productOnSale.getuID());
+            prepare.setString(1,productOnSale.getuID());
+            prepare.setString(2,productOnSale.getpName());
+            prepare.setString(3,productOnSale.getpType());
+            prepare.setDouble(4,productOnSale.getpDiscount());
+            prepare.setDouble(5,productOnSale.getpPrice());
+            prepare.setString(6,productOnSale.getpProducer());
+            prepare.setString(7,productOnSale.getpReleaseDate());
+            prepare.setString(8,productOnSale.getpInfo());
+            prepare.setInt(9,productOnSale.getpInventory());
+            prepare.setString(10,productOnSale.getpStatus());
 
             ResultSet rs=prepare.executeQuery();
             if(rs.next())
@@ -220,6 +222,12 @@ public class MerchantController
     }
     private ProductAllInfo_jsonSend ProductAllInfoResult(ProductRecord_jsonGet recordCall)
     {
+        {
+            System.out.println("**************ProductAllInfo******************");
+            System.out.println(recordCall.getuID()+"商户请求过往上架的商品记录");
+            System.out.println("**************ProductAllInfo******************");
+        }
+
         ProductAllInfo_jsonSend res=new ProductAllInfo_jsonSend();
         ArrayList<String>pIDs=new ArrayList<>();
         try
@@ -278,6 +286,19 @@ public class MerchantController
 
                 res.AllInfo.add(item);
             }
+
+            {
+                System.out.println("***************ProductAllInfo检索结果*******************");
+                if(res.AllInfo.size()==0)
+                {
+                    System.out.println("检索到0条记录");
+                }
+                else
+                {
+                    System.out.println("检索到"+res.AllInfo.size()+"记录");
+                }
+                System.out.println("***************ProductAllInfo检索结果*******************");
+            }
         }
         catch(SQLException e)
         {
@@ -305,6 +326,20 @@ public class MerchantController
     }
     private boolean ProductStatusUpdateResult(ProductInfoUpdate_jsonGet updateInfo) //可能需要删除一些照片
     {
+        {
+            System.out.println("************ProductStatusUpdateResult*************");
+            System.out.println("商户更新商品的信息");
+            System.out.println(updateInfo.getpID());
+            System.out.println(updateInfo.getpName());
+            System.out.println(updateInfo.getpType());
+            System.out.println(updateInfo.getpDiscount());
+            System.out.println(updateInfo.getpPrice());
+            System.out.println(updateInfo.getpInfo());
+            System.out.println(updateInfo.getpInventory());
+            System.out.println(updateInfo.getpStatus());
+            System.out.println("************ProductStatusUpdateResult*************");
+        }
+
         boolean res1=false,res2=false,res3=false,res4=false;
 
         //检查缩略图是否更新
@@ -513,13 +548,19 @@ public class MerchantController
     }
 
     @CrossOrigin(origins="*")
-    @RequestMapping("/api/ProductSaledInfo")//该用户售出的商品
+    @RequestMapping("/api/ProductSaledInfo")//该用户售出的商品的记录
     public ApiResult<ProductSaledInfo_jsonSend> ProductSaledInfo(@RequestBody ProductRecord_jsonGet recordCall)
     {
         return ApiResult.success(ProductSaledInfoResult(recordCall));
     }
     private ProductSaledInfo_jsonSend ProductSaledInfoResult(ProductRecord_jsonGet recordCall)
     {
+        {
+            System.out.println("****************ProductSaledInfoResult*****************");
+            System.out.println(recordCall.getuID()+"商户请求查看以前上架过的商品的记录");
+            System.out.println("****************ProductSaledInfoResult*****************");
+        }
+
         ProductSaledInfo_jsonSend res=new ProductSaledInfo_jsonSend();
 
         //筛选订购数量，订购价格信息，派送状态信息
@@ -574,6 +615,19 @@ public class MerchantController
                 res.SaledItemList.add(item);
             }
 
+            {
+                System.out.println("****************ProductSaledInfoResult*****************");
+                System.out.println("查询到如下信息的记录");
+                if(res.SaledItemList.size()==0)
+                {
+                    System.out.println("售出记录为0");
+                }
+                else
+                {
+                    System.out.println("售出记录为"+res.SaledItemList.size());
+                }
+                System.out.println("****************ProductSaledInfoResult*****************");
+            }
         }
         catch(SQLException e)
         {
