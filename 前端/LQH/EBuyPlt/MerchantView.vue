@@ -247,29 +247,74 @@
     </el-container>
 
     <!-- 详情/编辑弹窗 -->
-    <el-dialog v-model="showDetailDialog" title="商品详情与编辑" width="700px" :before-close="handleCloseDetail">
+    <el-dialog v-model="showDetailDialog" title="商品详情与编辑" width="850px" :before-close="handleCloseDetail">
       <el-form v-if="editingProduct" :model="editingProduct" label-width="100px">
         <el-tabs type="border-card">
           <el-tab-pane label="基本信息">
             <el-form-item label="商品ID">
               <el-input v-model="editingProduct.pID" disabled></el-input>
             </el-form-item>
-            <el-form-item label="商品名称">
-              <el-input v-model="editingProduct.pName"></el-input>
-            </el-form-item>
-            <el-form-item label="价格">
-              <el-input-number v-model="editingProduct.pPrice" :precision="2" :step="0.1"></el-input-number>
-            </el-form-item>
-            <el-form-item label="库存">
-              <el-input-number v-model="editingProduct.pInventory"></el-input-number>
-            </el-form-item>
+
+            <!-- 第一行：名称与类型 -->
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="商品名称">
+                  <el-input v-model="editingProduct.pName"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="商品类型">
+                  <el-input v-model="editingProduct.pType"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <!-- 第二行：价格、折扣、库存（这里加了 style="width: 100%"） -->
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-form-item label="价格">
+                  <el-input-number v-model="editingProduct.pPrice" :precision="2" :step="0.1" style="width: 100%">
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="折扣(0-1)">
+                  <el-input-number v-model="editingProduct.pDiscount" :precision="2" :step="0.05" :min="0" :max="1"
+                    style="width: 100%">
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="库存">
+                  <el-input-number v-model="editingProduct.pInventory" style="width: 100%">
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <!-- 第三行：生产商与上架日期（日期已禁用） -->
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="生产商">
+                  <el-input v-model="editingProduct.pProducer"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="上架日期">
+                  <!-- disabled 属性确保日期不可修改，原样回传 -->
+                  <el-input v-model="editingProduct.pReleaseDate" disabled></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
             <el-form-item label="状态">
-              <el-select v-model="editingProduct.pStatus">
+              <el-select v-model="editingProduct.pStatus" style="width: 100%">
                 <el-option label="上架" value="上架"></el-option>
                 <el-option label="缺货" value="缺货"></el-option>
                 <el-option label="下架" value="下架"></el-option>
               </el-select>
             </el-form-item>
+
             <el-form-item label="简介">
               <el-input type="textarea" v-model="editingProduct.pInfo" rows="4"></el-input>
             </el-form-item>
@@ -359,7 +404,8 @@ const products = ref([]);
 const salesList = ref([]);
 const showDetailDialog = ref(false);
 const editingProduct = ref(null);
-
+const newThumbnailFile = ref(null);
+const newGalleryFiles = ref([]);
 // 上架表单相关
 const addFormRef = ref(null);
 const thumbnailFile = ref(null);
@@ -536,7 +582,22 @@ const fetchSalesRecord = async () => {
 
 // ---------------- 4. 编辑/更新商品 (含图片处理) ----------------
 const openProductDetail = (product) => {
-  editingProduct.value = JSON.parse(JSON.stringify(product));
+
+  // 1. 深拷贝对象
+  const copy = JSON.parse(JSON.stringify(product));
+
+  copy.oldThumbnailPicURL = copy.pThumbnail;
+
+  // 同理，初始化旧展示图列表（确保是数组）
+  copy.oldShowcaseImagesURL = copy.pShowcaseImageList ? [...copy.pShowcaseImageList] : [];
+  // ==================================================
+
+  editingProduct.value = copy;
+
+  // 2. 重置新文件容器
+  newThumbnailFile.value = null;
+  newGalleryFiles.value = [];
+
   showDetailDialog.value = true;
 };
 
@@ -552,6 +613,7 @@ const handleRemoveEditThumbnail = () => {
 
 // 4.2 添加/预览缩略图
 const handleEditThumbnailChange = (file) => {
+  newThumbnailFile.value = file.raw;
   const blobUrl = URL.createObjectURL(file.raw);
   editingProduct.value.pThumbnail = blobUrl;
   // 注意：实际更新到后端可能需要 formData，此处仅演示前端预览逻辑
@@ -564,6 +626,7 @@ const handleRemoveEditShowcaseItem = (index) => {
 
 // 4.4 添加/预览展示图
 const handleEditGalleryChange = (file) => {
+  newGalleryFiles.value.push(file.raw);
   const blobUrl = URL.createObjectURL(file.raw);
   if (!editingProduct.value.pShowcaseImageList) {
     editingProduct.value.pShowcaseImageList = [];
@@ -572,27 +635,93 @@ const handleEditGalleryChange = (file) => {
 };
 
 const updateProductInfo = async () => {
+  // === 【校验 1】强制必须有缩略图 ===
+  // 如果界面上 pThumbnail 为空（说明用户把旧的删了，又没传新的），则阻止提交
+  if (!editingProduct.value.pThumbnail) {
+    ElMessage.warning('商品必须包含一张缩略图，请上传后再保存。');
+    return;
+  }
+
   updating.value = true;
   try {
-    const updatePayload = {
-      ...editingProduct.value,
-      oldThumbnailPicURL: editingProduct.value.pThumbnail || '',
-      newThumbnailPicURL: editingProduct.value.pThumbnail || '',
-      oldShowcaseImagesURL: editingProduct.value.pShowcaseImageList || [],
-      newShowcaseImagesURL: editingProduct.value.pShowcaseImageList || [],
-    };
+    const formData = new FormData();
+    const product = editingProduct.value;
 
-    const res = await axios.post(`${API_BASE_URL}/api/ProductInfoUpdate`, updatePayload);
+    // 1. 基本信息
+    formData.append('pID', product.pID);
+    formData.append('pName', product.pName);
+    formData.append('pType', product.pType);
+    formData.append('pDiscount', product.pDiscount);
+    formData.append('pPrice', product.pPrice);
+    formData.append('pProducer', product.pProducer || '');
+    formData.append('pReleaseDate', product.pReleaseDate || '');
+    formData.append('pInfo', product.pInfo || '');
+    formData.append('pInventory', product.pInventory);
+    formData.append('pStatus', product.pStatus);
 
-    if (res.data === 'UpdateSuccess' || res.data.includes('Success')) {
+    // ===============================================
+    // 2. 缩略图逻辑 (根据你的要求修改)
+    // ===============================================
+
+    // 旧路径 (始终传)
+    const oldUrl = product.oldThumbnailPicURL || '';
+    formData.append('oldThumbnailPicURL', oldUrl);
+
+    // 计算 newThumbnailPicURL 的值
+    let newUrlStr = '';
+
+    // 判断有没有新文件
+    if (newThumbnailFile.value) {
+      // 有新文件 -> newThumbnailPicURL 留空
+      newUrlStr = '';
+
+      // 放入文件对象
+      formData.append('newThumbnailItem.pImgType', '缩略图');
+      formData.append('newThumbnailItem.fileData', newThumbnailFile.value);
+    } else {
+      // 没有新文件 -> newThumbnailPicURL = 旧路径
+      newUrlStr = oldUrl;
+    }
+
+    // 将计算好的 newThumbnailPicURL 放入表单
+    formData.append('newThumbnailPicURL', newUrlStr);
+
+
+    // ===============================================
+    // 3. 展示图逻辑 (保持不变)
+    // ===============================================
+    if (product.oldShowcaseImagesURL && product.oldShowcaseImagesURL.length > 0) {
+      product.oldShowcaseImagesURL.forEach(url => {
+        formData.append('oldShowcaseImagesURL', url);
+      });
+    }
+    if (product.pShowcaseImageList && product.pShowcaseImageList.length > 0) {
+      const remainingOldImages = product.pShowcaseImageList.filter(url => !url.startsWith('blob:'));
+      remainingOldImages.forEach(url => {
+        formData.append('newShowcaseImagesURL', url);
+      });
+    }
+    if (newGalleryFiles.value && newGalleryFiles.value.length > 0) {
+      newGalleryFiles.value.forEach((file, index) => {
+        formData.append(`pShowcaseImageList[${index}].pImgType`, '展示图');
+        formData.append(`pShowcaseImageList[${index}].pImagePath`, file);
+      });
+    }
+
+    // 4. 发送请求
+    const res = await axios.post(`${API_BASE_URL}/api/ProductInfoUpdate`, formData);
+    // alert(res.data);
+    if (res.data === 'Success' || (typeof res.data === 'string' && res.data.includes('Success'))) {
       ElMessage.success('商品信息更新成功');
       showDetailDialog.value = false;
       fetchProductList();
     } else {
-      ElMessage.error('更新失败');
+      ElMessage.error('更新失败: ' + res.data);
     }
+
   } catch (error) {
-    ElMessage.error('更新请求异常');
+    console.error('Update Error:', error);
+    ElMessage.error('更新请求发生异常');
   } finally {
     updating.value = false;
   }
