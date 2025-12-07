@@ -52,6 +52,9 @@ public class AdminController        //管理员控制器
 
                 res.add(item);
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -68,7 +71,7 @@ public class AdminController        //管理员控制器
     @RequestMapping("/api/AdminUserDeliveryInfoTable")
     public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminUserDeliveryInfoTable()
     {
-        return ApiResult.success();
+        return ApiResult.success(AdminUserDeliveryInfoTableResult());
     }
     private ArrayList<UserDeliveryInfoTableItem> AdminUserDeliveryInfoTableResult()
     {

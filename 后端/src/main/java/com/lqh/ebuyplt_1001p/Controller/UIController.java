@@ -80,6 +80,8 @@ public class UIController
                 item.setpImagePath(rs.getString("pImagePath"));
                 res.add(item);
             }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -288,6 +290,8 @@ public class UIController
                     ResultList.put(item.getpID(),item);
                     res.add(item);
                 }
+                rs.close();
+                prepare.close();
             }
 
             //这个单独弄一块，这个部分查询需要在商品编号，商品名称，商品生产商，商品类型，商品描述信息里面查询，
@@ -323,6 +327,8 @@ public class UIController
                         res.add(item);
                     }
                 }
+                rs2.close();
+                prepare.close();
             }
         }
         catch(SQLException e)
@@ -363,6 +369,9 @@ public class UIController
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1,ClickCondition.getpID());
             ResultSet rs=prepare.executeQuery();
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -396,6 +405,8 @@ public class UIController
                 result.setpInventory(rs.getInt("pInventory"));
                 result.setpStatus(rs.getString("pStatus"));
             }
+            rs.close();
+            prepare.close();
 
             String sql2="SELECT * FROM ProductImagesTable WHERE pID=?;";                                                //查询该商品的图片信息
             PreparedStatement prepare2=con.prepareStatement(sql2);
@@ -408,7 +419,9 @@ public class UIController
                 temparr.add(tempstr);
             }
             result.setpImagePaths(temparr);
-
+            rs2.close();
+            prepare2.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -443,6 +456,8 @@ public class UIController
                 String pType=rs.getString("pType");
                 res.add(pType);
             }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {

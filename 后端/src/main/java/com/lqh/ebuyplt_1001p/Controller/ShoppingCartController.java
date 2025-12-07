@@ -48,9 +48,14 @@ public class ShoppingCartController
                 boolean flag=rs.getBoolean(1);
                 if(flag)
                 {
+                    rs.close();
+                    prepare.close();
                     return ShoppingCartAddResult.Success;
                 }
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -91,8 +96,12 @@ public class ShoppingCartController
             int row=prepare.executeUpdate();
             if(row>0)
             {
+                prepare.close();
+                con.close();
                 return  true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -141,8 +150,10 @@ public class ShoppingCartController
             int row=con.prepareStatement(sql1.toString()).executeUpdate();
             if(row>0)
             {
+                con.close();
                 return true;
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -191,6 +202,9 @@ public class ShoppingCartController
 
                 res.add(item);
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -229,6 +243,8 @@ public class ShoppingCartController
             {
                 return FavouriteAddResult.Success;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -267,8 +283,12 @@ public class ShoppingCartController
             int row=prepare.executeUpdate();
             if(row>0)
             {
+                prepare.close();
+                con.close();
                 return true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -318,8 +338,10 @@ public class ShoppingCartController
             int row=con.prepareStatement(sql1.toString()).executeUpdate();
             if(row>0)
             {
+                con.close();
                 return true;
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -367,6 +389,9 @@ public class ShoppingCartController
 
                 res.add(item);
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {

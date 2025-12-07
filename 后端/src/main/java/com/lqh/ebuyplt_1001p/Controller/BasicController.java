@@ -104,8 +104,14 @@ public class BasicController
             }
             else
             {
+                rs.close();
+                prepare.close();
+                con.close();
                 return "No such Account";
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(Exception e)
         {
@@ -184,8 +190,14 @@ public class BasicController
             }
             else
             {
+                rs.close();
+                prepare.close();
+                con.close();
                 return "No such Account";
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(Exception e)
         {
@@ -243,6 +255,9 @@ public class BasicController
                 System.out.println(rs.getString(1));
                 res.append(rs.getString(1));
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {

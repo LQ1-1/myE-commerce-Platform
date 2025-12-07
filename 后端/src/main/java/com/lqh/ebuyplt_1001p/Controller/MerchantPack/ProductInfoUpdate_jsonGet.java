@@ -6,47 +6,24 @@ import java.util.ArrayList;
 
 public class ProductInfoUpdate_jsonGet
 {
-    @JsonProperty("pID")
     private String pID;
-
-    @JsonProperty("pName")
     private String pName;
-
-    @JsonProperty("pType")
     private String pType;
-
-    @JsonProperty("pDiscount")
     private double pDiscount;
-
-    @JsonProperty("pPrice")
     private double pPrice;
-
-    @JsonProperty("pProducer")
     private String pProducer;
-
-    @JsonProperty("pReleaseDate")
     private String pReleaseDate;
-
-    @JsonProperty("pInfo")
     private String pInfo;
-
-    @JsonProperty("pInventory")
     private int pInventory;
-
-    @JsonProperty("pStatus")
     private String pStatus;
 
-    @JsonProperty("oldThumbnailPicURL")
     private String oldThumbnailPicURL;//新的等于旧的就是没有改变
-    @JsonProperty("newThumbnailPicURL")
     private String newThumbnailPicURL;//如果用户删除目前的缩略图换上新的缩略图的话，这里就是空的，新的图片放在pThumbnail
 
     //如果用户上传新的缩略图就是这个
     public ProductImageItem pThumbnail;
 
-    @JsonProperty("oldShowcaseImagesURL")
     public ArrayList<String>oldShowcaseImagesURL;//用来确定哪些是要被删除的图片
-    @JsonProperty("newShowcaseImagesURL")
     public ArrayList<String>newShowcaseImagesURL;//旧有新没有则表明该图片被移除，新的图片直接放在pShowcaseImageList里面
 
     //如果用户有上传新的展示图就放在这里

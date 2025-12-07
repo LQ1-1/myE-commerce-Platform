@@ -63,6 +63,8 @@ public class MerchantController
                 result.setStatus(PutOnSaleStatus.OnSaleSuccess);
                 result.setpID(New_pID);
             }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -210,6 +212,8 @@ public class MerchantController
             {
                 return true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -253,6 +257,8 @@ public class MerchantController
                 String pID=rs.getString("pID");
                 pIDs.add(pID);
             }
+            prepare.close();
+            rs.close();
 
             for(String pID : pIDs)
             {
@@ -272,7 +278,11 @@ public class MerchantController
                     item.setpInfo(rs2.getString("pInfo"));
                     item.setpInventory(rs2.getInt("pInventory"));
                     item.setpStatus(rs2.getString("pStatus"));
+                    item.setpProducer(rs2.getString("pProducer"));
+                    item.setpReleaseDate(rs2.getString("pReleaseDate"));
                 }
+                rs2.close();
+                prepare2.close();
 
                 String sub_sql2="SELECT * FROM ProductImagesTable WHERE pID=?;";
                 PreparedStatement prepare3=con.prepareStatement(sub_sql2);
@@ -292,6 +302,8 @@ public class MerchantController
                         item.pShowcaseImageList.add(pImagePath);
                     }
                 }
+                rs3.close();
+                prepare3.close();
 
                 res.AllInfo.add(item);
             }
@@ -308,6 +320,7 @@ public class MerchantController
                 }
                 System.out.println("***************ProductAllInfo检索结果*******************");
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -322,7 +335,8 @@ public class MerchantController
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductInfoUpdate")//商户更新该商品的信息
-    public String ProductStatusUpdate(@RequestBody ProductInfoUpdate_jsonGet updateInfo)    //ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
+    //Json文件是纯文本不能存储二进制文件，
+    public String ProductStatusUpdate(ProductInfoUpdate_jsonGet updateInfo)    //ProductInfoUpdate_jsonGet是从后端返回该商品的所有信息，然后让商户修改，商户确认修改之后再将所有的信息发送给后端
     {
         if(ProductStatusUpdateResult(updateInfo))
         {
@@ -353,7 +367,11 @@ public class MerchantController
 
         //检查缩略图是否更新
         boolean ThumbnailUpdate=true;
-        if(updateInfo.getNewThumbnailPicURL().equals(updateInfo.getOldThumbnailPicURL()))//缩略图未更新
+        if(updateInfo.getNewThumbnailPicURL()==null)
+        {
+            ThumbnailUpdate=true;
+        }
+        else if(updateInfo.getNewThumbnailPicURL().equals(updateInfo.getOldThumbnailPicURL()))//缩略图未更新
         {
             ThumbnailUpdate=false;
         }
@@ -394,12 +412,15 @@ public class MerchantController
             prepare.setString(7,updateInfo.getpInfo());
             prepare.setInt(8,updateInfo.getpInventory());
             prepare.setString(9,updateInfo.getpStatus());
+            prepare.setString(10,updateInfo.getpID());
             int row=prepare.executeUpdate();
             if(row>0)
             {
                 System.out.println("商品"+updateInfo.getpID()+"信息更新成功");
                 res1=true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -449,7 +470,9 @@ public class MerchantController
                     System.out.println(newURL+" 已在数据库里面设置好");
                     res2=true;
                 }
+                prepare2.close();
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -495,7 +518,9 @@ public class MerchantController
                 {
                     System.out.println("旧展示图"+str+"在数据库里面删除成功");
                 }
+                prepare3.close();
             }
+            con.close();
             res3=true;
         }
         catch(SQLException e)
@@ -518,24 +543,29 @@ public class MerchantController
                 String projectRoot=System.getProperty("user.dir");
                 String targetFolder=projectRoot+"/assets/images/";
 
+                //往数据库里面添加新的记录
+                String sql4="INSERT INTO ProductImagesTable (pID,pImgType,pImagePath)VALUES(?,?,?);";
+                PreparedStatement prepare4=con.prepareStatement(sql4);
+
                 for(ProductImageItem item:updateInfo.pShowcaseImageList)
                 {
                     //服务器硬盘上保存新的展示图片
                     String newURL="/assets/images/"+saveFile(item.getpImagePath(), targetFolder,updateInfo.getpID());
 
-                    //往数据库里面添加新的记录
-                    String sql4="INSERT INTO (pID,pImgType,pImagePath)VALUES(?,?,?);";
-                    PreparedStatement prepare4=con.prepareStatement(sql4);
                     prepare4.setString(1,updateInfo.getpID());
                     prepare4.setString(2,"展示图");
                     prepare4.setString(3,newURL);
-                    int row=prepare4.executeUpdate();
-                    if(row>0)
-                    {
-                        System.out.println("新的展示图"+newURL+"在数据库里保存成功");
-                    }
+                    prepare4.addBatch();//批量插入
                 }
-                res4=true;
+                int rows[]=prepare4.executeBatch();
+                con.commit();//提交事务
+                if(rows.length>0)
+                {
+                    System.out.println("成功插入 "+rows.length+"张展示图");
+                    res4=true;
+                }
+                prepare4.close();
+                con.close();
             }
             catch(SQLException e)
             {
@@ -546,7 +576,8 @@ public class MerchantController
                 e.printStackTrace();
             }
         }
-        if(res1==true && res2==true && res3==true && res4==true)
+        System.out.println(res1+" "+res2+" "+res3+" "+res4);
+        if(res1==true)
         {
             return true;
         }
@@ -608,6 +639,8 @@ public class MerchantController
                     item.DeliveryInfoItem.setuContactPersonPhone(rs2.getString("oContactPhone"));
                     item.DeliveryInfoItem.setuDeliveryAddress(rs2.getString("oDeliveryAddress"));
                 }
+                rs2.close();
+                prepare2.close();
 
                 //再根据订单号信息去查找下单时间信息,以及下单者的账号，以及该订单的生成时间，以及该订单的状态
                 String sql3="SELECT * FROM OrderGeneralInfoTable,OrderBasicInfoTable WHERE OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID AND OrderGeneralInfoTable.oOrderID=?;";
@@ -620,6 +653,8 @@ public class MerchantController
                     item.setoDate(rs3.getString("oDate"));
                     item.setoStatus(rs3.getString("oStatus"));
                 }
+                prepare3.close();
+                rs3.close();
 
                 res.SaledItemList.add(item);
             }
@@ -637,6 +672,9 @@ public class MerchantController
                 }
                 System.out.println("****************ProductSaledInfoResult*****************");
             }
+            rs1.close();
+            prepare1.close();
+            con.close();
         }
         catch(SQLException e)
         {

@@ -72,6 +72,9 @@ public class Order02Controller
 
                 res.DeliveryInfos.add(dInfo);
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -139,6 +142,8 @@ public class Order02Controller
             {
                 return true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -228,6 +233,8 @@ public class Order02Controller
                     flag1_AmountCheckisLegal=false;
                 }
             }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -282,6 +289,9 @@ public class Order02Controller
             System.out.println(OrderProductInfoTableResult);
             System.out.println(RemoveCartRecords);
             System.out.println("最终订单号 : "+res.getoOrderID());
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -319,6 +329,8 @@ public class Order02Controller
             {
                 res=true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -349,6 +361,8 @@ public class Order02Controller
             {
                 res=true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -379,6 +393,8 @@ public class Order02Controller
             {
                 res=true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -411,6 +427,8 @@ public class Order02Controller
             {
                 res=true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -466,8 +484,10 @@ public class Order02Controller
             int row=con.prepareStatement(sql1.toString()).executeUpdate();
             if(!(row>0))
             {
+                con.close();
                 return false;
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -493,8 +513,9 @@ public class Order02Controller
                 prepare.setString(1, pID);
                 prepare.setInt(2, pAmount);
                 ResultSet rs=prepare.executeQuery();
-                if(rs.next()){}
+                if(rs.next()){rs.close();prepare.close();}
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -529,8 +550,10 @@ public class Order02Controller
             int row=con.prepareStatement(sql1.toString()).executeUpdate();
             if(row>0)
             {
+                con.close();
                 return true;
             }
+            con.close();
         }
         catch(SQLException e)
         {
@@ -579,8 +602,12 @@ public class Order02Controller
             int row=prepare.executeUpdate();
             if(row>0)
             {
+                prepare.close();
+                con.close();
                 return true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -629,8 +656,12 @@ public class Order02Controller
             int row=prepare.executeUpdate();
             if(row>0)
             {
+                prepare.close();
+                con.close();
                 return true;
             }
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -715,13 +746,16 @@ public class Order02Controller
                             prepare3.setString(1,pID);
                             prepare3.setInt(2,oAmount);
                             ResultSet rs3=prepare3.executeQuery();                  //将这个订单中这个商品的订购数量重新加回库存里面
-                            if(rs3.next()) {}
+                            if(rs3.next()) {rs3.close();;prepare3.close();}
                         }
                         CancelledFeedBackItem item=new CancelledFeedBackItem();
                         item.setoOrderID(oID);
                         item.setFeedBack(OrderPack2StatusCheck.CancelledAccept);
                         res.oOrderIDs.set(map.get(oID),item);
+                        rs2.close();
+                        prepare2.close();
                     }
+                    prepare.close();
                 }
                 else                                //差距在一小时之外，该订单不可以取消
                 {
@@ -731,6 +765,8 @@ public class Order02Controller
                     res.oOrderIDs.set(map.get(oID),item);
                 }
             }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -780,6 +816,8 @@ public class Order02Controller
                     String oStatus=rs2.getString("oStatus");
                     item.setoStatus(oStatus);//给item设置订单状态
                 }
+                rs2.close();
+                prepare2.close();
 
                 //查询该订单的收货人信息表
                 String sql3="SELECT * FROM OrdererInfoTable WHERE oOrderID=?;";
@@ -795,6 +833,8 @@ public class Order02Controller
                     String oReceieverEmail=rs3.getString("oReceieverEmail");
                     item.DeliveryInfo.setuContactPersonEmail(oReceieverEmail);
                 }
+                rs3.close();
+                prepare3.close();
 
                 //查询该订单的订单配送信息
                 String sql4="SELECT * FROM OrderDeliveryInfo WHERE oOrderID=?;";
@@ -812,6 +852,8 @@ public class Order02Controller
                     String oDeliveryNote=rs4.getString("oDeliveryNote");
                     item.DeliveryInfo.setoDeliveryNote(oDeliveryNote);
                 }
+                rs4.close();
+                prepare4.close();
 
                 //查询该订单的产品信息表
                 String sql5="SELECT * FROM OrderProductInfoTable WHERE oOrderID=?;";
@@ -832,8 +874,13 @@ public class Order02Controller
 
                     item.pProducts.add(productItem);
                 }
+                rs5.close();
+                prepare5.close();
                 res.OrderRecordList.add(item);
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {

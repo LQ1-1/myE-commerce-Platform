@@ -5,7 +5,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class ProductImageItem
 {
-    @JsonProperty("pImgType")
     private String pImgType;
 
     private MultipartFile pImagePath;
