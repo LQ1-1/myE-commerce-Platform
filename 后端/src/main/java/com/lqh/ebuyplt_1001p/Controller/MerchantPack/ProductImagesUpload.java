@@ -1,12 +1,15 @@
 package com.lqh.ebuyplt_1001p.Controller.MerchantPack;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.Data;
 
 @Data
 public class ProductImagesUpload
 {
+    @JsonProperty("uID")
     private String uID;
+    @JsonProperty("pID")
     private String pID;
 
     public MultipartFile cover;//缩略图

@@ -25,6 +25,12 @@ public class ProductSaledInfoItem
     @JsonProperty("oStatus")
     private String oStatus;
 
+    public ProductSaledInfoItem()
+    {
+        this.DeliveryInfoItem=new DeliveryInfo();
+        this.OrderProductInfoTableItem=new ProductItem();
+    }
+
     public String getoDate() {
         return oDate;
     }

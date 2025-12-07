@@ -7,7 +7,7 @@ public class ProductImageItem
 {
     @JsonProperty("pImgType")
     private String pImgType;
-    @JsonProperty("pImagePath")
+
     private MultipartFile pImagePath;
 
     public ProductImageItem(){}

@@ -41,7 +41,7 @@ public class ProductInfoUpdate_jsonGet
     @JsonProperty("newThumbnailPicURL")
     private String newThumbnailPicURL;//如果用户删除目前的缩略图换上新的缩略图的话，这里就是空的，新的图片放在pThumbnail
 
-    @JsonProperty("pThumbnail") //如果用户上传新的缩略图就是这个
+    //如果用户上传新的缩略图就是这个
     public ProductImageItem pThumbnail;
 
     @JsonProperty("oldShowcaseImagesURL")
@@ -49,7 +49,7 @@ public class ProductInfoUpdate_jsonGet
     @JsonProperty("newShowcaseImagesURL")
     public ArrayList<String>newShowcaseImagesURL;//旧有新没有则表明该图片被移除，新的图片直接放在pShowcaseImageList里面
 
-    @JsonProperty("pShowcaseImageList") //如果用户有上传新的展示图就放在这里
+    //如果用户有上传新的展示图就放在这里
     public ArrayList<ProductImageItem> pShowcaseImageList;
 
     public ProductInfoUpdate_jsonGet()
@@ -57,6 +57,8 @@ public class ProductInfoUpdate_jsonGet
         this.pShowcaseImageList = new ArrayList<>();
         this.oldShowcaseImagesURL = new ArrayList<>();
         this.newShowcaseImagesURL = new ArrayList<>();
+
+        this.pThumbnail=new ProductImageItem();
     }
 
     public String getpID()

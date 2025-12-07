@@ -63,4 +63,40 @@ public class UserAccountTableItem
         return uAccountStatus;
     }
 
+    public void  setuID(String uID)
+    {
+        this.uID = uID;
+    }
+    public void setuNickName(String uNickName)
+    {
+        this.uNickName = uNickName;
+    }
+    public void setuPassword(String uPassword)
+    {
+        this.uPassword = uPassword;
+    }
+    public void setuPhone(String uPhone)
+    {
+        this.uPhone = uPhone;
+    }
+    public void setuEmail(String uEmail)
+    {
+        this.uEmail = uEmail;
+    }
+    public void setuGender(String uGender)
+    {
+        this.uGender = uGender;
+    }
+    public void setuRegisterDate(String uRegisterDate)
+    {
+        this.uRegisterDate = uRegisterDate;
+    }
+    public void setuAccountType(String uAccountType)
+    {
+        this.uAccountType = uAccountType;
+    }
+    public void setuAccountStatus(String uAccountStatus)
+    {
+        this.uAccountStatus = uAccountStatus;
+    }
 }

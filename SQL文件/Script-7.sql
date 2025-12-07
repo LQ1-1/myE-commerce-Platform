@@ -270,6 +270,11 @@ INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegi
 '0123456789','测试账号_普通用户_注销','84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882',
 '10011867832','23456464@qq.com','male',
 '2025-11-15 15:12:41','注销','普通用户');
+INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES
+('206914893@163.com','Merchant002','48fcd3b9d4fe5e77dfc18bc50c1d98ae10e63f5a1853e3fe40eb5f96f3396b7d','18890816389','206914893@qq.com','某购物袋','2025-12-05 16:07:11','正常','商户');
+
+DELETE FROM UserAccountTable WHERE uID='206914893@163.com';
+
 
 SELECT * FROM UserAccountTable;
 SELECT version();
@@ -474,6 +479,7 @@ END
 SELECT ProductInventoryAscend('0000000000000000',15);
 SELECT * FROM ProductTable;
 SELECT * FROM ProductImagesTable;
+SELECT * FROM ProductClicksInfoTable;
 
 SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID='';
 
@@ -579,6 +585,12 @@ INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegi
 SELECT * FROM MerchantsProductTable;
 INSERT INTO MerchantsProductTable(uID,pID)values('1522788291@163.com','0000000000000021');
 INSERT INTO MerchantsProductTable(uID,pID)values('1522788291@163.com','0000000000000022');
+
+
+SELECT * FROM OrderProductInfoTable WHERE pID IN(SELECT DISTINCT  MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID='1522788291@163.com');
+SELECT MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID='1522788291@163.com';
+SELECT * FROM OrderProductInfoTable;
+
 
 
 

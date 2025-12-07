@@ -90,6 +90,15 @@ public class MerchantController
     }
     private boolean ProductImagesUploadResult(ProductImagesUpload form)
     {
+        {
+            System.out.println("**************ProductImagesUploadResult*****************");
+
+
+
+
+            System.out.println("**************ProductImagesUploadResult*****************");
+        }
+
         // 获取封面
         MultipartFile cover = form.getcover();
 
@@ -569,7 +578,7 @@ public class MerchantController
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            String sql1="SELECT * FROM OrderProductInfoTable WHERE pID=(SELECT MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID=?);";
+            String sql1="SELECT * FROM OrderProductInfoTable WHERE pID IN (SELECT MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID=?);";
             PreparedStatement prepare1=con.prepareStatement(sql1);
             prepare1.setString(1,recordCall.getuID());
             ResultSet rs1=prepare1.executeQuery();
