@@ -3,6 +3,8 @@ package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserAccountTableItem;
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserDeliveryInfoTableItem;
+import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserFavoritesTableItem;
+import com.lqh.ebuyplt_1001p.Controller.AdminPack.*;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +24,7 @@ public class AdminController        //管理员控制器
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminUserAccountTable")
-    public ApiResult<ArrayList<UserAccountTableItem>> AdminUserAccountTable()
+    public ApiResult<ArrayList<UserAccountTableItem>> AdminUserAccountTable()       //获取所有的账户信息
     {
         return ApiResult.success(AdminUserAccountTableResult());
     }
@@ -31,7 +33,7 @@ public class AdminController        //管理员控制器
         ArrayList<UserAccountTableItem>res=new ArrayList<>();
         try
         {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT * FROM UserAccountTable;";
@@ -69,7 +71,7 @@ public class AdminController        //管理员控制器
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminUserDeliveryInfoTable")
-    public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminUserDeliveryInfoTable()
+    public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminUserDeliveryInfoTable()     //获取所有用户的所有收货信息
     {
         return ApiResult.success(AdminUserDeliveryInfoTableResult());
     }
@@ -78,10 +80,27 @@ public class AdminController        //管理员控制器
         ArrayList<UserDeliveryInfoTableItem> res=new ArrayList<>();
         try
         {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
 
+            String sql1="SELECT * FROM UserDeliveryInfoTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                UserDeliveryInfoTableItem item=new UserDeliveryInfoTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setoDeliveryNote(rs.getString("oDeliveryNote"));
+                item.setoPostalCode(rs.getString("oPostalCode"));
+                item.setuContactPersonEmail(rs.getString("oReceieverEmail"));
+                item.setuDeliveryAddress(rs.getString("uDeliveryAddress"));
+                item.setuContactPersonGender(rs.getString("uContactPersonGender"));
+                item.setuContactPersonPhone(rs.getString("uContactPersonPhone"));
+                item.setuContactPersonName(rs.getString("uContactPersonName"));
 
+                res.add(item);
+            }
+            rs.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -93,4 +112,203 @@ public class AdminController        //管理员控制器
         }
         return res;
     }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserShoppingCartTable")
+    public ApiResult<ArrayList<UserShoppingCartTableItem>> AdminUserShoppingCartTable()     //返回所有用户的所有购物车记录
+    {
+        return ApiResult.success(AdminUserShoppingCartTableResult());
+    }
+    private ArrayList<UserShoppingCartTableItem> AdminUserShoppingCartTableResult()
+    {
+        ArrayList<UserShoppingCartTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+            String sql1="SELECT * FROM UserShoppingCartTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                UserShoppingCartTableItem item=new UserShoppingCartTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setpID(rs.getString("pID"));
+                item.setcAmount(rs.getInt("cAmount"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserFavoritesTable")
+    public ApiResult<ArrayList<UserFavoritesTableItem>>AdminUserFavoritesTable()        //获取所有用户的所有商品收藏信息
+    {
+        return ApiResult.success(AdminUserFavoritesTableResult());
+    }
+    private ArrayList<UserFavoritesTableItem> AdminUserFavoritesTableResult()
+    {
+        ArrayList<UserFavoritesTableItem>res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM UserFavoritesTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                UserFavoritesTableItem item=new UserFavoritesTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setpID(rs.getString("pID"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/MerchantsProductTable")
+    public ApiResult<ArrayList<MerchantsProductTableItem>> MerchantsProductTable()      //获取所有商户的所有上架记录
+    {
+        return ApiResult.success(MerchantsProductTableResult());
+    }
+    private ArrayList<MerchantsProductTableItem> MerchantsProductTableResult()
+    {
+        ArrayList<MerchantsProductTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM MerchantsProductTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                MerchantsProductTableItem item=new MerchantsProductTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setpID(rs.getString("pID"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/ProductTable")
+    public ApiResult<ArrayList<ProductTableItem>> ProductTable()        //返回所有商品的记录
+    {
+        return ApiResult.success(ProductTableResult());
+    }
+    private ArrayList<ProductTableItem> ProductTableResult()
+    {
+        ArrayList<ProductTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+            String sql1="SELECT * FROM ProductTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                ProductTableItem item=new ProductTableItem();
+                item.setpID(rs.getString("pID"));
+                item.setpName(rs.getString("pName"));
+                item.setpType(rs.getString("pType"));
+                item.setpDiscount(rs.getDouble("pDiscount"));
+                item.setpPrice(rs.getDouble("pPrice"));
+                item.setpProducer(rs.getString("pProducer"));
+                item.setpReleaseDate(rs.getString("pReleaseDate"));
+                item.setpInfo(rs.getString("pInfo"));
+                item.setpInventory(rs.getInt("pInventory"));
+                item.setpStatus(rs.getString("pStatus"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/ProductImagesTable")
+    public ApiResult<ArrayList<ProductImagesTableItem>> ProductImagesTable()
+    {
+        return ApiResult.success(ProductImagesTableResult());
+    }
+    private ArrayList<ProductImagesTableItem> ProductImagesTableResult()
+    {
+        ArrayList<ProductImagesTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM ProductImagesTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                ProductImagesTableItem item=new ProductImagesTableItem();
+                item.setpID(rs.getString("pID"));
+                item.setpType(rs.getString("pType"));
+                item.setpImagePath(rs.getString("pImagePath"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        Object obj;
+        String str;
+        return res;
+    }
+
+
+
+
 }
