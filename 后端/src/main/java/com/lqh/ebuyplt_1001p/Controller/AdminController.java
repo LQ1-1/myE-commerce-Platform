@@ -270,7 +270,7 @@ public class AdminController        //管理员控制器
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/ProductImagesTable")
-    public ApiResult<ArrayList<ProductImagesTableItem>> ProductImagesTable()
+    public ApiResult<ArrayList<ProductImagesTableItem>> ProductImagesTable()    //返回所有商品的所有图片记录信息
     {
         return ApiResult.success(ProductImagesTableResult());
     }
@@ -305,6 +305,69 @@ public class AdminController        //管理员控制器
         }
         Object obj;
         String str;
+        return res;
+    }
+
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/api/ProductClicksInfoTable")
+    public ApiResult<ArrayList<ProductClicksInfoTableItem>> ProductClicksInfoTable()    //返回所有商品的点击次数记录信息
+    {
+        return ApiResult.success(ProductClicksInfoTableResult());
+    }
+    private ArrayList<ProductClicksInfoTableItem> ProductClicksInfoTableResult()
+    {
+        ArrayList<ProductClicksInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM ProductClicksInfoTable;";
+            ResultSet rs=con.createStatement().executeQuery(sql1);
+            while(rs.next())
+            {
+                ProductClicksInfoTableItem item=new ProductClicksInfoTableItem();
+                item.setpID(rs.getString("pID"));
+                item.setpClicksAmount(rs.getLong("pClicksAmount"));
+                res.add(item);
+            }
+            rs.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/api/OrderFullInfoTable")
+    public ApiResult<ArrayList<OrderFullInfoTableItem>> OrderFullInfoTable()
+    {
+        return ApiResult.success(OrderFullInfoTableResult());
+    }
+    private ArrayList<OrderFullInfoTableItem> OrderFullInfoTableResult()
+    {
+        ArrayList<OrderFullInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
         return res;
     }
 
