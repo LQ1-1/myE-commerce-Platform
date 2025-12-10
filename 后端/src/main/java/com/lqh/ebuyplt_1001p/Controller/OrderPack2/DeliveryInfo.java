@@ -29,6 +29,17 @@ public class DeliveryInfo
     @JsonProperty("oDeliveryNote")
     private String oDeliveryNote;                   //送货邮编           --NEW
 
+    @JsonProperty("uDIndex")
+    private int uDIndex;                            //标记这是第几个的送货记录 --NEW 2025-12-10
+
+    public int getuDIndex() {
+        return uDIndex;
+    }
+
+    public void setuDIndex(int uDIndex) {
+        this.uDIndex = uDIndex;
+    }
+
     public DeliveryInfo(){}
 
     public String getuID()

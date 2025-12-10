@@ -120,12 +120,9 @@ public class Order02Controller
             Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
 
-            String sql1="INSERT INTO UserDeliveryInfoTable(uID,uDeliveryAddress," +
-                    "uContactPersonName,uContactPersonPhone," +
-                    "uContactPersonGender,oReceieverEmail," +
-                    "oPostalCode,oDeliveryNote)" +
-                    "VALUES(?,?,?,?," +
-                    "?,?,?,?)";
+            String sql1="SELECT UserDeliveryInfoTableadd(?, ?, ?, " +
+                    "?, ?, ?, " +
+                    "?, ?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
             prepare.setString(1,deliveryInfo.getuID());
             prepare.setString(2,deliveryInfo.getuDeliveryAddress());

@@ -9,25 +9,25 @@ public class OrderProductInfoTableItem
     @JsonProperty("pID")
     private String pID;
     @JsonProperty("oPrice")
-    private String oPrice;
+    private double oPrice;
     @JsonProperty("oAmount")
-    private String oAmount;
+    private int oAmount;
 
     public OrderProductInfoTableItem(){}
 
-    public String getoAmount() {
+    public int getoAmount() {
         return oAmount;
     }
 
-    public void setoAmount(String oAmount) {
+    public void setoAmount(int oAmount) {
         this.oAmount = oAmount;
     }
 
-    public String getoPrice() {
+    public double getoPrice() {
         return oPrice;
     }
 
-    public void setoPrice(String oPrice) {
+    public void setoPrice(double oPrice) {
         this.oPrice = oPrice;
     }
 
