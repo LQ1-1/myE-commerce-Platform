@@ -17,6 +17,7 @@ uAccountStatus varchar(10) NOT NULL 					--COMMENT'账号状态'
 );
 --SELECT * FROM UserAccountTable;
 --账号以及附带的信息不删除，标记为注销后，该账号的信息就不再更新了，账号密码登录失效，UserDeliveryInfoTable,UserShoppingCartTable,UserFavoritesTable上的记录删除
+ALTER TABLE UserAccountTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 SELECT * FROM UserAccountTable;
 
 
@@ -34,6 +35,30 @@ ALTER TABLE UserDeliveryInfoTable ADD COLUMN oReceieverEmail varchar(32) NOT NUL
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN oPostalCode varchar(16) NOT NULL ;
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN oDeliveryNote varchar(512);
 --若UserAccountTable中的账号被注销后，则在UserDeliveryInfoTable的收货信息记录也要被删除，所以uID仅作为外键
+ALTER TABLE UserDeliveryInfoTable ADD COLUMN uDIndex int16 default 0;
+ALTER TABLE UserDeliveryInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
+
+
+
+
+CREATE OR REPLACE FUNCTION UserDeliveryInfoTableadd(iuID UserDeliveryInfoTable.uID%TYPE, iuDeliveryAddress UserDeliveryInfoTable.uDeliveryAddress%TYPE,
+iuContactPersonName UserDeliveryInfoTable.uContactPersonName%TYPE, iuContactPersonPhone UserDeliveryInfoTable.uContactPersonPhone%TYPE,
+iuContactPersonGender UserDeliveryInfoTable.uContactPersonGender%TYPE, ioReceieverEmail UserDeliveryInfoTable.oReceieverEmail%TYPE,
+ioPostalCode UserDeliveryInfoTable.oPostalCode%TYPE, ioDeliveryNote UserDeliveryInfoTable.oDeliveryNote%TYPE)
+RETURN int16 AS
+DECLARE
+newDIndex int16;
+BEGIN
+	SELECT max(uDIndex)+1 INTO newDIndex FROM UserDeliveryInfoTable WHERE uID=iuID FOR UPDATE;
+	INSERT INTO UserDeliveryInfoTable(uID,uDeliveryAddress,uContactPersonName,uContactPersonPhone,
+	uContactPersonGender,oReceieverEmail,oPostalCode,
+	oDeliveryNote,uDIndex)VALUES(iuID, iuDeliveryAddress, iuContactPersonName,
+	iuContactPersonPhone, iuContactPersonGender, ioReceieverEmail,
+	ioPostalCode, ioDeliveryNote, newDIndex);
+	RETURN newDIndex;
+END;
+
+SELECT * FROM UserDeliveryInfoTable;
 
 
 
@@ -90,9 +115,13 @@ CREATE INDEX index_pReleaseDate_date ON ProductTable(date(pReleaseDate));
 CREATE INDEX index_pType ON ProductTable(pType);
 ALTER TABLE ProductTable ALTER COLUMN pName TYPE varchar(1024);
 ALTER TABLE ProductTable ALTER COLUMN pInfo TYPE varchar(4096);
+ALTER TABLE ProductTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 --商品状态:(上架,缺货,下架)下架之后不再更新数据但是仍然会保留在数据库中
 --pReleaseDate的格式与下单时间的格式一致YYYY-MM-DD HH:mm:ss
 --0000000000000000 pID长16位
+
+
+
 
 SELECT * 
 FROM pg_indexes 
@@ -180,7 +209,10 @@ oDate date NOT NULL, 									--COMMENT '下单日期',
 oStatus varchar(20) NOT NULL 							--COMMENT '订单状态'
 );
 ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOREIGN KEY (OOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
+ALTER TABLE OrderBasicInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 --一次订单可以有多个商品，多个收货人
+
+
 
 SELECT * FROM OrderBasicInfoTable;
 DELETE FROM OrderBasicInfoTable WHERE oOrderID='20251129160000000';
@@ -197,6 +229,7 @@ oReceieverGender varchar(64),							--COMMENT '收货人性别',
 oReceieverEmail varchar(32) DEFAULT NULL				--COMMENT '收货人邮箱',
 );
 ALTER TABLE OrdererInfoTable ADD CONSTRAINT OrdererInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
+ALTER TABLE OrdererInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 
 SELECT * FROM OrdererInfoTable;
 DELETE FROM OrdererInfoTable WHERE oOrderID='20251129900000000';
@@ -212,6 +245,8 @@ oContactPhone varchar(11) NOT NULL,						--COMMENT '联系电话',
 oDeliveryNote varchar(512) DEFAULT NULL 				--COMMENT '配送备注',
 );
 ALTER TABLE OrderDeliveryInfo ADD CONSTRAINT OrderDeliveryInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
+ALTER TABLE OrderDeliveryInfo ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
+
 
 SELECT * FROM OrderDeliveryInfo;
 DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129160000000';
@@ -232,6 +267,8 @@ oAmount int16 NOT NULL									--COMMENT '购买数量',
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
 ALTER TABLE OrderProductInfoTable ADD COLUMN oProductDeliveryStatus varchar(32) default'Submitted';		--单个商品的交付状态
+ALTER TABLE OrderProductInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
+
 
 SELECT * FROM OrderProductInfoTable;
 DELETE FROM OrderProductInfoTable WHERE oOrderID='20251129160000000';
@@ -591,6 +628,39 @@ SELECT * FROM OrderProductInfoTable WHERE pID IN(SELECT DISTINCT  MerchantsProdu
 SELECT MerchantsProductTable.pID FROM MerchantsProductTable WHERE MerchantsProductTable.uID='1522788291@163.com';
 SELECT * FROM OrderProductInfoTable;
 
+--触发器函数
+CREATE OR REPLACE FUNCTION updateTimestamp()
+RETURN TRIGGER AS 
+BEGIN 
+	NEW.tLastUpdateTime=CURRENT_TIMESTAMP(1);
+	RETURN NEW;
+END;
+--定义触发器(UserAccountTable上的)
+CREATE TRIGGER trigger_UserAccountTable_update
+BEFORE UPDATE ON UserAccountTable
+FOR EACH ROW 
+EXECUTE FUNCTION updateTimestamp();
 
+--定义触发器(UserDeliveryInfoTable上的)
+CREATE TRIGGER trigger_UserDeliveryInfoTable_update
+BEFORE UPDATE ON UserDeliveryInfoTable
+FOR EACH ROW 
+EXECUTE FUNCTION updateTimestamp();
 
+--定义触发器(ProductTable上的)
+CREATE TRIGGER trigger_ProductTable_update
+BEFORE UPDATE ON ProductTable
+FOR EACH ROW 
+EXECUTE FUNCTION updateTimestamp();
 
+--定义触发器(OrderBasicInfoTable上的)
+CREATE TRIGGER trigger_OrderBasicInfoTable_update
+BEFORE UPDATE ON OrderBasicInfoTable
+FOR EACH ROW 
+EXECUTE FUNCTION updateTimestamp();
+
+--定义触发器(OrderProductInfoTable上的)
+CREATE TRIGGER trigger_OrderProductInfoTable_update
+BEFORE UPDATE ON OrderProductInfoTable
+FOR EACH ROW 
+EXECUTE FUNCTION updateTimestamp();
