@@ -19,6 +19,7 @@ uAccountStatus varchar(10) NOT NULL 					--COMMENT'账号状态'
 --账号以及附带的信息不删除，标记为注销后，该账号的信息就不再更新了，账号密码登录失效，UserDeliveryInfoTable,UserShoppingCartTable,UserFavoritesTable上的记录删除
 ALTER TABLE UserAccountTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 SELECT * FROM UserAccountTable;
+UPDATE UserAccountTable SET uPassword='932f3c1b56257ce8539ac269d7aab42550dacf8818d075f0bdf1990562aae3ef' WHERE uID='1522788291@163.com';
 
 
 --用户收件地址,用户保存的收件人，收件地址，收件联系方式(与订单购买人信息表不一样)

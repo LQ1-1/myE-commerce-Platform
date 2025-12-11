@@ -295,8 +295,7 @@ public class BasicController
             {
                 res.setuID(rs.getString("uID"));
                 res.setuNickName(rs.getString("uNickName"));
-                //密码栏为********号替代
-                res.setuPassword("****************");
+                res.setuPassword(rs.getString("uPassword"));
                 res.setuPhone(rs.getString("uPhone"));
                 res.setuEmail(rs.getString("uEmail"));
                 res.setuGender(rs.getString("uGender"));
