@@ -97,6 +97,8 @@ ALTER TABLE MerchantsProductTable ADD CONSTRAINT MerchantsProductTableForeignKey
 CREATE INDEX index_uID_MerchantsProductTable ON MerchantsProductTable(uID);
 CREATE INDEX index_pID_MerchantsProductTable ON MerchantsProductTable(pID);
 
+SELECT * FROM MerchantsProductTable;
+
 --商品信息表
 CREATE TABLE ProductTable
 (
@@ -484,8 +486,9 @@ END;
 --RegistrationResult函数检测
 SELECT RegistrationResult('079754646484','test1','5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9',
 '12345678911','asdw564651@gmail.com','Armor Helicopter',
-'2025-11-21 18:21:54','正常','普通用户');
+'2025-11-21 18:21:54','普通用户','正常');
 SELECT * FROM UserAccountTable;
+
 
 
 CREATE OR REPLACE FUNCTION ProductInventoryDecrease(ipID varchar(32),iNum int16)
@@ -517,6 +520,7 @@ SELECT ProductInventoryAscend('0000000000000000',15);
 SELECT * FROM ProductTable;
 SELECT * FROM ProductImagesTable;
 SELECT * FROM ProductClicksInfoTable;
+--UPDATE ProductTable SET pInfo='能帮你做任何事情的生活助手' WHERE pID='0000000000000032';
 
 SELECT OrderProductInfoTable.pID,OrderProductInfoTable.oAmount FROM OrderProductInfoTable WHERE OrderProductInfoTable.oOrderID='';
 
@@ -664,3 +668,13 @@ CREATE TRIGGER trigger_OrderProductInfoTable_update
 BEFORE UPDATE ON OrderProductInfoTable
 FOR EACH ROW 
 EXECUTE FUNCTION updateTimestamp();
+
+SELECT 
+OrderGeneralInfoTable.oOrderID, OrderGeneralInfoTable.oOrdererID, 
+OrderBasicInfoTable.oDate, OrderBasicInfoTable.oStatus, 
+OrdererInfoTable.oReceiverName, OrdererInfoTable.oReceieverGender, OrdererInfoTable.oReceieverEmail, 
+OrderDeliveryInfo.oDeliveryAddress, OrderDeliveryInfo.oPostalCode, OrderDeliveryInfo.oContactPhone, OrderDeliveryInfo.oDeliveryNote 
+FROM OrderGeneralInfoTable 
+INNER JOIN OrderBasicInfoTable ON OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID 
+INNER JOIN OrdererInfoTable ON OrdererInfoTable.oOrderID=OrderGeneralInfoTable.oOrderID 
+INNER JOIN OrderDeliveryInfo ON OrderDeliveryInfo.oOrderID=OrderGeneralInfoTable.oOrderID ;

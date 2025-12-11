@@ -7,7 +7,7 @@ public class ProductImagesTableItem
     @JsonProperty("pID")
     private String pID;
     @JsonProperty("pType")
-    private String pType;
+    private String pImgType;
     @JsonProperty("pImagePath")
     private String pImagePath;
 
@@ -21,13 +21,13 @@ public class ProductImagesTableItem
     {
         this.pID = pID;
     }
-    public String getpType()
+    public String getpImgType()
     {
-        return pType;
+        return pImgType;
     }
-    public void setpType(String pType)
+    public void setpImgType(String pType)
     {
-        this.pType = pType;
+        this.pImgType = pType;
     }
     public String getpImagePath()
     {

@@ -1,5 +1,7 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
+import com.lqh.ebuyplt_1001p.Controller.AdminPack.AdminStatus;
+import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserAccountTableItem;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
 import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
@@ -270,6 +272,95 @@ public class BasicController
         return res.toString();
     }
 
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GetUserAccountInfo")
+    public ApiResult<UserAccountTableItem> GetUserAccountInfo(@RequestBody UserAccountTableItem para)   //获取用户信息的接口，请求的时候只用填写uID
+    {
+        return ApiResult.success(GetUserAccountInfoResult(para));
+    }
+    private UserAccountTableItem GetUserAccountInfoResult(UserAccountTableItem para)
+    {
+        UserAccountTableItem res=new UserAccountTableItem();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM UserAccountTable WHERE uID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
+            {
+                res.setuID(rs.getString("uID"));
+                res.setuNickName(rs.getString("uNickName"));
+                //密码栏为********号替代
+                res.setuPassword("****************");
+                res.setuPhone(rs.getString("uPhone"));
+                res.setuEmail(rs.getString("uEmail"));
+                res.setuGender(rs.getString("uGender"));
+                res.setuRegisterDate(rs.getString("uRegisterDate"));
+                res.setuAccountType(rs.getString("uAccountType"));
+                res.setuAccountStatus(rs.getString("uAccountStatus"));
+            }
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/SetUserAccountInfo")
+    public String  AdminUserAccountTableUpdate(@RequestBody UserAccountTableItem newInfo)     //更新UserAccount信息的接口
+    {
+        if(AdminUserAccountTableUpdateResult(newInfo)) {   return AdminStatus.Success;    }
+        else {   return AdminStatus.Fail;    }
+    }
+    private boolean AdminUserAccountTableUpdateResult(UserAccountTableItem newInfo)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE UserAccountTable SET UserAccountTable.uNickName=?, UserAccountTable.uPassword=?, " +
+                    "UserAccountTable.uPhone=?, UserAccountTable.uEmail=?, UserAccountTable.uGender=?, " +
+                    "UserAccountTable.uAccountType=?, UserAccountTable.uAccountStatus=? WHERE UserAccountTable.uID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1, newInfo.getuNickName());
+            prepare.setString(2, newInfo.getuPassword());
+            prepare.setString(3, newInfo.getuPhone());
+            prepare.setString(4, newInfo.getuEmail());
+            prepare.setString(5, newInfo.getuGender());
+            prepare.setString(6, newInfo.getuAccountType());
+            prepare.setString(7, newInfo.getuAccountStatus());
+            prepare.setString(8, newInfo.getuID());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
 
 }
 

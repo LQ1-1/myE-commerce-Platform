@@ -290,7 +290,7 @@ public class AdminController        //管理员控制器
             {
                 ProductImagesTableItem item=new ProductImagesTableItem();
                 item.setpID(rs.getString("pID"));
-                item.setpType(rs.getString("pType"));
+                item.setpImgType(rs.getString("pImgType"));
                 item.setpImagePath(rs.getString("pImagePath"));
                 res.add(item);
             }
@@ -362,7 +362,7 @@ public class AdminController        //管理员控制器
             Connection con= DriverManager.getConnection(url,user,password);
 
             String sql1="SELECT " +
-                    "OrderGeneralInfoTable.oOrderID, OrderGeneralInfoTable.oOrderID, " +
+                    "OrderGeneralInfoTable.oOrderID, OrderGeneralInfoTable.oOrdererID, " +
                     "OrderBasicInfoTable.oDate, OrderBasicInfoTable.oStatus, " +
                     "OrdererInfoTable.oReceiverName, OrdererInfoTable.oReceieverGender, OrdererInfoTable.oReceieverEmail, " +
                     "OrderDeliveryInfo.oDeliveryAddress, OrderDeliveryInfo.oPostalCode, OrderDeliveryInfo.oContactPhone, OrderDeliveryInfo.oDeliveryNote " +
