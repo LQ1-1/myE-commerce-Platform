@@ -248,7 +248,7 @@ const handleSubmit = async () => {
           } else if (messageStr.includes('管理员')) {
             ElMessage.success('欢迎,用户'+formData.uID)
             sessionStorage.setItem('uID', formData.uID) 
-            // router.push('/admin')//跳转到管理员界面
+            router.push('/AdminView')//跳转到管理员界面
           } else if (messageStr.includes('普通用户')) {
             //欢迎
             ElMessage.success('欢迎,用户'+formData.uID)

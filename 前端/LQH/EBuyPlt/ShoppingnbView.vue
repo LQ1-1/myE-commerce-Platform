@@ -32,6 +32,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
+                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item> 
                                     <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
@@ -103,10 +104,10 @@
             <!-- 快捷分类栏 -->
             <div class="category-bar">
                 <el-tabs v-model="activeCategory" class="category-tabs" @tab-change="handleCategoryChange">
-                    <!-- "全部" 选项手动保留 -->
-                    <el-tab-pane label="全部" name="全部" />
+                    <!-- 修改：将 "全部" 替换为 "推荐" -->
+                    <el-tab-pane label="推荐" name="推荐" />
 
-                    <!-- 修改部分：使用 v-for 循环渲染接口返回的类型 -->
+                    <!-- 循环渲染其他分类 -->
                     <el-tab-pane v-for="type in categoryList" :key="type" :label="type" :name="type" />
                 </el-tabs>
             </div>
@@ -335,7 +336,7 @@ const products = ref([])
 const isLoading = ref(false)
 const isRecommendMode = ref(false)
 const searchQuery = ref('')
-const activeCategory = ref('全部')
+const activeCategory = ref('推荐')
 const showFilter = ref(false)
 const filterForm = reactive({
     pID: '',
@@ -391,6 +392,13 @@ onMounted(() => {
     fetchFavorites()
 })
 
+const goToUserProfile = () => {
+    router.push({
+        path: '/UserProfileView', // 这里的路径要和你路由配置里的一致
+        query: { uID: currentUserID.value } // 将当前用户ID传过去
+    })
+}
+
 // 路由跳转
 const goToDetail = (id) => { router.push({ name: 'ProductDetailView', params: { pID: id } }) }
 const handleLogout = () => { sessionStorage.removeItem('uID'); router.push('/') }
@@ -420,12 +428,13 @@ const handleRecommend = async () => {
 // 搜索逻辑
 const handleSearch = async () => {
     isLoading.value = true
-    isRecommendMode.value = false
+    isRecommendMode.value = false // 只要是搜索或分类筛选，就不是推荐模式
     try {
         const payload = {
             SearchDesciption: searchQuery.value,
             pID: filterForm.pID,
-            pType: activeCategory.value !== '全部' ? activeCategory.value : filterForm.pType,
+            // 修改：如果当前是 '推荐' 标签，搜索时不限制类型（传空），否则传当前分类名
+            pType: activeCategory.value !== '推荐' ? activeCategory.value : filterForm.pType,
             pPrice_f: filterForm.minPrice || 0.0,
             pPrice_r: filterForm.maxPrice || 0.0,
             pProducer: filterForm.pProducer,
@@ -449,13 +458,19 @@ const handleSearch = async () => {
     }
 }
 
-const handleCategoryChange = () => {
-    handleSearch()
+const handleCategoryChange = (val) => {
+    if (val === '推荐') {
+        // 如果点击的是推荐，调用推荐接口
+        handleRecommend()
+    } else {
+        // 如果点击的是具体分类，调用搜索接口筛选该分类
+        handleSearch()
+    }
 }
 
 const resetFilters = () => {
     searchQuery.value = ''
-    activeCategory.value = '全部'
+    activeCategory.value = '推荐'
     filterForm.pID = ''
     filterForm.pProducer = ''
     filterForm.pType = ''

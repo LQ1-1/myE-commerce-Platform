@@ -6,7 +6,6 @@
         <div class="header-content">
           <!-- 左侧：Logo和标题 -->
           <div class="brand">
-            <el-avatar :icon="Store" class="logo-avatar" shape="square" />
             <h1 class="app-title">EBuyPlt 商户管理中心</h1>
           </div>
 
@@ -34,15 +33,20 @@
             <!-- 用户信息与退出 -->
             <el-divider direction="vertical" class="header-divider" />
 
+            <!-- 修复开始：补全了丢失的 el-dropdown 开始标签和触发显示区域 -->
             <el-dropdown trigger="click" @command="handleUserCommand">
               <span class="el-dropdown-link user-profile">
                 <el-avatar :size="32" :icon="UserFilled" class="user-avatar" />
                 <span class="username">{{ currentMerchantID }}</span>
-                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                <el-icon class="el-icon--right">
+                  <ArrowDown />
+                </el-icon>
               </span>
+
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item disabled>商户账号</el-dropdown-item>
+                  <el-dropdown-item disabled>商户ID: {{ currentMerchantID }}</el-dropdown-item>
+                   <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item> 
                   <el-dropdown-item divided command="logout" style="color: #f56c6c;">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -385,7 +389,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import {
-  Goods, Plus, List, Picture, UserFilled, Store, ArrowDown, Delete
+  Goods, Plus, List, Picture, UserFilled, ArrowDown, Delete
 } from '@element-plus/icons-vue';
 
 // ================= 配置 =================
@@ -464,6 +468,13 @@ const getImageUrl = (path) => {
   if (path.startsWith('http') || path.startsWith('blob:')) return path;
   return `${API_BASE_URL}${path}`;
 };
+
+const goToUserProfile = () => {
+  router.push({
+    path: '/UserProfileView', // 这里的路径要和你路由配置里的一致
+    query: { uID: currentMerchantID.value } // 将当前用户ID传过去
+  })
+}
 
 // ---------------- 1. 获取商品列表 ----------------
 const fetchProductList = async () => {

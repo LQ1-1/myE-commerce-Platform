@@ -28,7 +28,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
-                                    <!-- 新增：下拉菜单中的订单入口 -->
+                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item> 
                                     <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
@@ -374,6 +374,13 @@ watch(
         }
     }
 )
+
+const goToUserProfile = () => {
+    router.push({
+        path: '/UserProfileView', // 这里的路径要和你路由配置里的一致
+        query: { uID: currentUserID.value } // 将当前用户ID传过去
+    })
+}
 
 // --- API 方法 ---
 const fetchProductDetail = async (id) => {
