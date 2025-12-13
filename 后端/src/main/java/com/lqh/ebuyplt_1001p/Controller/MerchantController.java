@@ -1,6 +1,7 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
 
+import com.lqh.ebuyplt_1001p.Controller.DBTools.DBUtil;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +37,9 @@ public class MerchantController
 
         try
         {
-            Class.forName("com.kingbase8.Driver");
-            Connection con= DriverManager.getConnection(url,user,password);
+//            Class.forName("com.kingbase8.Driver");
+//            Connection con= DriverManager.getConnection(url,user,password);
+            Connection con= DBUtil.getConnection();
 
             String sql1="SELECT NewProductOnSaleFunction(?,?,?,?," +
                     "?,?,?," +
@@ -198,8 +200,9 @@ public class MerchantController
     {
         try
         {
-            Class.forName("com.kingbase8.Driver");
-            Connection con=DriverManager.getConnection(url,user,password);
+//            Class.forName("com.kingbase8.Driver");
+//            Connection con=DriverManager.getConnection(url,user,password);
+            Connection con= DBUtil.getConnection();
 
             String sql1="INSERT INTO ProductImagesTable(pID,pImgType,pImagePath)VALUES(?,?,?);";
             PreparedStatement prepare=con.prepareStatement(sql1);
@@ -245,8 +248,9 @@ public class MerchantController
         ArrayList<String>pIDs=new ArrayList<>();
         try
         {
-            Class.forName("com.kingbase8.Driver");
-            Connection con=DriverManager.getConnection(url,user,password);
+//            Class.forName("com.kingbase8.Driver");
+//            Connection con=DriverManager.getConnection(url,user,password);
+            Connection con= DBUtil.getConnection();
 
             String sql1="SELECT * FROM MerchantsProductTable WHERE uID=?;";
             PreparedStatement prepare=con.prepareStatement(sql1);

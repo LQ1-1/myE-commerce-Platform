@@ -23,6 +23,7 @@ public class UserAccountTableItem
     @JsonProperty("uAccountStatus")
     private String uAccountStatus;
 
+
     public UserAccountTableItem(){}
 
 

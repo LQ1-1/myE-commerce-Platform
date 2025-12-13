@@ -2,6 +2,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.AdminStatus;
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserAccountTableItem;
+import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserDeliveryInfoTableItem;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
 import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.sql.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 @RestController
 public class BasicController
@@ -303,6 +305,9 @@ public class BasicController
                 res.setuAccountType(rs.getString("uAccountType"));
                 res.setuAccountStatus(rs.getString("uAccountStatus"));
             }
+            rs.close();
+            prepare.close();
+            con.close();                //使用完之后连接一定要记得关闭！！！
         }
         catch(SQLException e)
         {
@@ -317,12 +322,12 @@ public class BasicController
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/SetUserAccountInfo")
-    public String  AdminUserAccountTableUpdate(@RequestBody UserAccountTableItem newInfo)     //更新UserAccount信息的接口
+    public String  UserAccountTableUpdate(@RequestBody UserAccountTableItem newInfo)     //更新UserAccount信息的接口
     {
-        if(AdminUserAccountTableUpdateResult(newInfo)) {   return AdminStatus.Success;    }
+        if(UserAccountTableUpdateResult(newInfo)) {   return AdminStatus.Success;    }
         else {   return AdminStatus.Fail;    }
     }
-    private boolean AdminUserAccountTableUpdateResult(UserAccountTableItem newInfo)
+    private boolean UserAccountTableUpdateResult(UserAccountTableItem newInfo)
     {
         boolean res=false;
         try
@@ -361,6 +366,104 @@ public class BasicController
         return res;
     }
 
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GetUserDeliveryInfo")
+    public ApiResult<ArrayList<UserDeliveryInfoTableItem>> GetUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)     //获取所有的该用户的收货记录，请求的时候只用填写uID,返回的数据中uDIndex不向用户显示
+    {
+        return ApiResult.success(GetUserDeliveryInfoResult(para));
+    }
+    private ArrayList<UserDeliveryInfoTableItem> GetUserDeliveryInfoResult(UserDeliveryInfoTableItem para)
+    {
+        ArrayList<UserDeliveryInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con=DriverManager.getConnection(url,user,password);
+
+            String sql1="SELECT * FROM UserDeliveryInfoTable WHERE uID=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            ResultSet rs=prepare.executeQuery();
+            while(rs.next())
+            {
+                UserDeliveryInfoTableItem item=new UserDeliveryInfoTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setuDIndex(rs.getInt("uDIndex"));
+                item.setuDeliveryAddress(rs.getString("uDeliveryAddress"));
+                item.setuContactPersonName(rs.getString("uContactPersonName"));
+                item.setuContactPersonPhone(rs.getString("uContactPersonPhone"));
+                item.setuContactPersonGender(rs.getString("uContactPersonGender"));
+                item.setuContactPersonEmail(rs.getString("oReceieverEmail"));
+                item.setoPostalCode(rs.getString("oPostalCode"));
+                item.setoDeliveryNote(rs.getString("oDeliveryNote"));
+                res.add(item);
+            }
+            rs.close();
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/SetUserDeliveryInfo")
+    public String  SetUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)     //更新其中一个收货信息
+    {
+        if(SetUserDeliveryInfoResult(para)){    return AdminStatus.Success;    }
+        else {   return AdminStatus.Fail;    }
+    }
+    private boolean SetUserDeliveryInfoResult(UserDeliveryInfoTableItem para)
+    {
+        boolean res=false;
+        try
+        {
+            Class.forName("com.kingbase8.Driver");
+            Connection con= DriverManager.getConnection(url,user,password);
+
+            String sql1="UPDATE UserDeliveryInfoTable SET UserDeliveryInfoTable.uDeliveryAddress=?, UserDeliveryInfoTable.uContactPersonName=?, " +
+                    "UserDeliveryInfoTable.uContactPersonPhone=?, UserDeliveryInfoTable.uContactPersonGender=?, " +
+                    "UserDeliveryInfoTable.oReceieverEmail=?, UserDeliveryInfoTable.oPostalCode=?, " +
+                    "UserDeliveryInfoTable.oDeliveryNote=? " +
+                    "WHERE UserDeliveryInfoTable.uID=? AND UserDeliveryInfoTable.uDIndex=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuDeliveryAddress());
+            prepare.setString(2,para.getuContactPersonName());
+            prepare.setString(3,para.getuContactPersonPhone());
+            prepare.setString(4,para.getuContactPersonGender());
+            prepare.setString(5,para.getuContactPersonEmail());
+            prepare.setString(6,para.getoPostalCode());
+            prepare.setString(7,para.getoDeliveryNote());
+            prepare.setString(8,para.getuID());
+            prepare.setInt(9,para.getuDIndex());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    //添加新的收货信息则使用/api/OrderConfirm_NewDeliveryRecord这个接口
 }
 
 /*

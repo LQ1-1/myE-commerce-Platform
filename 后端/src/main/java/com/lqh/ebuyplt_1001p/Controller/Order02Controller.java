@@ -88,7 +88,7 @@ public class Order02Controller
     }
 
     @CrossOrigin(origins="*")
-    @RequestMapping("/api/OrderConfirm_NewDeliveryRecord")
+    @RequestMapping("/api/OrderConfirm_NewDeliveryRecord")                                       //在Profile界面管理收货信息的时候，也可以使用这个api来添加新的收货记录
     public String OrderConfirm_NewDeliveryRecord(@RequestBody DeliveryInfo  deliveryInfo)           //用户发来收货地址信息
     {
         {

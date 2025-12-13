@@ -330,6 +330,7 @@ public class UIController
                 rs2.close();
                 prepare.close();
             }
+            con.close();
         }
         catch(SQLException e)
         {

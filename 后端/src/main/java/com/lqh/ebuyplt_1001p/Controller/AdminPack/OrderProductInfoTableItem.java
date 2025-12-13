@@ -12,6 +12,16 @@ public class OrderProductInfoTableItem
     private double oPrice;
     @JsonProperty("oAmount")
     private int oAmount;
+    @JsonProperty("oProductDeliveryStatus")
+    private String oProductDeliveryStatus;
+
+    public String getoProductDeliveryStatus() {
+        return oProductDeliveryStatus;
+    }
+
+    public void setoProductDeliveryStatus(String oProductDeliveryStatus) {
+        this.oProductDeliveryStatus = oProductDeliveryStatus;
+    }
 
     public OrderProductInfoTableItem(){}
 
