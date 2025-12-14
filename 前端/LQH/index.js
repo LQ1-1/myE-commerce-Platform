@@ -37,6 +37,21 @@ const routes = [
     component:()=>import('../views/EBuyPlt/UserProfileView.vue')
   },
   {
+    path:'/AdminUserDetailView/:uID',
+    name:'AdminUserDetailView',
+    component:()=>import('../views/EBuyPlt/AdminUserDetailView.vue')
+  },
+  {
+    path:'/AdminProductDetailView/:pID',
+    name:'AdminProductDetailView',
+    component:()=>import('../views/EBuyPlt/AdminProductDetailView.vue')
+  },
+  {
+    path:'/AdminOrderDetailView/:oOrderID',
+    name:'AdminOrderDetailView',
+    component:()=>import('../views/EBuyPlt/AdminOrderDetailView.vue')
+  },
+  {
     path: '/',
     redirect: '/LoginView'
   }

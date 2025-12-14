@@ -32,7 +32,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
-                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item> 
+                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item>
                                     <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
@@ -255,10 +255,11 @@
                             <el-input v-model="newAddressForm.uContactPersonPhone" />
                         </el-form-item>
                         <el-form-item label="性别">
-                            <el-radio-group v-model="newAddressForm.uContactPersonGender">
-                                <el-radio label="男">男</el-radio>
-                                <el-radio label="女">女</el-radio>
-                            </el-radio-group>
+                            <el-select v-model="newAddressForm.uContactPersonGender" placeholder="选择或输入性别" filterable
+                                allow-create default-first-option clearable style="width: 100%">
+                                <el-option label="男" value="男" />
+                                <el-option label="女" value="女" />
+                            </el-select>
                         </el-form-item>
                         <el-form-item label="邮箱">
                             <el-input v-model="newAddressForm.uContactPersonEmail" />
@@ -612,6 +613,14 @@ const handleCheckout = async () => {
     checkoutVisible.value = true
     checkoutLoading.value = true
     isAddingNewAddress.value = false
+
+    newAddressForm.uContactPersonGender = ''
+    newAddressForm.uContactPersonName = ''
+    newAddressForm.uContactPersonPhone = ''
+    newAddressForm.uContactPersonEmail = ''
+    newAddressForm.uDeliveryAddress = ''
+    newAddressForm.oPostalCode = ''
+    newAddressForm.oDeliveryNote = ''
 
     try {
         const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
