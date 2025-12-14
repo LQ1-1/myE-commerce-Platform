@@ -1434,4 +1434,196 @@ public class AdminController        //管理员控制器
 
     //-----------------------------------更新接口-----------------------------------//
 
+    //-----------------------------返回具体的信息的接口----------------------------//
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminGetUserDeliveryInfo")                                                                         //返回被点击的账号记录的所有收货信息
+    public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminGetUserDeliveryInfo(@RequestBody UserAccountTableItem para)     //参数只用填写账号信息
+    {
+        return ApiResult.success(AdminGetUserDeliveryInfoResult(para));
+    }
+    private ArrayList<UserDeliveryInfoTableItem> AdminGetUserDeliveryInfoResult(UserAccountTableItem para)
+    {
+        ArrayList<UserDeliveryInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Connection con=DBUtil.getConnection();
+            String sql1="SELECT * FROM UserDeliveryInfoTable WHERE uID=?;";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,para.getuID());
+            ResultSet rs=prepare1.executeQuery();
+            while(rs.next())
+            {
+                UserDeliveryInfoTableItem item=new UserDeliveryInfoTableItem();
+                item.setuID(rs.getString("uID"));
+                item.setoDeliveryNote(rs.getString("oDeliveryNote"));
+                item.setoPostalCode(rs.getString("oPostalCode"));
+                item.setuContactPersonEmail(rs.getString("oReceieverEmail"));
+                item.setuDeliveryAddress(rs.getString("uDeliveryAddress"));
+                item.setuContactPersonGender(rs.getString("uContactPersonGender"));
+                item.setuContactPersonPhone(rs.getString("uContactPersonPhone"));
+                item.setuContactPersonName(rs.getString("uContactPersonName"));
+                item.setuDIndex(Integer.parseInt(rs.getString("uDIndex")));
+                res.add(item);
+            }
+            rs.close();
+            prepare1.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminGetUserOrderInfo")                                                                        //返回被点击的账号记录的所有订购信息
+    public ApiResult<ArrayList<OrderFullInfoTableItem>> AdminGetUserOrderInfo(@RequestBody UserAccountTableItem para)       //参数只用填写账号信息
+    {
+        return ApiResult.success(AdminGetUserOrderInfoResult(para));
+    }
+    private ArrayList<OrderFullInfoTableItem> AdminGetUserOrderInfoResult(UserAccountTableItem para)
+    {
+        ArrayList<OrderFullInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="SELECT " +
+                    "OrderGeneralInfoTable.oOrderID, OrderGeneralInfoTable.oOrdererID, " +
+                    "OrderBasicInfoTable.oDate, OrderBasicInfoTable.oStatus, " +
+                    "OrdererInfoTable.oReceiverName, OrdererInfoTable.oReceieverGender, OrdererInfoTable.oReceieverEmail, " +
+                    "OrderDeliveryInfo.oDeliveryAddress, OrderDeliveryInfo.oPostalCode, OrderDeliveryInfo.oContactPhone, OrderDeliveryInfo.oDeliveryNote " +
+                    "FROM OrderGeneralInfoTable " +
+                    "INNER JOIN OrderBasicInfoTable ON OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID " +
+                    "INNER JOIN OrdererInfoTable ON OrdererInfoTable.oOrderID=OrderGeneralInfoTable.oOrderID " +
+                    "INNER JOIN OrderDeliveryInfo ON OrderDeliveryInfo.oOrderID=OrderGeneralInfoTable.oOrderID " +
+                    "WHERE OrderGeneralInfoTable.oOrdererID = ? ;";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,para.getuID());
+            ResultSet rs=prepare1.executeQuery();
+            while(rs.next())
+            {
+                OrderFullInfoTableItem item=new OrderFullInfoTableItem();
+                item.setoOrderID(rs.getString("oOrderID"));
+                item.setoOrdererID(rs.getString("oOrdererID"));
+                item.setoDate(rs.getString("oDate"));
+                item.setoStatus(rs.getString("oStatus"));
+                item.setoReceiverName(rs.getString("oReceiverName"));
+                item.setoReceieverGender(rs.getString("oReceieverGender"));
+                item.setoReceieverEmail(rs.getString("oReceieverEmail"));
+                item.setoDeliveryAddress(rs.getString("oDeliveryAddress"));
+                item.setoPostalCode(rs.getString("oPostalCode"));
+                item.setoContactPhone(rs.getString("oContactPhone"));
+                item.setoDeliveryNote(rs.getString("oDeliveryNote"));
+                res.add(item);
+            }
+            rs.close();
+            prepare1.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminGetOrderSpecificInfo")                                                                                //被点击的订单信息的订购的商品信息
+    public ApiResult<ArrayList<OrderProductInfoTableItem>> AdminGetOrderSpecificInfo(@RequestBody OrderProductInfoTableItem para)       //参数只用填写订单号oOrderID
+    {
+        return ApiResult.success(AdminGetOrderSpecificInfoResult(para));
+    }
+    private ArrayList<OrderProductInfoTableItem> AdminGetOrderSpecificInfoResult(OrderProductInfoTableItem para)
+    {
+        ArrayList<OrderProductInfoTableItem> res=new ArrayList<>();
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="SELECT * FROM OrderProductInfoTable WHERE oOrderID = ? ;";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,para.getoOrderID());
+            ResultSet rs=prepare1.executeQuery();
+            while(rs.next())
+            {
+                OrderProductInfoTableItem item=new OrderProductInfoTableItem();
+                item.setoOrderID(rs.getString("oOrderID"));
+                item.setpID(rs.getString("pID"));
+                item.setoPrice(rs.getDouble("oPrice"));
+                item.setoAmount(rs.getInt("oAmount"));
+                item.setoProductDeliveryStatus(rs.getString("oProductDeliveryStatus"));
+                res.add(item);
+            }
+            rs.close();
+            prepare1.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminGetSpecificProductInfo")
+    public ApiResult<ArrayList<ProductTableItem>> AdminGetSpecificProductInfo(@RequestBody ProductTableItem para)       //参数只用填写商品的编号
+    {
+        return ApiResult.success(AdminGetSpecificProductInfoResult(para));
+    }
+    private ArrayList<ProductTableItem> AdminGetSpecificProductInfoResult(ProductTableItem para)
+    {
+        ArrayList<ProductTableItem> res=new ArrayList<>();
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="SELECT * FROM ProductTable WHERE pID = ? ;";
+            PreparedStatement prepare1=con.prepareStatement(sql1);
+            prepare1.setString(1,para.getpID());
+            ResultSet rs=prepare1.executeQuery();
+            if(rs.next())
+            {
+                ProductTableItem item=new ProductTableItem();
+                item.setpID(rs.getString("pID"));
+                item.setpName(rs.getString("pName"));
+                item.setpType(rs.getString("pType"));
+                item.setpDiscount(rs.getDouble("pDiscount"));
+                item.setpPrice(rs.getDouble("pPrice"));
+                item.setpProducer(rs.getString("pProducer"));
+                item.setpReleaseDate(rs.getString("pReleaseDate"));
+                item.setpInfo(rs.getString("pInfo"));
+                item.setpInventory(rs.getInt("pInventory"));
+                item.setpStatus(rs.getString("pStatus"));
+                res.add(item);
+            }
+            rs.close();
+            prepare1.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    //-----------------------------返回具体用户的信息的接口----------------------------//
+
 }
