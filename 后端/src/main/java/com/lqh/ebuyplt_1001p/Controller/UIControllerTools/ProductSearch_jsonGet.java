@@ -108,7 +108,49 @@ public class ProductSearch_jsonGet
 
     public boolean FilterOpen()
     {
-        if(pID.length()!=0 || pType.length()!=0 || pPrice_f+pPrice_r>0 || pProducer.length()!=0 || pReleaseDate_f.length()!=0 || pReleaseDate_r.length()!=0 || pInfo.length()!=0)
+        if(pID!=null)
+        {
+            if(pID.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pType!=null)
+        {
+            if(pType.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pProducer!=null)
+        {
+            if(pProducer.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pReleaseDate_f!=null)
+        {
+            if(pReleaseDate_f.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pReleaseDate_r!=null)
+        {
+            if(pReleaseDate_r.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pInfo!=null)
+        {
+            if(pInfo.length()!=0)
+            {
+                return true;
+            }
+        }
+        if(pPrice_f+pPrice_r>0)
         {
             return true;
         }

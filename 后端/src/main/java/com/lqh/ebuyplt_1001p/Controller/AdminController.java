@@ -482,13 +482,14 @@ public class AdminController        //管理员控制器
         String searchinput;
         String datef;
         String dater;
-
-        id=(para!=null && para.getuID()!=null)?para.getuID():"";
-        nickname=(para!=null && para.getuNickName()!=null)?para.getuNickName():"";
-        phone=(para!=null && para.getuPhone()!=null)?para.getuPhone():"";
-        email=(para!=null && para.getuEmail()!=null)?para.getuEmail():"";
-        gender=(para!=null && para.getuGender()!=null)?para.getuGender():"";
-        searchinput=(para!=null && para.getSearchInput()!=null)?para.getSearchInput():"";
+        String def;
+        searchinput=(para!=null && para.getSearchInput()!=null)?para.getSearchInput():" ";
+        def=(!(searchinput.length()==1 && searchinput.charAt(0)==' '))?searchinput:" ";
+        id=(para!=null && para.getuID()!=null && para.getuID().length()>0)?para.getuID():def;
+        nickname=(para!=null && para.getuNickName()!=null && para.getuNickName().length()>0)?para.getuNickName():def;
+        phone=(para!=null && para.getuPhone()!=null && para.getuPhone().length()>0)?para.getuPhone():def;
+        email=(para!=null && para.getuEmail()!=null && para.getuEmail().length()>0)?para.getuEmail():def;
+        gender=(para!=null && para.getuGender()!=null && para.getuGender().length()>0)?para.getuGender():def;
         datef=(para!=null && para.getDateF()!=null)?para.getDateF():"0001-01-01";
         dater=(para!=null && para.getDateR()!=null)?para.getDateR():"9999-12-31";
 
@@ -500,17 +501,25 @@ public class AdminController        //管理员控制器
             System.out.println(email);
             System.out.println(gender);
             System.out.println(searchinput);
+            System.out.println(def);
             System.out.println(datef);
             System.out.println(dater);
+            for(String str:para.getuAccountStatuess())
+            {
+                System.out.println(str);
+            }
+            for(String str:para.getuAccountTypes())
+            {
+                System.out.println(str);
+            }
             System.out.println("*******************AdminUserAccountTableSearchResult*********************");
         }
 
         ArrayList<UserAccountTableItem>res=new ArrayList<>();
-        try
-        {
-            Connection con=DBUtil.getConnection();
+        try {
+            Connection con = DBUtil.getConnection();
             //筛选表单
-            String sql1="SELECT * FROM UserAccountTable WHERE " +
+            String sql1 = "SELECT * FROM UserAccountTable WHERE " +
                     "LOWER(UserAccountTable.uID) LIKE LOWER(?) AND " +      //账号
                     "LOWER(UserAccountTable.uNickName) LIKE LOWER(?) AND " +       //NickName
                     "LOWER(UserAccountTable.uPhone) LIKE LOWER(?) AND " +       //电话
@@ -521,57 +530,62 @@ public class AdminController        //管理员控制器
                     "UserAccountTable.uRegisterDate >= ? AND UserAccountTable.uRegisterDate <= ? ;";     //注册日期
 
             //搜索框输入
-            String sql2="SELECT * FROM UserAccountTable WHERE " +
+            String sql2 = "SELECT * FROM UserAccountTable WHERE " +
+                    "( " +
                     "LOWER(UserAccountTable.uID) LIKE LOWER(?) OR " +
                     "LOWER(UserAccountTable.uNickName) LIKE LOWER(?) OR " +
                     "LOWER(UserAccountTable.uPhone) LIKE LOWER(?) OR " +
                     "LOWER(UserAccountTable.uEmail) LIKE LOWER(?) OR " +
-                    "LOWER(UserAccountTable.uGender) LIKE LOWER(?) OR " +
-                    "LOWER(UserAccountTable.uAccountType) LIKE LOWER(?) OR " +
-                    "LOWER(UserAccountTable.uAccountStatus) LIKE LOWER(?) ;";
+                    "LOWER(UserAccountTable.uGender) LIKE LOWER(?) ) AND " +
+                    "UserAccountTable.uAccountType = ANY(?) AND " +
+                    "UserAccountTable.uAccountStatus = ANY(?) ;";
 
-            PreparedStatement prepare1=con.prepareStatement(sql1);
-            prepare1.setString(1,id);
-            prepare1.setString(2,nickname);
-            prepare1.setString(3,phone);
-            prepare1.setString(4,email);
-            prepare1.setString(5,gender);
-            prepare1.setArray(6,con.createArrayOf("VARCHAR",para.getuAccountTypes().toArray(new String[0])));
-            prepare1.setArray(7,con.createArrayOf("VARCHAR",para.getuAccountStatuess().toArray(new String[0])));
-            prepare1.setString(8,datef);
-            prepare1.setString(9,dater);
-            ResultSet rs=prepare1.executeQuery();
-            while(rs.next())
-            {
-                if(MAP.get(rs.getString("uID"))==null)
-                {
-                    UserAccountTableItem item=new UserAccountTableItem();
+            PreparedStatement prepare1 = con.prepareStatement(sql1);
+            prepare1.setString(1, "%" + id + "%");
+            prepare1.setString(2, "%" + nickname + "%");
+            prepare1.setString(3, "%" + phone + "%");
+            prepare1.setString(4, "%" + email + "%");
+            prepare1.setString(5, "%" + gender + "%");
+            prepare1.setArray(6, con.createArrayOf("VARCHAR", para.getuAccountTypes().toArray(new String[0])));
+            prepare1.setArray(7, con.createArrayOf("VARCHAR", para.getuAccountStatuess().toArray(new String[0])));
+            prepare1.setString(8, datef);
+            prepare1.setString(9, dater);
+            ResultSet rs = prepare1.executeQuery();
+            while (rs.next()) {
+                if (MAP.get(rs.getString("uID")) == null) {
+                    UserAccountTableItem item = new UserAccountTableItem();
                     item.setuID(rs.getString("uID"));
                     item.setuNickName(rs.getString("uNickName"));
                     item.setuPassword(rs.getString("uPassword"));
-                    item.setuEmail(rs.getString("uPhone"));
+                    item.setuPhone(rs.getString("uPhone"));
                     item.setuEmail(rs.getString("uEmail"));
                     item.setuGender(rs.getString("uGender"));
                     item.setuRegisterDate(rs.getString("uRegisterDate"));
                     item.setuAccountType(rs.getString("uAccountType"));
                     item.setuAccountStatus(rs.getString("uAccountStatus"));
                     res.add(item);
-                    MAP.put(rs.getString("uID"),true);
+                    MAP.put(rs.getString("uID"), true);
                 }
             }
             rs.close();
             prepare1.close();
 
+            {
+                System.out.println("res长度:"+res.size());
+            }
+
             if(searchinput!=null&&searchinput.length()>0)
             {
                 PreparedStatement prepare2=con.prepareStatement(sql2);
-                prepare2.setString(1,searchinput);
-                prepare2.setString(2,searchinput);
-                prepare2.setString(3,searchinput);
-                prepare2.setString(4,searchinput);
-                prepare2.setString(5,searchinput);
-                prepare2.setString(6,searchinput);
-                prepare2.setString(7,searchinput);
+                prepare2.setString(1,"%"+searchinput+"%");
+                prepare2.setString(2,"%"+searchinput+"%");
+                prepare2.setString(3,"%"+searchinput+"%");
+                prepare2.setString(4,"%"+searchinput+"%");
+                prepare2.setString(5,"%"+searchinput+"%");
+//                prepare2.setString(6,"%"+searchinput+"%");
+//                prepare2.setString(7,"%"+searchinput+"%");
+                prepare2.setArray(6,con.createArrayOf("VARCHAR", para.getuAccountTypes().toArray(new String[0])));
+                prepare2.setArray(7,con.createArrayOf("VARCHAR", para.getuAccountStatuess().toArray(new String[0])));
                 ResultSet rs2=prepare2.executeQuery();
                 while(rs2.next())
                 {
@@ -581,7 +595,7 @@ public class AdminController        //管理员控制器
                         item.setuID(rs2.getString("uID"));
                         item.setuNickName(rs2.getString("uNickName"));
                         item.setuPassword(rs2.getString("uPassword"));
-                        item.setuEmail(rs2.getString("uPhone"));
+                        item.setuPhone(rs2.getString("uPhone"));
                         item.setuEmail(rs2.getString("uEmail"));
                         item.setuGender(rs2.getString("uGender"));
                         item.setuRegisterDate(rs2.getString("uRegisterDate"));
@@ -595,6 +609,10 @@ public class AdminController        //管理员控制器
                 prepare2.close();
             }
             con.close();
+
+            {
+                System.out.println("res长度:"+res.size());
+            }
         }
         catch(SQLException e)
         {
@@ -604,6 +622,19 @@ public class AdminController        //管理员控制器
         {
             e.printStackTrace();
         }
+
+        {
+            System.out.println("Debug:res返回结果");
+            for(UserAccountTableItem item:res)
+            {
+                System.out.println("------------------------------------------------------");
+                System.out.println(item.getuID());
+                System.out.println(item.getuNickName());
+                System.out.println(item.getuRegisterDate());
+                System.out.println("------------------------------------------------------");
+            }
+        }
+
         return res;
     }
 
@@ -635,32 +666,43 @@ public class AdminController        //管理员控制器
         ArrayList<ProductTableItem>res=new ArrayList<ProductTableItem>();
         HashMap<String,ProductTableItem>ResultList=new HashMap<String,ProductTableItem>();                  //以pID为主键，标记已经加入res的商品，避免重复加入
 
-        String SearchDescribe=new StringBuilder("").append(SearchCondition.getSearchDesciption()).toString();                                                     //用户输入大概商品描述
-        String SearchpID=new StringBuilder("").append(SearchCondition.getpID()).toString();                                                                      //筛选条件：商品编号
-        String SearchpType=new StringBuilder("").append(SearchCondition.getpType()).toString();                                                                  //筛选条件：商品类型
+        //筛选条件：商品类型
+        String SearchDescribe,SearchpID,SearchpType;
+        SearchDescribe=(SearchCondition!=null && SearchCondition.getSearchDesciption()!=null)?SearchCondition.getSearchDesciption():" ";
+        SearchpID=(SearchCondition!=null && SearchCondition.getpID()!=null)?SearchCondition.getpID():" ";
+        SearchpType=(SearchCondition!=null && SearchCondition.getpType()!=null)?SearchCondition.getpType():" ";
 
         double SearchpPrice_f=SearchCondition.getpPrice_f();                                                            //筛选条件：商品价格
         double SearchpPrice_r=SearchCondition.getpPrice_r();                                                            //筛选条件：商品价格
 
-        String SearchpProducer=new StringBuilder("").append(SearchCondition.getpProducer()).toString();                                                          //筛选条件：商品生产商
+        //筛选条件：商品生产商
+        String SearchpProducer;
+        SearchpProducer=(SearchCondition!=null && SearchCondition.getpProducer()!=null)?SearchCondition.getpProducer():" ";
 
-        String SearchpReleaseDate_f=new StringBuilder("").append(SearchCondition.getpReleaseDate_f()).toString();                                                //筛选条件：商品上架日期
-        String SearchpReleaseDate_r=new StringBuilder("").append(SearchCondition.getpReleaseDate_r()).toString();                                                //筛选条件：商品上架日期
+        //筛选条件：商品上架日期
+        String SearchpReleaseDate_f,SearchpReleaseDate_r;
+        SearchpReleaseDate_f=(SearchCondition!=null && SearchCondition.getpReleaseDate_f()!=null)?SearchCondition.getpReleaseDate_f():"0001-01-01";
+        SearchpReleaseDate_r=(SearchCondition!=null && SearchCondition.getpReleaseDate_r()!=null)?SearchCondition.getpReleaseDate_r():"9999-12-31";
 
-        String SearchpInfo=new StringBuilder("").append(SearchCondition.getpInfo()).toString();                                                                  //筛选条件：商品描述信息
+        //筛选条件：商品描述信息
+        String SearchpInfo;
+        SearchpInfo=(SearchCondition!=null && SearchCondition.getpInfo()!=null)?SearchCondition.getpInfo():" ";
 
         SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd");
         java.util.Date date_f=null;
         Date date_r=null;
 
-        if(SearchpReleaseDate_f.length()==0)
+        if(SearchpReleaseDate_f==null || SearchpReleaseDate_f.isEmpty() ||SearchpReleaseDate_f.length()==0)
         {
-            SearchpReleaseDate_f=new StringBuilder("0001-01-01").toString();
+            SearchpReleaseDate_f="0001-01-01";
         }
-        if(SearchpReleaseDate_r.length()==0)
+        if(SearchpReleaseDate_r==null || SearchpReleaseDate_r.isEmpty() || SearchpReleaseDate_r.length()==0)
         {
-            SearchpReleaseDate_r=new StringBuilder("9999-12-31").toString();
+            SearchpReleaseDate_r="9999-12-31";
         }
+
+        System.out.println(SearchpReleaseDate_f);
+        System.out.println(SearchpReleaseDate_r);
 
         if(SearchpPrice_f==0.0)
         {
@@ -767,6 +809,7 @@ public class AdminController        //管理员控制器
                 StringBuilder sb2=new StringBuilder(SearchpReleaseDate_r);
                 sb2.append(" 23:59:59");
 
+                System.out.println(sb1.toString()+" "+sb2.toString());
                 prepare.setString(5,sb1.toString());                                                        //填入上架日期筛选区间f          5
                 prepare.setString(6,sb2.toString());                                                        //填入上架日期筛选区间r          6
             }
@@ -780,7 +823,7 @@ public class AdminController        //管理员控制器
             prepare.setDouble(7,SearchpPrice_f);                                                //填入价格筛选区间f             7
             prepare.setDouble(8,SearchpPrice_r);                                                //填入价格筛选区间r             8
 
-
+            System.out.println(SearchCondition.FilterOpen());
             if(SearchCondition.FilterOpen()==true)
             {
                 ResultSet rs=prepare.executeQuery();
@@ -1477,25 +1520,22 @@ public class AdminController        //管理员控制器
     {
         return ApiResult.success(AdminGetUserDeliveryInfoResult(para));
     }
-    private ArrayList<UserDeliveryInfoTableItem> AdminGetUserDeliveryInfoResult(UserAccountTableItem para)
-    {
+    private ArrayList<UserDeliveryInfoTableItem> AdminGetUserDeliveryInfoResult(UserAccountTableItem para) {
         {
             System.out.println("*****************AdminGetUserDeliveryInfoResult********************");
             System.out.println(para.getuID());
             System.out.println("*****************AdminGetUserDeliveryInfoResult********************");
         }
 
-        ArrayList<UserDeliveryInfoTableItem> res=new ArrayList<>();
-        try
-        {
-            Connection con=DBUtil.getConnection();
-            String sql1="SELECT * FROM UserDeliveryInfoTable WHERE uID=?;";
-            PreparedStatement prepare1=con.prepareStatement(sql1);
-            prepare1.setString(1,para.getuID());
-            ResultSet rs=prepare1.executeQuery();
-            while(rs.next())
-            {
-                UserDeliveryInfoTableItem item=new UserDeliveryInfoTableItem();
+        ArrayList<UserDeliveryInfoTableItem> res = new ArrayList<>();
+        try {
+            Connection con = DBUtil.getConnection();
+            String sql1 = "SELECT * FROM UserDeliveryInfoTable WHERE uID=?;";
+            PreparedStatement prepare1 = con.prepareStatement(sql1);
+            prepare1.setString(1, para.getuID());
+            ResultSet rs = prepare1.executeQuery();
+            while (rs.next()) {
+                UserDeliveryInfoTableItem item = new UserDeliveryInfoTableItem();
                 item.setuID(rs.getString("uID"));
                 item.setoDeliveryNote(rs.getString("oDeliveryNote"));
                 item.setoPostalCode(rs.getString("oPostalCode"));
@@ -1510,15 +1550,22 @@ public class AdminController        //管理员控制器
             rs.close();
             prepare1.close();
             con.close();
-        }
-        catch(SQLException e)
-        {
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        catch(Exception e)
+
         {
-            e.printStackTrace();
+            for(UserDeliveryInfoTableItem item:res)
+            {
+                System.out.println("----------------------------------------");
+                System.out.println(item.getuID());
+                System.out.println(item.getuDeliveryAddress());
+                System.out.println("----------------------------------------");
+            }
         }
+
         return res;
     }
 
@@ -1581,6 +1628,17 @@ public class AdminController        //管理员控制器
         {
             e.printStackTrace();
         }
+
+        {
+            for(OrderFullInfoTableItem item:res)
+            {
+                System.out.println("---------------------------------------------------");
+                System.out.println(item.getoOrderID());
+                System.out.println(item.getoDate());
+                System.out.println("---------------------------------------------------");
+            }
+        }
+
         return res;
     }
 
