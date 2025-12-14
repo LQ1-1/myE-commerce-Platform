@@ -24,7 +24,8 @@ public class ProductTableItem
     private int pInventory;
     @JsonProperty("pStatus")
     private String pStatus;
-
+    @JsonProperty("pImagePath")
+    private String pImagePath;
     public  ProductTableItem() {}
 
     public String getpID(){return pID;}
@@ -48,5 +49,13 @@ public class ProductTableItem
     public void setpInfo(String pInfo){this.pInfo=pInfo;}
     public void setpInventory(int pInventory){this.pInventory=pInventory;}
     public void setpStatus(String pStatus){this.pStatus=pStatus;}
+
+    public String getpImagePath() {
+        return pImagePath;
+    }
+
+    public void setpImagePath(String pImagePath) {
+        this.pImagePath = pImagePath;
+    }
 }
 

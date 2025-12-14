@@ -251,7 +251,11 @@ public class AdminController        //管理员控制器
         {
             Class.forName("com.kingbase8.Driver");
             Connection con= DriverManager.getConnection(url,user,password);
-            String sql1="SELECT * FROM ProductTable;";
+            String sql1="SELECT ProductTable.pID, ProductTable.pName, ProductTable.pType," +
+                    "ProductTable.pDiscount, ProductTable.pPrice, ProductTable.pProducer," +
+                    "ProductTable.pReleaseDate, ProductTable.pInfo, ProductTable.pInventory, ProductTable.pStatus, " +
+                    "ProductImagesTable.pImagePath FROM ProductTable " +
+                    "INNER JOIN ProductImagesTable ON ProductImagesTable.pID=ProductTable.pID WHERE ProductImagesTable.pImgType='缩略图';";
             ResultSet rs=con.createStatement().executeQuery(sql1);
             while(rs.next())
             {
@@ -266,6 +270,7 @@ public class AdminController        //管理员控制器
                 item.setpInfo(rs.getString("pInfo"));
                 item.setpInventory(rs.getInt("pInventory"));
                 item.setpStatus(rs.getString("pStatus"));
+                item.setpImagePath(rs.getString("pImagePath"));
                 res.add(item);
             }
             rs.close();
@@ -487,6 +492,19 @@ public class AdminController        //管理员控制器
         datef=(para!=null && para.getDateF()!=null)?para.getDateF():"0001-01-01";
         dater=(para!=null && para.getDateR()!=null)?para.getDateR():"9999-12-31";
 
+        {
+            System.out.println("*******************AdminUserAccountTableSearchResult*********************");
+            System.out.println(id);
+            System.out.println(nickname);
+            System.out.println(phone);
+            System.out.println(email);
+            System.out.println(gender);
+            System.out.println(searchinput);
+            System.out.println(datef);
+            System.out.println(dater);
+            System.out.println("*******************AdminUserAccountTableSearchResult*********************");
+        }
+
         ArrayList<UserAccountTableItem>res=new ArrayList<>();
         try
         {
@@ -591,7 +609,7 @@ public class AdminController        //管理员控制器
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminProductTableSearch")
-    public ApiResult<ArrayList<ProductSearch_jsonSend>> AdminProductTableSearch(@RequestBody ProductSearch_jsonGet SearchCondition)     //搜索商品
+    public ApiResult<ArrayList<ProductTableItem>> AdminProductTableSearch(@RequestBody ProductSearch_jsonGet SearchCondition)     //搜索商品
     {
         {
             System.out.println("***************Product search***************");
@@ -609,13 +627,13 @@ public class AdminController        //管理员控制器
         }
 
 
-        ArrayList<ProductSearch_jsonSend>ItemList=AdminProductTableSearchResult(SearchCondition);
+        ArrayList<ProductTableItem>ItemList=AdminProductTableSearchResult(SearchCondition);
         return ApiResult.success(ItemList);
     }
-    private ArrayList<ProductSearch_jsonSend>  AdminProductTableSearchResult(ProductSearch_jsonGet SearchCondition)                      //参数是描述信息
+    private ArrayList<ProductTableItem>  AdminProductTableSearchResult(ProductSearch_jsonGet SearchCondition)                      //参数是描述信息
     {
-        ArrayList<ProductSearch_jsonSend>res=new ArrayList<ProductSearch_jsonSend>();
-        HashMap<String,ProductSearch_jsonSend>ResultList=new HashMap<String,ProductSearch_jsonSend>();                  //以pID为主键，标记已经加入res的商品，避免重复加入
+        ArrayList<ProductTableItem>res=new ArrayList<ProductTableItem>();
+        HashMap<String,ProductTableItem>ResultList=new HashMap<String,ProductTableItem>();                  //以pID为主键，标记已经加入res的商品，避免重复加入
 
         String SearchDescribe=new StringBuilder("").append(SearchCondition.getSearchDesciption()).toString();                                                     //用户输入大概商品描述
         String SearchpID=new StringBuilder("").append(SearchCondition.getpID()).toString();                                                                      //筛选条件：商品编号
@@ -768,7 +786,7 @@ public class AdminController        //管理员控制器
                 ResultSet rs=prepare.executeQuery();
                 while(rs.next())
                 {
-                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                    ProductTableItem item=new ProductTableItem();
                     item.setpID(rs.getString("pID"));
                     item.setpName(rs.getString("pName"));
                     item.setpType(rs.getString("pType"));
@@ -803,7 +821,7 @@ public class AdminController        //管理员控制器
                 while(rs2.next())
                 {
 
-                    ProductSearch_jsonSend item=new ProductSearch_jsonSend();
+                    ProductTableItem item=new ProductTableItem();
                     item.setpID(rs2.getString("pID"));
                     item.setpName(rs2.getString("pName"));
                     item.setpType(rs2.getString("pType"));
@@ -874,6 +892,23 @@ public class AdminController        //管理员控制器
         searchinput=(para!=null && para.getSearchInput()!=null)?para.getSearchInput():"";
         datef=(para!=null && para.getDateF()!=null)?para.getDateF():"0001-01-01";
         dater=(para!=null && para.getDateR()!=null)?para.getDateR():"9999-12-31";
+
+        {
+            System.out.println("***********************AdminOrderInfoSearchResult***********************");
+            System.out.println(orderid);
+            System.out.println(orderer);
+            System.out.println(receiver);
+            System.out.println(gender);
+            System.out.println(email);
+            System.out.println(address);
+            System.out.println(code);
+            System.out.println(phone);
+            System.out.println(note);
+            System.out.println(searchinput);
+            System.out.println(datef);
+            System.out.println(dater);
+            System.out.println("***********************AdminOrderInfoSearchResult***********************");
+        }
 
         try
         {
@@ -1444,6 +1479,12 @@ public class AdminController        //管理员控制器
     }
     private ArrayList<UserDeliveryInfoTableItem> AdminGetUserDeliveryInfoResult(UserAccountTableItem para)
     {
+        {
+            System.out.println("*****************AdminGetUserDeliveryInfoResult********************");
+            System.out.println(para.getuID());
+            System.out.println("*****************AdminGetUserDeliveryInfoResult********************");
+        }
+
         ArrayList<UserDeliveryInfoTableItem> res=new ArrayList<>();
         try
         {
@@ -1489,6 +1530,12 @@ public class AdminController        //管理员控制器
     }
     private ArrayList<OrderFullInfoTableItem> AdminGetUserOrderInfoResult(UserAccountTableItem para)
     {
+        {
+            System.out.println("*******************************AdminGetUserOrderInfoResult*******************************");
+            System.out.println(para.getuID());
+            System.out.println("*******************************AdminGetUserOrderInfoResult*******************************");
+        }
+
         ArrayList<OrderFullInfoTableItem> res=new ArrayList<>();
         try
         {
@@ -1545,6 +1592,12 @@ public class AdminController        //管理员控制器
     }
     private ArrayList<OrderProductInfoTableItem> AdminGetOrderSpecificInfoResult(OrderProductInfoTableItem para)
     {
+        {
+            System.out.println("******************************AdminGetOrderSpecificInfoResult***********************************");
+            System.out.println(para.getoOrderID());
+            System.out.println("******************************AdminGetOrderSpecificInfoResult***********************************");
+        }
+
         ArrayList<OrderProductInfoTableItem> res=new ArrayList<>();
         try
         {
@@ -1586,6 +1639,12 @@ public class AdminController        //管理员控制器
     }
     private ArrayList<ProductTableItem> AdminGetSpecificProductInfoResult(ProductTableItem para)
     {
+        {
+            System.out.println("****************************AdminGetSpecificProductInfoResult***********************************");
+            System.out.println(para.getpID());
+            System.out.println("****************************AdminGetSpecificProductInfoResult***********************************");
+        }
+
         ArrayList<ProductTableItem> res=new ArrayList<>();
         try
         {
