@@ -1182,6 +1182,50 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserDeliveryInfoTableAdd")
+    public String AdminUserDeliveryInfoTableAdd(@RequestBody UserDeliveryInfoTableItem para)        //uDIndex不用填写
+    {
+        return AdminUserDeliveryInfoTableAddResult(para)?AdminStatus.Success:AdminStatus.Fail;
+    }
+    private boolean AdminUserDeliveryInfoTableAddResult(UserDeliveryInfoTableItem para)
+    {
+        boolean res=false;
+        try
+        {
+            Connection con=DBUtil.getConnection();
+            String sql1="SELECT UserDeliveryInfoTableadd(?, ?, ?, " +
+                    "?, ?, ?, " +
+                    "?, ?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            prepare.setString(2,para.getuDeliveryAddress());
+            prepare.setString(3,para.getuContactPersonName());
+            prepare.setString(4,para.getuContactPersonPhone());
+
+            prepare.setString(5,para.getuContactPersonGender());
+            prepare.setString(6,para.getuContactPersonEmail());
+            prepare.setString(7,para.getoPostalCode());
+            prepare.setString(8,para.getoDeliveryNote());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminProductTableUpdate")
     public String AdminProductTableUpdate(ProductInfoUpdate_jsonGet updateInfo)         //更商户界面的更新商品信息的接口是一样的
     {

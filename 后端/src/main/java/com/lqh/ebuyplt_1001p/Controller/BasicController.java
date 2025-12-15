@@ -3,6 +3,7 @@ package com.lqh.ebuyplt_1001p.Controller;
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.AdminStatus;
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserAccountTableItem;
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.UserDeliveryInfoTableItem;
+import com.lqh.ebuyplt_1001p.Controller.DBTools.DBUtil;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserLogin;
 import com.lqh.ebuyplt_1001p.Controller.JSONparameter.UserRegistration;
 import com.lqh.ebuyplt_1001p.Controller.BasicControllerTools.*;
@@ -274,7 +275,6 @@ public class BasicController
         return res.toString();
     }
 
-
     @CrossOrigin(origins="*")
     @RequestMapping("/api/GetUserAccountInfo")
     public ApiResult<UserAccountTableItem> GetUserAccountInfo(@RequestBody UserAccountTableItem para)   //获取用户信息的接口，请求的时候只用填写uID
@@ -451,6 +451,48 @@ public class BasicController
             }
             prepare.close();
             con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/api/AddUserDeliveryInfo")
+    public String AddUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)      //新增一个收货信息,uDIndex不用填写
+    {
+        return AddUserDeliveryInfoResult(para)?AdminStatus.Success:AdminStatus.Fail;
+    }
+    private boolean AddUserDeliveryInfoResult(@RequestBody UserDeliveryInfoTableItem para)
+    {
+        boolean res=false;
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="SELECT UserDeliveryInfoTableadd(?, ?, ?, " +
+                    "?, ?, ?, " +
+                    "?, ?);";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            prepare.setString(2,para.getuDeliveryAddress());
+            prepare.setString(3,para.getuContactPersonName());
+            prepare.setString(4,para.getuContactPersonPhone());
+
+            prepare.setString(5,para.getuContactPersonGender());
+            prepare.setString(6,para.getuContactPersonEmail());
+            prepare.setString(7,para.getoPostalCode());
+            prepare.setString(8,para.getoDeliveryNote());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
         }
         catch(SQLException e)
         {
