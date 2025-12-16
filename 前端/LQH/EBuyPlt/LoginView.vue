@@ -37,8 +37,9 @@
               :prefix-icon="Key" />
           </el-form-item>
 
+          <!-- ⭐ 修改：添加 maxlength="11" 限制输入长度 -->
           <el-form-item label="手机号" prop="uPhone">
-            <el-input v-model="formData.uPhone" placeholder="请输入手机号" :prefix-icon="Phone" />
+            <el-input v-model="formData.uPhone" placeholder="请输入手机号" :prefix-icon="Phone" maxlength="11" />
           </el-form-item>
 
           <el-form-item label="Email" prop="uEmail">
@@ -61,23 +62,19 @@
           </el-button>
         </el-form-item>
 
-        <!-- ================= 底部链接区域 (核心修改) ================= -->
+        <!-- ================= 底部链接区域 ================= -->
         <div class="form-footer">
-          <!-- 场景1：登录模式，显示两个入口 -->
           <template v-if="!isRegister">
             <div class="footer-links">
-              <!-- 普通用户注册入口 -->
               <el-link type="primary" :underline="false" @click="switchToRegister('user')">
                 没有账号？去注册
               </el-link>
-              <!-- 商户注册入口 (放在下面) -->
               <el-link type="warning" :underline="false" @click="switchToRegister('merchant')" class="merchant-link">
                 我是商户，申请入驻
               </el-link>
             </div>
           </template>
 
-          <!-- 场景2：注册模式，显示返回登录 -->
           <template v-else>
             <el-link type="primary" :underline="false" @click="switchToLogin">
               已有账号？去登录
@@ -104,7 +101,6 @@ const isLoading = ref(false)
 
 // --- 状态控制 ---
 const isRegister = ref(false)
-// 核心变量：'user' 代表普通用户注册, 'merchant' 代表商户注册
 const registerType = ref('user')
 
 // 计算标题文字
@@ -125,18 +121,15 @@ const formData = reactive({
 })
 
 // --- 切换逻辑 ---
-
-// 切换到注册模式 (接收类型参数)
 const switchToRegister = (type) => {
   isRegister.value = true
-  registerType.value = type // 记录是 'user' 还是 'merchant'
+  registerType.value = type
   if (formRef.value) formRef.value.resetFields()
 }
 
-// 切换回登录模式
 const switchToLogin = () => {
   isRegister.value = false
-  registerType.value = 'user' // 重置默认为 user
+  registerType.value = 'user'
   if (formRef.value) formRef.value.resetFields()
 }
 
@@ -168,7 +161,11 @@ const rules = computed(() => {
       ...baseRules,
       uNickName: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
       confirmPassword: [{ required: true, validator: validatePass2, trigger: 'blur' }],
-      uPhone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
+      // ⭐ 修改：添加了正则校验
+      uPhone: [
+        { required: true, message: '请输入手机号', trigger: 'blur' },
+        { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的11位手机号码', trigger: 'blur' }
+      ],
       uEmail: [
         { required: true, message: '请输入邮箱', trigger: 'blur' },
         { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
@@ -204,10 +201,7 @@ const handleSubmit = async () => {
         let url = ''
 
         if (isRegister.value) {
-          // === 注册逻辑 ===
           url = 'http://192.168.66.94:8082/api/Registration'
-
-          // 根据 registerType 决定账户类型
           const finalAccountType = registerType.value === 'merchant' ? '商户' : '普通用户'
 
           payload = {
@@ -218,11 +212,10 @@ const handleSubmit = async () => {
             uEmail: formData.uEmail,
             uGender: formData.uGender,
             uRegisterDate: getNowTime(new Date()),
-            uAccountType: finalAccountType, // 这里是关键变化
+            uAccountType: finalAccountType,
             uAccountStatus: '正常'
           }
         } else {
-          // === 登录逻辑 ===
           url = 'http://192.168.66.94:8082/api/Login_RequestBody'
           payload = {
             uID: formData.uID,
@@ -236,10 +229,9 @@ const handleSubmit = async () => {
         const messageStr = response.data
 
         if (response.status === 200) {
-          // 处理各类返回信息
           if (messageStr.includes('Registration Success')) {
             ElMessage.success(messageStr)
-            switchToLogin() // 注册成功跳回登录
+            switchToLogin()
           } else if (messageStr.includes('Account Exist')) {
             ElMessage.error(messageStr)
           } else if (messageStr.includes('Registration Fail')) {
@@ -311,16 +303,13 @@ const handleSubmit = async () => {
   margin-top: -10px;
 }
 
-/* 新增：用于堆叠两个链接的样式 */
 .footer-links {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  /* 两个链接之间的间距 */
 }
 
-/* 商户链接稍微小一点，或者颜色区分，增加辨识度 */
 .merchant-link {
   font-size: 13px;
 }
