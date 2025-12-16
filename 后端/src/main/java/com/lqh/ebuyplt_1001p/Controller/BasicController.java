@@ -416,7 +416,7 @@ public class BasicController
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/SetUserDeliveryInfo")
-    public String  SetUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)     //更新其中一个收货信息
+    public String  SetUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)     //更新其中一个收货信息,需要填写uID,uDIndex来确定具体是要删除哪一个记录
     {
         if(SetUserDeliveryInfoResult(para)){    return AdminStatus.Success;    }
         else {   return AdminStatus.Fail;    }
@@ -488,11 +488,17 @@ public class BasicController
             prepare.setString(6,para.getuContactPersonEmail());
             prepare.setString(7,para.getoPostalCode());
             prepare.setString(8,para.getoDeliveryNote());
-            int row=prepare.executeUpdate();
-            if(row>0)
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
             {
-                res=true;
+                if(rs.getInt(1) >= 0)
+                {
+                    res=true;
+                }
             }
+            rs.close();
+            prepare.close();
+            con.close();
         }
         catch(SQLException e)
         {
@@ -505,7 +511,37 @@ public class BasicController
         return res;
     }
 
-    //添加新的收货信息则使用/api/OrderConfirm_NewDeliveryRecord这个接口
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/DeleteUserDeliveryInfo")
+    public String DeleteUserDeliveryInfo(@RequestBody UserDeliveryInfoTableItem para)   //删除其中的一个收货记录，需要填写uID,uDIndex来标定具体一个记录
+    {
+        return  DeleteUserDeliveryInfoResult(para)?AdminStatus.Success:AdminStatus.Fail;
+    }
+    private boolean DeleteUserDeliveryInfoResult(UserDeliveryInfoTableItem para)
+    {
+        boolean res=false;
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="DELETE FROM UserDeliveryInfoTable WHERE uID=? AND uDIndex=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            prepare.setInt(2,para.getuDIndex());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
 }
 
 /*

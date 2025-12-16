@@ -1226,6 +1226,37 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserDeliveryInfoTableDelete")
+    public String AdminUserDeliveryInfoTableDelete(@RequestBody UserDeliveryInfoTableItem para)     //需要填写uID,uDIndex来标定一个具体收货信息记录
+    {
+        return AdminUserDeliveryInfoTableDeleteResult(para)?AdminStatus.Success:AdminStatus.Fail;
+    }
+    private boolean AdminUserDeliveryInfoTableDeleteResult(UserDeliveryInfoTableItem para)
+    {
+        boolean res=false;
+        try
+        {
+            Connection con= DBUtil.getConnection();
+            String sql1="DELETE FROM UserDeliveryInfoTable WHERE uID=? AND uDIndex=?;";
+            PreparedStatement prepare=con.prepareStatement(sql1);
+            prepare.setString(1,para.getuID());
+            prepare.setInt(2,para.getuDIndex());
+            int row=prepare.executeUpdate();
+            if(row>0)
+            {
+                res=true;
+            }
+            prepare.close();
+            con.close();
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminProductTableUpdate")
     public String AdminProductTableUpdate(ProductInfoUpdate_jsonGet updateInfo)         //更商户界面的更新商品信息的接口是一样的
     {

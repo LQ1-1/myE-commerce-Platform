@@ -19,6 +19,7 @@ uAccountStatus varchar(10) NOT NULL 					--COMMENT'账号状态'
 --账号以及附带的信息不删除，标记为注销后，该账号的信息就不再更新了，账号密码登录失效，UserDeliveryInfoTable,UserShoppingCartTable,UserFavoritesTable上的记录删除
 ALTER TABLE UserAccountTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 SELECT * FROM UserAccountTable;
+SELECT * FROM UserAccountTable WHERE uNickName LIKE '%%';
 UPDATE UserAccountTable SET uPassword='932f3c1b56257ce8539ac269d7aab42550dacf8818d075f0bdf1990562aae3ef' WHERE uID='1522788291@163.com';
 
 
@@ -39,7 +40,7 @@ ALTER TABLE UserDeliveryInfoTable ADD COLUMN oDeliveryNote varchar(512);
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN uDIndex int16 default 0;
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 
-
+SELECT * FROM UserDeliveryInfoTable;
 
 
 CREATE OR REPLACE FUNCTION UserDeliveryInfoTableadd(iuID UserDeliveryInfoTable.uID%TYPE, iuDeliveryAddress UserDeliveryInfoTable.uDeliveryAddress%TYPE,
@@ -50,7 +51,8 @@ RETURN int16 AS
 DECLARE
 newDIndex int16;
 BEGIN
-	SELECT max(uDIndex)+1 INTO newDIndex FROM UserDeliveryInfoTable WHERE uID=iuID FOR UPDATE;
+	PERFORM 1 FROM UserDeliveryInfoTable WHERE uID = iuID FOR UPDATE;	--对该用户的所有收货记录进行加锁
+	SELECT COALESCE(max(uDIndex),0)+1 INTO newDIndex FROM UserDeliveryInfoTable WHERE uID=iuID;
 	INSERT INTO UserDeliveryInfoTable(uID,uDeliveryAddress,uContactPersonName,uContactPersonPhone,
 	uContactPersonGender,oReceieverEmail,oPostalCode,
 	oDeliveryNote,uDIndex)VALUES(iuID, iuDeliveryAddress, iuContactPersonName,
@@ -60,7 +62,7 @@ BEGIN
 END;
 
 SELECT * FROM UserDeliveryInfoTable;
-
+DELETE FROM UserDeliveryInfoTable WHERE uID='18775332736' AND uDIndex=4;
 
 
 --用户购物车记录
@@ -347,6 +349,7 @@ INSERT INTO ProductTable(pID,pName,pType,pDiscount,pPrice,pProducer,pReleaseDate
 ;
 
 SELECT * FROM ProductTable;
+SELECT * FROM ProductTable WHERE pName LIKE '% %' AND pReleaseDate >= '2010-12-25 00:00:00' AND pReleaseDate <= '2029-11-30 23:59:59';
 UPDATE ProductTable SET ProductTable.pInventory=120 WHERE ProductTable.pID='0000000000000020';0000000000000021
 UPDATE ProductTable SET ProductTable.pStatus='上架' WHERE ProductTable.pID='0000000000000022';
 
