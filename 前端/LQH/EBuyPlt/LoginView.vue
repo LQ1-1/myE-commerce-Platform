@@ -3,57 +3,48 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <span>{{ isRegister ? '用户注册' : '电子商务系统' }}</span>
+          <!-- 标题根据状态动态显示：登录 / 用户注册 / 商户注册 -->
+          <span>{{ titleText }}</span>
         </div>
       </template>
 
       <!-- 表单区域 -->
       <el-form ref="formRef" :model="formData" :rules="rules" label-width="80px" size="large" status-icon>
 
-        <!-- ================= 公共区域 (登录/注册都显示) ================= -->
-
-        <!-- 账号输入框 -->
+        <!-- ================= 公共区域 (账号) ================= -->
         <el-form-item label="账号" prop="uID">
           <el-input v-model="formData.uID" placeholder="请输入账号" :prefix-icon="User" />
         </el-form-item>
 
-        <!-- ================= 注册专用区域 (仅注册显示) ================= -->
-
+        <!-- ================= 注册专用区域 (用户/商户通用) ================= -->
         <template v-if="isRegister">
-          <!-- 用户名称 -->
+          <!-- 用户名 -->
           <el-form-item label="用户名" prop="uNickName">
             <el-input v-model="formData.uNickName" placeholder="请输入用户名" :prefix-icon="UserFilled" />
           </el-form-item>
         </template>
 
         <!-- ================= 公共区域 (密码) ================= -->
-
-        <!-- 密码输入框 -->
         <el-form-item label="密码" prop="uPassword">
           <el-input v-model="formData.uPassword" type="password" placeholder="请输入密码" show-password
             :prefix-icon="Lock" />
         </el-form-item>
 
-        <!-- ================= 注册专用区域 (其他详细信息) ================= -->
-
+        <!-- ================= 注册专用区域 (其他信息) ================= -->
         <template v-if="isRegister">
-          <!-- 确认密码 -->
           <el-form-item label="确认密码" prop="confirmPassword">
             <el-input v-model="formData.confirmPassword" type="password" placeholder="请再次输入密码" show-password
               :prefix-icon="Key" />
           </el-form-item>
 
-          <!-- 手机号 -->
           <el-form-item label="手机号" prop="uPhone">
             <el-input v-model="formData.uPhone" placeholder="请输入手机号" :prefix-icon="Phone" />
           </el-form-item>
 
-          <!-- Email -->
           <el-form-item label="Email" prop="uEmail">
             <el-input v-model="formData.uEmail" placeholder="请输入邮箱" :prefix-icon="MessageBox" />
           </el-form-item>
 
-          <!-- 性别 -->
           <el-form-item label="性别" prop="uGender">
             <el-select v-model="formData.uGender" placeholder="选择或输入性别" filterable allow-create default-first-option
               clearable style="width: 100%">
@@ -64,19 +55,34 @@
         </template>
 
         <!-- ================= 按钮区域 ================= -->
-
-        <!-- 提交按钮 -->
         <el-form-item>
           <el-button type="primary" :loading="isLoading" class="login-button" @click="handleSubmit">
-            {{ isRegister ? '立即注册' : '登 录' }}
+            {{ isRegister ? '立 即 注 册' : '登 录' }}
           </el-button>
         </el-form-item>
 
-        <!-- 底部切换链接 -->
+        <!-- ================= 底部链接区域 (核心修改) ================= -->
         <div class="form-footer">
-          <el-link type="primary" :underline="false" @click="toggleMode">
-            {{ isRegister ? '已有账号？去登录' : '没有账号？去注册' }}
-          </el-link>
+          <!-- 场景1：登录模式，显示两个入口 -->
+          <template v-if="!isRegister">
+            <div class="footer-links">
+              <!-- 普通用户注册入口 -->
+              <el-link type="primary" :underline="false" @click="switchToRegister('user')">
+                没有账号？去注册
+              </el-link>
+              <!-- 商户注册入口 (放在下面) -->
+              <el-link type="warning" :underline="false" @click="switchToRegister('merchant')" class="merchant-link">
+                我是商户，申请入驻
+              </el-link>
+            </div>
+          </template>
+
+          <!-- 场景2：注册模式，显示返回登录 -->
+          <template v-else>
+            <el-link type="primary" :underline="false" @click="switchToLogin">
+              已有账号？去登录
+            </el-link>
+          </template>
         </div>
 
       </el-form>
@@ -92,12 +98,22 @@ import { User, Lock, Key, UserFilled, Phone, MessageBox } from '@element-plus/ic
 import CryptoJS from 'crypto-js'
 import axios from 'axios'
 
-// --- 状态定义 ---
+const router = useRouter()
 const formRef = ref(null)
 const isLoading = ref(false)
-const isRegister = ref(false)
 
-// 表单数据
+// --- 状态控制 ---
+const isRegister = ref(false)
+// 核心变量：'user' 代表普通用户注册, 'merchant' 代表商户注册
+const registerType = ref('user')
+
+// 计算标题文字
+const titleText = computed(() => {
+  if (!isRegister.value) return '电子商务系统'
+  return registerType.value === 'merchant' ? '商户入驻注册' : '用户注册'
+})
+
+// --- 表单数据 ---
 const formData = reactive({
   uID: '',
   uNickName: '',
@@ -105,14 +121,26 @@ const formData = reactive({
   uPhone: '',
   uEmail: '',
   uGender: '',
-  uRegisterDate: '',
-  uAccountType: '',
-  uAccountStatus: '',
   confirmPassword: ''
 })
 
-// --- 验证规则 ---
+// --- 切换逻辑 ---
 
+// 切换到注册模式 (接收类型参数)
+const switchToRegister = (type) => {
+  isRegister.value = true
+  registerType.value = type // 记录是 'user' 还是 'merchant'
+  if (formRef.value) formRef.value.resetFields()
+}
+
+// 切换回登录模式
+const switchToLogin = () => {
+  isRegister.value = false
+  registerType.value = 'user' // 重置默认为 user
+  if (formRef.value) formRef.value.resetFields()
+}
+
+// --- 验证规则 ---
 const validatePass2 = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请再次输入密码'))
@@ -123,9 +151,7 @@ const validatePass2 = (rule, value, callback) => {
   }
 }
 
-// 动态计算规则：登录时只校验 uID 和 uPassword
 const rules = computed(() => {
-  // 基础规则（登录和注册都需要）
   const baseRules = {
     uID: [
       { required: true, message: '请输入账号', trigger: 'blur' },
@@ -137,49 +163,26 @@ const rules = computed(() => {
     ]
   }
 
-  // 注册特有规则（仅在 isRegister 为 true 时生效）
   if (isRegister.value) {
     return {
       ...baseRules,
-      uNickName: [
-        { required: true, message: '请输入用户名', trigger: 'blur' }
-      ],
-      confirmPassword: [
-        { required: true, validator: validatePass2, trigger: 'blur' }
-      ],
-      uPhone: [
-        { required: true, message: '请输入手机号', trigger: 'blur' }
-        // 可以加正则校验: { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不对', trigger: 'blur' }
-      ],
+      uNickName: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+      confirmPassword: [{ required: true, validator: validatePass2, trigger: 'blur' }],
+      uPhone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
       uEmail: [
         { required: true, message: '请输入邮箱', trigger: 'blur' },
         { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
       ],
-      uGender: [
-        { required: true, message: '请选择或输入性别', trigger: 'change' }
-      ]
+      uGender: [{ required: true, message: '请选择或输入性别', trigger: 'change' }]
     }
   }
-
-  // 登录模式只返回基础规则
   return baseRules
 })
 
-// --- 核心逻辑 ---
-
-const toggleMode = () => {
-  isRegister.value = !isRegister.value
-  if (formRef.value) {
-    formRef.value.resetFields() // 切换时清空校验红字和输入内容
-  }
-}
-
-//获取router实例
-const router = useRouter() 
-
+// --- 工具函数 ---
 const getNowTime = (date) => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始，需 +1
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -187,6 +190,7 @@ const getNowTime = (date) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+// --- 提交处理 ---
 const handleSubmit = async () => {
   if (!formRef.value) return
 
@@ -196,73 +200,63 @@ const handleSubmit = async () => {
 
       try {
         const hashedPassword = CryptoJS.SHA256(formData.uPassword).toString()
-
         let payload = {}
         let url = ''
 
         if (isRegister.value) {
-          // --- 注册模式 ---
+          // === 注册逻辑 ===
           url = 'http://192.168.66.94:8082/api/Registration'
 
+          // 根据 registerType 决定账户类型
+          const finalAccountType = registerType.value === 'merchant' ? '商户' : '普通用户'
+
           payload = {
-            uID: formData.uID,             // 账号
-            uNickName: formData.uNickName, // 用户名
+            uID: formData.uID,
+            uNickName: formData.uNickName,
             uPassword: hashedPassword,
             uPhone: formData.uPhone,
             uEmail: formData.uEmail,
             uGender: formData.uGender,
             uRegisterDate: getNowTime(new Date()),
-            uAccountType: '普通用户',
+            uAccountType: finalAccountType, // 这里是关键变化
             uAccountStatus: '正常'
           }
         } else {
-          // --- 登录模式 ---
+          // === 登录逻辑 ===
           url = 'http://192.168.66.94:8082/api/Login_RequestBody'
           payload = {
-            uID: formData.uID,          // 登录使用账号(uID)
+            uID: formData.uID,
             uPassword: hashedPassword
           }
         }
 
-        console.log('发送 Payload:', payload) // 调试用
+        console.log('Mode:', registerType.value, 'Payload:', payload)
 
-        // 直接payload发送就可以
         const response = await axios.post(url, payload)
-
-        console.log('后端响应:', response.data)
+        const messageStr = response.data
 
         if (response.status === 200) {
-          const messageStr = response.data
-          // alert(messageStr)
-
+          // 处理各类返回信息
           if (messageStr.includes('Registration Success')) {
-            //注册成功
             ElMessage.success(messageStr)
-            toggleMode()  // 切换模式（去登录）
+            switchToLogin() // 注册成功跳回登录
           } else if (messageStr.includes('Account Exist')) {
-            //账号已经存在
             ElMessage.error(messageStr)
           } else if (messageStr.includes('Registration Fail')) {
-            //注册失败,后端的原因
             ElMessage.error(messageStr)
           } else if (messageStr.includes('管理员')) {
-            ElMessage.success('欢迎,用户'+formData.uID)
-            sessionStorage.setItem('uID', formData.uID) 
-            router.push('/AdminView')//跳转到管理员界面
+            ElMessage.success('欢迎, 用户' + formData.uID)
+            sessionStorage.setItem('uID', formData.uID)
+            router.push('/AdminView')
           } else if (messageStr.includes('普通用户')) {
-            //欢迎
-            ElMessage.success('欢迎,用户'+formData.uID)
-            sessionStorage.setItem('uID', formData.uID) //将账号信息带入界面
-            router.push('/ShoppingnbView')//跳转到普通用户界面
+            ElMessage.success('欢迎, 用户' + formData.uID)
+            sessionStorage.setItem('uID', formData.uID)
+            router.push('/ShoppingnbView')
           } else if (messageStr.includes('商户')) {
-            ElMessage.success('欢迎,用户'+formData.uID)
-            sessionStorage.setItem('uID', formData.uID) //将账号信息带入界面
-            router.push('/MerchantView')//跳转到商户界面
-          } else if (messageStr.includes('无此类型账户')) {
-            ElMessage.error(messageStr)
-          }else if(messageStr.includes('No such Account')){
-            ElMessage.error(messageStr)
-          }else if(messageStr.includes('Wrong Password')){
+            ElMessage.success('欢迎, 商户' + formData.uID)
+            sessionStorage.setItem('uID', formData.uID)
+            router.push('/MerchantView')
+          } else if (messageStr.includes('无此类型账户') || messageStr.includes('No such Account') || messageStr.includes('Wrong Password')) {
             ElMessage.error(messageStr)
           }
         } else {
@@ -271,8 +265,7 @@ const handleSubmit = async () => {
 
       } catch (error) {
         console.error('API Error:', error)
-        const errorMsg = error.response?.data || '网络连接错误'
-        ElMessage.error(typeof errorMsg === 'string' ? errorMsg : '服务器内部错误')
+        ElMessage.error('服务器内部错误或网络连接失败')
       } finally {
         isLoading.value = false
       }
@@ -284,7 +277,6 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
 .login-container {
   display: flex;
   justify-content: center;
@@ -317,5 +309,19 @@ const handleSubmit = async () => {
 .form-footer {
   text-align: right;
   margin-top: -10px;
+}
+
+/* 新增：用于堆叠两个链接的样式 */
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  /* 两个链接之间的间距 */
+}
+
+/* 商户链接稍微小一点，或者颜色区分，增加辨识度 */
+.merchant-link {
+  font-size: 13px;
 }
 </style>
