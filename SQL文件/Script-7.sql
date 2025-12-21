@@ -164,6 +164,49 @@ ALTER TABLE ProductClicksInfoTable ADD CONSTRAINT uk_pid UNIQUE (pID);
 ALTER TABLE ProductClicksInfoTable ALTER COLUMN pClicksAmount TYPE bigint;
 CREATE INDEX index_producet_clicks_amount ON ProductClicksInfoTable(pClicksAmount DESC);
 
+CREATE TABLE CommentOnProductTable
+(
+cID varchar(46) PRIMARY KEY, 							--COMMENT'评论编号'
+uID varchar(32) NOT NULL, 								--COMMENT'评论员'
+pID varchar(32) NOT NULL,                               --COMMENT'评论的商品'
+cDate date NOT NULL,									--COMMENT'评论时间'
+rReplyID varchar(46) DEFAULT NULL									--COMMENT'回复那一条评论'
+);
+ALTER TABLE CommentOnProductTable ADD COLUMN cContent varchar(4096);	--COMMENT'评论内容'
+ALTER TABLE CommentOnProductTable ADD CONSTRAINT CommentOnProductTableForeignKeyuID FOREIGN KEY (uID) REFERENCES UserAccountTable(uID);
+ALTER TABLE CommentOnProductTable ADD CONSTRAINT CommentOnProductTableForeignKeypID FOREIGN KEY	(pID) REFERENCES ProductTable(pID);
+
+CREATE OR REPLACE FUNCTION CommentOnProductTableAdd(iuID UserAccountTable.uID%TYPE, ipID ProductTable.pID%TYPE, 
+irReplyID CommentOnProductTable.rReplyID%TYPE, icContent CommentOnProductTable.cContent%TYPE)
+RETURNS void AS
+DECLARE 
+	currentTime varchar(14);
+BEGIN
+	SELECT to_char(now(), 'YYYYMMDDHH24MISS') INTO currentTime;
+	INSERT INTO CommentOnProductTable(cID, uID, pID, cDate, rReplyID, cContent)VALUES (currentTime||iuID, iuID, ipID, CURRENT_DATE, irReplyID, icContent);
+	INSERT INTO CommentLikesTable(cID)VALUES (currentTime||iuID);
+END;
+
+
+SELECT CommentOnProductTableAdd('18775332736','0000000000000000',NULL,'Test Comment');
+SELECT * FROM CommentOnProductTable;
+SELECT * FROM CommentLikesTable;
+
+CREATE TABLE CommentLikesTable
+(
+cID varchar(46),										--COMMENT'评论编号'	
+cLikes int16 DEFAULT 0									--COMMENT'点赞数'
+);
+ALTER TABLE CommentLikesTable ADD CONSTRAINT CommentLikesTableForeignKeycID FOREIGN KEY (cID) REFERENCES CommentOnProductTable(cID);
+
+CREATE OR REPLACE FUNCTION CommentLiksIncrease(icID CommentLikesTable.cID%TYPE)
+RETURNS void AS 
+BEGIN 
+	INSERT INTO CommentLikesTable(cID,cLikes)VALUES (icID,1) ON CONFLICT (cID)DO UPDATE SET cLikes=CommentLikesTable.cLikes+1;
+END;
+
+	
+	
 --订单总体信息表
 CREATE TABLE OrderGeneralInfoTable
 (
@@ -314,6 +357,10 @@ INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegi
 '2025-11-15 15:12:41','注销','普通用户');
 INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES
 ('206914893@163.com','Merchant002','48fcd3b9d4fe5e77dfc18bc50c1d98ae10e63f5a1853e3fe40eb5f96f3396b7d','18890816389','206914893@qq.com','某购物袋','2025-12-05 16:07:11','正常','商户');
+INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES
+('Admin001','Admin001','ac1943286401ef7bf3e0609032171386b2265952f5000f3fc246bbab7c6021ae','123456789','123456789@qq.com','Observer','2025-12-15 16:07:11','正常','管理员');
+
+
 
 DELETE FROM UserAccountTable WHERE uID='206914893@163.com';
 

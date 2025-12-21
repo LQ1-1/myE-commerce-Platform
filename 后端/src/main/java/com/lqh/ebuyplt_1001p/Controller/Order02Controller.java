@@ -115,6 +115,7 @@ public class Order02Controller
     }
     public boolean OrderConfirm_NewDeliveryRecordResult(DeliveryInfo  deliveryInfo)                 //将这个收货信息存入数据库中，同时这个用户填写的新的收货信息将作为这次订单的收货信息；该收货信息在前端存着，发起订单Request时再次发送过来
     {
+        boolean res=false;
         try
         {
             Class.forName("com.kingbase8.Driver");
@@ -134,10 +135,13 @@ public class Order02Controller
             prepare.setString(7,deliveryInfo.getoPostalCode());
             prepare.setString(8,deliveryInfo.getoDeliveryNote());
 
-            int row=prepare.executeUpdate();
-            if(row>0)
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
             {
-                return true;
+                if(rs.getInt(1) >= 0)
+                {
+                    res=true;
+                }
             }
             prepare.close();
             con.close();
@@ -150,7 +154,8 @@ public class Order02Controller
         {
             e.printStackTrace();
         }
-        return false;
+        System.out.println(res);
+        return res;
     }
 
     @CrossOrigin(origins="*")

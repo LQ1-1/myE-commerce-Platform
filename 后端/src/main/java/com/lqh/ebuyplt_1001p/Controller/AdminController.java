@@ -1206,10 +1206,13 @@ public class AdminController        //管理员控制器
             prepare.setString(6,para.getuContactPersonEmail());
             prepare.setString(7,para.getoPostalCode());
             prepare.setString(8,para.getoDeliveryNote());
-            int row=prepare.executeUpdate();
-            if(row>0)
+            ResultSet rs=prepare.executeQuery();
+            if(rs.next())
             {
-                res=true;
+                if(rs.getInt(1) >= 0)
+                {
+                    res=true;
+                }
             }
             prepare.close();
             con.close();
