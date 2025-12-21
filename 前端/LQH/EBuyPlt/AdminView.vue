@@ -479,7 +479,7 @@ import { ElMessage } from 'element-plus'
 import { User, Goods, List, Picture, Search } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 
 // 状态
 const currentAdminID = ref('')

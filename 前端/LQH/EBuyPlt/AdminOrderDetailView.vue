@@ -61,7 +61,7 @@ import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 
 const oOrderID = ref(route.params.oOrderID)
 const orderInfo = ref({})

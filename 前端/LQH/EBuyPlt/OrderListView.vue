@@ -181,7 +181,7 @@ import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ShoppingCart, User, Star, Delete, CirclePlus, Remove } from '@element-plus/icons-vue'
 
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 const router = useRouter()
 const currentUserID = ref('')
 const loading = ref(false)

@@ -95,7 +95,7 @@
 
                         <div class="filter-actions">
                             <el-button @click="resetFilters">重置</el-button>
-                            <el-button type="primary" @click="handleSearch">应用筛选</el-button>
+                            <el-button type="primary" @click="applyAdvancedFilter">应用筛选</el-button>
                         </div>
                     </el-form>
                 </div>
@@ -252,7 +252,9 @@
                             <el-input v-model="newAddressForm.uContactPersonName" />
                         </el-form-item>
                         <el-form-item label="电话">
-                            <el-input v-model="newAddressForm.uContactPersonPhone" />
+                            <el-input v-model="newAddressForm.uContactPersonPhone" maxlength="11"
+                                placeholder="请输入11位手机号"
+                                @input="(val) => (newAddressForm.uContactPersonPhone = val.replace(/[^\d]/g, ''))" />
                         </el-form-item>
                         <el-form-item label="性别">
                             <el-select v-model="newAddressForm.uContactPersonGender" placeholder="选择或输入性别" filterable
@@ -327,7 +329,7 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 const router = useRouter()
 const route = useRoute()
 
@@ -429,13 +431,17 @@ const handleRecommend = async () => {
 // 搜索逻辑
 const handleSearch = async () => {
     isLoading.value = true
-    isRecommendMode.value = false // 只要是搜索或分类筛选，就不是推荐模式
+    isRecommendMode.value = false
+
     try {
+        // 构造请求参数，完全信任 filterForm 中的数据
         const payload = {
             SearchDesciption: searchQuery.value,
             pID: filterForm.pID,
-            // 修改：如果当前是 '推荐' 标签，搜索时不限制类型（传空），否则传当前分类名
-            pType: activeCategory.value !== '推荐' ? activeCategory.value : filterForm.pType,
+
+            // 【重点】直接取表单里的类型，不再看 activeCategory
+            pType: filterForm.pType,
+
             pPrice_f: filterForm.minPrice || 0.0,
             pPrice_r: filterForm.maxPrice || 0.0,
             pProducer: filterForm.pProducer,
@@ -460,13 +466,39 @@ const handleSearch = async () => {
 }
 
 const handleCategoryChange = (val) => {
+    // 1. 如果点击的是“推荐”
     if (val === '推荐') {
-        // 如果点击的是推荐，调用推荐接口
+        // 清空类型，进入推荐模式
+        filterForm.pType = ''
         handleRecommend()
-    } else {
-        // 如果点击的是具体分类，调用搜索接口筛选该分类
-        handleSearch()
+        return
     }
+
+    // 2. 如果点击的是具体分类（如“电子产品”）
+    // 【重点逻辑】：重置高级筛选的其他条件，确保导航栏点击是“纯净”的分类搜索
+    filterForm.pID = ''
+    filterForm.pProducer = ''
+    filterForm.pInfo = ''
+    filterForm.minPrice = undefined
+    filterForm.maxPrice = undefined
+    filterForm.dateRange = null
+
+    // 把当前点击的 Tab 类型同步给表单
+    filterForm.pType = val
+
+    // 立即执行搜索
+    handleSearch()
+}
+
+const applyAdvancedFilter = () => {
+    // 【重点逻辑】：将导航栏状态置空，视觉上变成“未选择”
+    // 注意：Element Plus Tabs 如果绑定值不在选项列表中，就会不显示下划线，刚好符合需求
+    activeCategory.value = ''
+
+    // 注意：这里不需要清空 filterForm，因为用户就是要用这里面的值去搜
+
+    // 执行搜索
+    handleSearch()
 }
 
 const resetFilters = () => {
@@ -658,6 +690,7 @@ const confirmOrderGeneration = async () => {
         try {
             checkoutLoading.value = true
             const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
+            // alert(addrRes.data);
             if (addrRes.data !== 'Request Accept') {
                 throw new Error('地址保存失败')
             }

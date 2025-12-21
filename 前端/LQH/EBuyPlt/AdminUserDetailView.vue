@@ -127,7 +127,7 @@ import { ArrowRight } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 
 const uID = ref('')
 const userInfo = ref({})

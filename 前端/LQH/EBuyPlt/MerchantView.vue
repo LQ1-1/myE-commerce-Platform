@@ -393,7 +393,7 @@ import {
 } from '@element-plus/icons-vue';
 
 // ================= 配置 =================
-const API_BASE_URL = 'http://192.168.66.94:8082';
+const API_BASE_URL = 'http://192.168.126.94:8082';
 
 // ================= 状态变量 =================
 const router = useRouter();

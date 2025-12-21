@@ -160,7 +160,7 @@ const formRef = ref(null)
 const loading = ref(false)
 
 // 后端地址
-const BASE_URL = 'http://192.168.66.94:8082'
+const BASE_URL = 'http://192.168.126.94:8082'
 
 // ================= 基础信息部分 =================
 const userInfo = reactive({

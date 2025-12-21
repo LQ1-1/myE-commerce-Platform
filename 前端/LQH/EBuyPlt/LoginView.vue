@@ -49,8 +49,8 @@
           <el-form-item label="性别" prop="uGender">
             <el-select v-model="formData.uGender" placeholder="选择或输入性别" filterable allow-create default-first-option
               clearable style="width: 100%">
-              <el-option label="Male" value="Male" />
-              <el-option label="Female" value="Female" />
+              <el-option label="男" value="Male" />
+              <el-option label="女" value="Female" />
             </el-select>
           </el-form-item>
         </template>
@@ -164,7 +164,10 @@ const rules = computed(() => {
       // ⭐ 修改：添加了正则校验
       uPhone: [
         { required: true, message: '请输入手机号', trigger: 'blur' },
-        { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的11位手机号码', trigger: 'blur' }
+        // 验证必须是数字（双重保障，虽然输入框已经过滤了）
+        { pattern: /^\d+$/, message: '手机号只能由数字组成', trigger: 'blur' },
+        // 验证长度（虽然 maxlength 限制了输入，但这里用于显示校验状态）
+        { max: 11, message: '手机号长度不能超过11位', trigger: 'blur' }
       ],
       uEmail: [
         { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -201,7 +204,7 @@ const handleSubmit = async () => {
         let url = ''
 
         if (isRegister.value) {
-          url = 'http://192.168.66.94:8082/api/Registration'
+          url = 'http://192.168.126.94:8082/api/Registration'
           const finalAccountType = registerType.value === 'merchant' ? '商户' : '普通用户'
 
           payload = {
@@ -216,7 +219,7 @@ const handleSubmit = async () => {
             uAccountStatus: '正常'
           }
         } else {
-          url = 'http://192.168.66.94:8082/api/Login_RequestBody'
+          url = 'http://192.168.126.94:8082/api/Login_RequestBody'
           payload = {
             uID: formData.uID,
             uPassword: hashedPassword
