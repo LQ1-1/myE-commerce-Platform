@@ -323,7 +323,7 @@ public class ShoppingCartController
             Class.forName("com.kingbase8.Driver");
             Connection con=DriverManager.getConnection(url,user,password);
 
-            StringBuilder sql1=new StringBuilder("DELETE FROM UserShoppingCartTable WHERE (uID,pID) IN (");
+            StringBuilder sql1=new StringBuilder("DELETE FROM UserFavoritesTable WHERE (uID,pID) IN (");
             for(int i=0;i<favouriteMultipleRemove.RemoveList.size();i++)
             {
                 if(i==favouriteMultipleRemove.RemoveList.size()-1)

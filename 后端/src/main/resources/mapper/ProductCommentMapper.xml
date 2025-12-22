@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lqh.ebuyplt_1001p.Controller.mapper.ProductCommentMapper">
+
+    <update id="sendComment">
+        select CommentOnProductTableAdd(#{para.uID}, #{Para.pID}, #{para.rReplyID}, #{para.cContent});
+    </update>
+
+    <update id="giveLiketoComment">
+        select CommentLiksIncrease(#{para.cID});
+    </update>
+
+    <select id="getCommentofSpecificProduct" resultType="com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductCommentItem_jsonSend">
+        select c1.cID, c1.pID, c1.uID as CommenterID, c1.cDate, c1.cContent, cl1.cLikes, c1.rReplyID, u1.uNickName as Commenter, u2.uNickName as Recipient
+        from CommentOnProductTable c1
+        inner join CommentLikesTable cl1 on cl1.cID=c1.cID
+        inner join UserAccountTable u1 on c1.uID=u1.uID
+        left join CommentOnProductTable c2 on c1.rReplyID=c2.cID
+        left join UserAccounttable u2 on c2.uID=u2.uID where c1.pID=#{para.pID};
+    </select>
+</mapper>

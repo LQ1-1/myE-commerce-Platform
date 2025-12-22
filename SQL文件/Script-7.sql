@@ -79,6 +79,8 @@ CREATE INDEX index_uID ON UserShoppingCartTable(uID);
 
 SELECT * FROM UserShoppingCartTable;
 
+DELETE FROM UserShoppingCartTable WHERE uID IN ;
+
 
 --用户收藏表
 CREATE TABLE UserFavoritesTable

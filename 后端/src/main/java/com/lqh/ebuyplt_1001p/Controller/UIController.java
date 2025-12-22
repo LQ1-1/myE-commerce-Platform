@@ -1,17 +1,21 @@
 package com.lqh.ebuyplt_1001p.Controller;
 
 import com.lqh.ebuyplt_1001p.Controller.AdminPack.ProductTableItem;
-import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductClick_jsonGet;
-import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductClick_jsonSend;
-import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonSend;
-import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonGet;
+import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.*;
+import com.lqh.ebuyplt_1001p.Controller.mapper.*;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
 import java.sql.SQLException;
 
@@ -482,6 +486,75 @@ public class UIController
             e.printStackTrace();
         }
         return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GetAllProductComment")
+    public ApiResult<ArrayList<ProductCommentItem_jsonSend>> GetAllProductComment(ProductCommentItem para)      //只需要填写pID
+    {
+        return ApiResult.success(GetAllProductCommentResult(para));
+    }
+    private  ArrayList<ProductCommentItem_jsonSend> GetAllProductCommentResult(ProductCommentItem para)
+    {
+        ArrayList<ProductCommentItem_jsonSend>res=new ArrayList<>();
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
+        res=mapper.getCommentofSpecificProduct(para);
+        return res;
+    }
+
+    @CrossOrigin(origins = "*")
+    @RequestMapping("/api/SendProductComment")
+    public void SendProductComment(ProductCommentItem para)     //需要填写pID, uID, rReplyID(回复那一条评论cID)也可留空, cContent
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
+        mapper.sendComment(para);
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/GiveLikesProductComment")
+    public void GiveLikesProductComment(ProductCommentItem para)    //只用填写cID
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
+        mapper.giveLiketoComment(para);
     }
 
 }
