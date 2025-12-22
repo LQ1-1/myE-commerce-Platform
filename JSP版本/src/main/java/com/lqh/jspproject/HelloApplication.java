@@ -1,4 +1,4 @@
-package com.lqh.ebuyplt_jsp;
+package com.lqh.jspproject;
 
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
