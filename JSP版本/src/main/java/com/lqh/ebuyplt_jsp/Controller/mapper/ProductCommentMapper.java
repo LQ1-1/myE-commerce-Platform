@@ -1,4 +1,4 @@
-package com.lqh.ebuyplt_jsp.Controller.mapper;
+package com.lqh.ebuyplt_jsp.Controller.Mapper;
 
 import com.lqh.ebuyplt_jsp.Controller.UIControllerTools.*;
 

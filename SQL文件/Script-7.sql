@@ -39,6 +39,8 @@ ALTER TABLE UserDeliveryInfoTable ADD COLUMN oDeliveryNote varchar(512);
 --若UserAccountTable中的账号被注销后，则在UserDeliveryInfoTable的收货信息记录也要被删除，所以uID仅作为外键
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN uDIndex int16 default 0;
 ALTER TABLE UserDeliveryInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
+ALTER TABLE UserDeliveryInfoTable ALTER COLUMN uDIndex TYPE int2 USING uDIndex::int2;
+ALTER TABLE UserDeliveryInfoTable ADD PRIMARY KEY (uID, uDIndex);
 
 SELECT * FROM UserDeliveryInfoTable;
 
@@ -101,6 +103,7 @@ pID varchar(32)											--COMMENT'该商户上架的商品'
 ALTER TABLE MerchantsProductTable ADD CONSTRAINT MerchantsProductTableForeignKey FOREIGN KEY(uID) REFERENCES UserAccountTable(uID);
 CREATE INDEX index_uID_MerchantsProductTable ON MerchantsProductTable(uID);
 CREATE INDEX index_pID_MerchantsProductTable ON MerchantsProductTable(pID);
+ALTER TABLE MerchantsProductTable ADD PRIMARY KEY (uID,pID);
 
 SELECT * FROM MerchantsProductTable;
 
@@ -200,6 +203,7 @@ cID varchar(46),										--COMMENT'评论编号'
 cLikes int16 DEFAULT 0									--COMMENT'点赞数'
 );
 ALTER TABLE CommentLikesTable ADD CONSTRAINT CommentLikesTableForeignKeycID FOREIGN KEY (cID) REFERENCES CommentOnProductTable(cID);
+ALTER TABLE CommentLikesTable ADD PRIMARY KEY (cID);
 
 CREATE OR REPLACE FUNCTION CommentLiksIncrease(icID CommentLikesTable.cID%TYPE)
 RETURNS void AS 
@@ -261,7 +265,7 @@ oStatus varchar(20) NOT NULL 							--COMMENT '订单状态'
 ALTER TABLE OrderBasicInfoTable ADD CONSTRAINT OrderBasicInfoTableForeignKey FOREIGN KEY (OOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderBasicInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
 --一次订单可以有多个商品，多个收货人
-
+ALTER TABLE OrderBasicInfoTable ADD PRIMARY KEY (oOrderID);
 
 
 SELECT * FROM OrderBasicInfoTable;
@@ -280,6 +284,7 @@ oReceieverEmail varchar(32) DEFAULT NULL				--COMMENT '收货人邮箱',
 );
 ALTER TABLE OrdererInfoTable ADD CONSTRAINT OrdererInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrdererInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
+ALTER TABLE OrdererInfoTable ADD PRIMARY KEY (oOrderID);
 
 SELECT * FROM OrdererInfoTable;
 DELETE FROM OrdererInfoTable WHERE oOrderID='20251129900000000';
@@ -296,7 +301,7 @@ oDeliveryNote varchar(512) DEFAULT NULL 				--COMMENT '配送备注',
 );
 ALTER TABLE OrderDeliveryInfo ADD CONSTRAINT OrderDeliveryInfoForeignKey FOREIGN KEY (oOrderID) REFERENCES OrderGeneralInfoTable(oOrderID);
 ALTER TABLE OrderDeliveryInfo ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
-
+ALTER TABLE OrderDeliveryInfo ADD PRIMARY KEY (oOrderID);
 
 SELECT * FROM OrderDeliveryInfo;
 DELETE FROM OrderDeliveryInfo WHERE oOrderID='20251129160000000';
@@ -318,7 +323,7 @@ ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OrderProductInfoTableForeignKey
 ALTER TABLE OrderProductInfoTable ADD CONSTRAINT OOrderProductInfoTableForeignKey FOREIGN KEY (pID) REFERENCES ProductTable(pID);
 ALTER TABLE OrderProductInfoTable ADD COLUMN oProductDeliveryStatus varchar(32) default'Submitted';		--单个商品的交付状态
 ALTER TABLE OrderProductInfoTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRENT_TIMESTAMP(1);
-
+ALTER TABLE OrderProductInfoTable ADD PRIMARY KEY (oOrderID,pID);
 
 SELECT * FROM OrderProductInfoTable;
 DELETE FROM OrderProductInfoTable WHERE oOrderID='20251129160000000';
@@ -330,6 +335,7 @@ pID varchar(32)							--COMMENT'商人上架的商品的编号'
 );
 CREATE INDEX index_uID_MerchantManagementTable ON MerchantManagementTable(uID);
 CREATE INDEX index_pID_MerchantManagementTable ON MerchantManagementTable(pID);
+ALTER TABLE MerchantManagementTable ADD PRIMARY KEY (uID,pID);
 
 --添加账号信息
 INSERT INTO UserAccountTable(uID,uNickName,uPassword,uPhone,uEmail,uGender,uRegisterDate,uAccountStatus,uAccountType)VALUES

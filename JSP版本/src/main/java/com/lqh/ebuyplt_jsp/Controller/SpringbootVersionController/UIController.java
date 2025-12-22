@@ -1,10 +1,8 @@
 package com.lqh.ebuyplt_jsp.Controller.SpringbootVersionController;
 
-import com.lqh.ebuyplt_jsp.Controller.AdminPack.ProductTableItem;
 import com.lqh.ebuyplt_jsp.Controller.UIControllerTools.*;
-import com.lqh.ebuyplt_jsp.Controller.mapper.*;
+import com.lqh.ebuyplt_jsp.Controller.Mapper.*;
 import com.lqh.ebuyplt_jsp.Controller.ResultPack.ApiResult;
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
