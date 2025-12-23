@@ -212,7 +212,7 @@ public class BasicController
     }
 
     //    @CrossOrigin(origins="http://192.168.66.94:8082")
-    @GET
+    @POST
     @Path("/Registration")
     @Produces("text/plain")
     public String Registration(UserRegistration userregistration)
