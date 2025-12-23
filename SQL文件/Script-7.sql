@@ -130,7 +130,7 @@ ALTER TABLE ProductTable ADD COLUMN tLastUpdateTime TIMESTAMPTZ(1) DEFAULT CURRE
 --pReleaseDate的格式与下单时间的格式一致YYYY-MM-DD HH:mm:ss
 --0000000000000000 pID长16位
 
-
+SELECT * FROM ProductTable;
 
 
 SELECT * 
@@ -169,6 +169,8 @@ ALTER TABLE ProductClicksInfoTable ADD CONSTRAINT uk_pid UNIQUE (pID);
 ALTER TABLE ProductClicksInfoTable ALTER COLUMN pClicksAmount TYPE bigint;
 CREATE INDEX index_producet_clicks_amount ON ProductClicksInfoTable(pClicksAmount DESC);
 
+SELECT * FROM ProductClicksInfoTable;
+
 CREATE TABLE CommentOnProductTable
 (
 cID varchar(46) PRIMARY KEY, 							--COMMENT'评论编号'
@@ -193,7 +195,7 @@ BEGIN
 END;
 
 
-SELECT CommentOnProductTableAdd('18775332736','0000000000000000',NULL,'Test Comment');
+SELECT CommentOnProductTableAdd('18775332736','0000000000000013',NULL,'Test Comment2');
 SELECT * FROM CommentOnProductTable;
 SELECT * FROM CommentLikesTable;
 

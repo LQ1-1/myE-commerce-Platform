@@ -490,12 +490,21 @@ public class UIController
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/GetAllProductComment")
-    public ApiResult<ArrayList<ProductCommentItem_jsonSend>> GetAllProductComment(ProductCommentItem para)      //只需要填写pID
+    public ApiResult<ArrayList<ProductCommentItem_jsonSend>> GetAllProductComment(@RequestBody ProductCommentItem para)      //只需要填写pID
     {
         return ApiResult.success(GetAllProductCommentResult(para));
     }
     private  ArrayList<ProductCommentItem_jsonSend> GetAllProductCommentResult(ProductCommentItem para)
     {
+        {
+            System.out.println("*******************GetAllProductCommentResult********************");
+            System.out.println(para.getuID());
+            System.out.println(para.getpID());
+            System.out.println(para.getrReplyID());
+            System.out.println(para.getcContent());
+            System.out.println("*******************GetAllProductCommentResult********************");
+        }
+
         ArrayList<ProductCommentItem_jsonSend>res=new ArrayList<>();
         InputStream inputStream = null;
         try
@@ -509,7 +518,7 @@ public class UIController
         //读取mybatis的配置
         SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
         // 打开会话
-        SqlSession sqlSession = sqlSessionFactory.openSession();
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
         ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
         res=mapper.getCommentofSpecificProduct(para);
         return res;
@@ -517,8 +526,15 @@ public class UIController
 
     @CrossOrigin(origins = "*")
     @RequestMapping("/api/SendProductComment")
-    public void SendProductComment(ProductCommentItem para)     //需要填写pID, uID, rReplyID(回复那一条评论cID)也可留空, cContent
+    public void SendProductComment(@RequestBody ProductCommentItem para)     //需要填写pID, uID, rReplyID(回复那一条评论cID)也可留空, cContent
     {
+        System.out.println("*******************SendProductComment********************");
+        System.out.println(para.getuID());
+        System.out.println(para.getpID());
+        System.out.println(para.getrReplyID());
+        System.out.println(para.getcContent());
+        System.out.println("*******************SendProductComment********************");
+
         InputStream inputStream = null;
         try
         {
@@ -531,14 +547,14 @@ public class UIController
         //读取mybatis的配置
         SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
         // 打开会话
-        SqlSession sqlSession = sqlSessionFactory.openSession();
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
         ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
         mapper.sendComment(para);
     }
 
     @CrossOrigin(origins="*")
     @RequestMapping("/api/GiveLikesProductComment")
-    public void GiveLikesProductComment(ProductCommentItem para)    //只用填写cID
+    public void GiveLikesProductComment(@RequestBody ProductCommentItem para)    //只用填写cID
     {
         InputStream inputStream = null;
         try
@@ -552,7 +568,7 @@ public class UIController
         //读取mybatis的配置
         SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
         // 打开会话
-        SqlSession sqlSession = sqlSessionFactory.openSession();
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
         ProductCommentMapper mapper=sqlSession.getMapper(ProductCommentMapper.class);
         mapper.giveLiketoComment(para);
     }
