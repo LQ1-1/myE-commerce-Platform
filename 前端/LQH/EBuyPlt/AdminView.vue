@@ -651,6 +651,7 @@ const handleSearch = async () => {
             fetchData(activeMenu.value)
             return
         }
+        // alert(params.pProducer);
 
         const res = await axios.post(url, params)
         if (res.data && res.data.data) {

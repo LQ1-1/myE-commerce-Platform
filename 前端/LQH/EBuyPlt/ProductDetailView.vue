@@ -1,34 +1,28 @@
 <template>
     <div class="detail-layout">
-        <!-- 顶部导航栏 -->
+        <!-- 顶部导航栏 (保持不变) -->
         <el-affix :offset="0">
             <el-header class="header">
                 <div class="header-content">
                     <div class="logo" @click="goHome">EBuyPlt</div>
-
                     <div class="search-bar">
                         <el-input v-model="searchQuery" placeholder="搜索其他商品..." class="search-input"
                             :prefix-icon="Search" @keyup.enter="handleSearchRedirect" />
                     </div>
-
                     <div class="actions">
                         <el-button @click="goHome">继续购物</el-button>
-
-                        <!-- 新增：订单列表跳转按钮 -->
-                        <el-button :icon="Tickets" circle size="large" @click="router.push('/OrderListView')" title="我的订单" />
-
+                        <el-button :icon="Tickets" circle size="large" @click="router.push('/OrderListView')"
+                            title="我的订单" />
                         <el-button :icon="Star" circle size="large" @click="openFavorites" title="我的收藏" />
-
                         <el-badge :value="cartCount" :hidden="cartCount === 0" class="item-badge">
                             <el-button :icon="ShoppingCart" circle size="large" @click="openCart" title="我的购物车" />
                         </el-badge>
-
                         <el-dropdown>
                             <el-avatar :icon="User" class="user-avatar" />
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item>用户ID: {{ currentUserID }}</el-dropdown-item>
-                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item> 
+                                    <el-dropdown-item @click="goToUserProfile">个人信息</el-dropdown-item>
                                     <el-dropdown-item @click="router.push('/OrderListView')">我的订单</el-dropdown-item>
                                     <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                                 </el-dropdown-menu>
@@ -42,9 +36,8 @@
         <!-- 主内容区 -->
         <el-main class="main-container" v-loading="isLoading">
             <div v-if="product" class="product-detail-wrapper">
-                <!-- 第一部分：上方的主图与基本信息 -->
+                <!-- 第一部分：上方的主图与基本信息 (保持不变) -->
                 <el-row :gutter="40" class="main-info-row">
-                    <!-- 左侧：图片轮播 -->
                     <el-col :xs="24" :md="12">
                         <div class="carousel-container">
                             <el-carousel trigger="click" height="450px" :autoplay="false" arrow="always"
@@ -60,8 +53,6 @@
                             </el-carousel>
                         </div>
                     </el-col>
-
-                    <!-- 右侧：商品核心参数与操作 -->
                     <el-col :xs="24" :md="12">
                         <div class="info-container">
                             <div class="info-top">
@@ -69,10 +60,8 @@
                                     <el-tag effect="dark" size="large">{{ product.pType }}</el-tag>
                                     <span class="producer">厂商: {{ product.pProducer }}</span>
                                 </div>
-
                                 <h1 class="product-name">{{ product.pName }}</h1>
                                 <p class="product-id">Product ID: {{ product.pID }}</p>
-
                                 <div class="price-section">
                                     <div class="price-box">
                                         <span class="currency">¥</span>
@@ -83,7 +72,6 @@
                                         Discount: {{ product.pDiscount }}
                                     </div>
                                 </div>
-
                                 <div class="meta-info">
                                     <div class="meta-row">
                                         <span class="label">库存状态:</span>
@@ -96,8 +84,6 @@
                                     <div class="meta-row"><span class="label">商品状态:</span> {{ product.pStatus }}</div>
                                 </div>
                             </div>
-
-                            <!-- 操作按钮区 -->
                             <div class="action-buttons">
                                 <div class="qty-wrapper">
                                     <span class="qty-label">数量</span>
@@ -105,13 +91,11 @@
                                         :max="product.pInventory > 0 ? product.pInventory : 1"
                                         :disabled="product.pInventory <= 0" size="large" />
                                 </div>
-
                                 <div class="btn-group">
                                     <el-button type="primary" size="large" :icon="ShoppingCart" class="add-btn"
                                         :disabled="product.pInventory <= 0" @click="addToCart(product, buyQuantity)">
                                         加入购物车
                                     </el-button>
-
                                     <el-button size="large" class="fav-btn"
                                         :type="isFavorite(product.pID) ? 'warning' : 'default'"
                                         :icon="isFavorite(product.pID) ? StarFilled : Star"
@@ -126,7 +110,7 @@
 
                 <el-divider class="section-divider" />
 
-                <!-- 第二部分：底部独立的商品详情描述 -->
+                <!-- 第二部分：商品详情描述 -->
                 <div class="description-section">
                     <div class="desc-title">
                         <h3>商品详情</h3>
@@ -137,6 +121,76 @@
                     </div>
                 </div>
 
+                <el-divider class="section-divider" />
+
+                <!-- 新增：第三部分：商品评价区 -->
+                <div class="comments-section" id="comments">
+                    <div class="desc-title">
+                        <h3>用户评价 ({{ commentList.length }})</h3>
+                        <div class="title-underline"></div>
+                    </div>
+
+                    <div class="comment-input-area">
+                        <el-input v-model="newCommentContent" type="textarea" :rows="3" placeholder="写下你的评价..."
+                            maxlength="200" show-word-limit resize="none" />
+                        <div class="input-actions" style="margin-top: 10px; text-align: right;">
+                            <el-button type="primary" :icon="ChatDotSquare" @click="submitComment(null)"
+                                :loading="commentSubmitting">
+                                发表评论
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <!-- 评论列表 -->
+                    <div class="comment-list" v-loading="commentLoading">
+                        <div v-if="commentList.length === 0" class="no-comments">
+                            <el-empty description="暂无评价，快来抢沙发吧！" :image-size="100" />
+                        </div>
+                        <div v-else v-for="item in commentList" :key="item.cID" class="comment-item">
+                            <div class="comment-avatar">
+                                <el-avatar :size="40" :icon="User" style="background-color: #409EFF;" />
+                            </div>
+                            <div class="comment-content-box">
+                                <div class="comment-header">
+                                    <span class="username">{{ item.Commenter }}</span>
+                                    <span class="date">{{ formatTime(item.cDate) }}</span>
+                                </div>
+
+                                <div class="comment-text">
+                                    <span v-if="item.rReplyID && item.Recipient" class="reply-tag">
+                                        回复 @{{ item.Recipient }} :
+                                    </span>
+                                    {{ item.cContent }}
+                                </div>
+
+                                <div class="comment-actions">
+                                    <span class="action-btn like-btn" @click="handleLike(item)">
+                                        <el-icon>
+                                            <ThumbUp />
+                                        </el-icon>
+                                        {{ item.cLikes > 0 ? item.cLikes : '点赞' }}
+                                    </span>
+                                    <span class="action-btn reply-btn" @click="toggleReplyBox(item.cID)">
+                                        <el-icon>
+                                            <ChatLineRound />
+                                        </el-icon> 回复
+                                    </span>
+                                </div>
+
+                                <!-- 回复输入框 (动态显示) -->
+                                <div v-if="activeReplyID === item.cID" class="inline-reply-box">
+                                    <el-input v-model="replyContent" size="small"
+                                        :placeholder="`回复 @${item.Commenter}...`" class="reply-input">
+                                        <template #append>
+                                            <el-button :icon="Position" @click="submitComment(item.cID, item.cID)"
+                                                :loading="commentSubmitting" />
+                                        </template>
+                                    </el-input>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <el-empty v-else-if="!isLoading" description="未找到商品信息">
@@ -144,7 +198,7 @@
             </el-empty>
         </el-main>
 
-        <!-- 购物车抽屉 -->
+        <!-- 购物车、收藏夹、结算弹窗 (保持不变) -->
         <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="480px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
@@ -158,7 +212,6 @@
                     <el-checkbox v-model="isAllSelected" @change="toggleSelectAll">全选</el-checkbox>
                     <el-button type="primary" link @click="router.push('/OrderListView')">我的订单 ></el-button>
                 </div>
-
                 <div class="cart-list">
                     <div v-for="item in cart" :key="item.pID" class="cart-item"
                         style="display: flex; align-items: center; gap: 10px;">
@@ -197,7 +250,7 @@
             </template>
         </el-drawer>
 
-        <!-- 结算流程弹窗 -->
+        <!-- 结算流程弹窗 (保持不变) -->
         <el-dialog v-model="checkoutVisible" title="确认收货信息" width="500px" destroy-on-close>
             <div v-loading="checkoutLoading">
                 <div v-if="existingAddresses.length > 0 && !isAddingNewAddress">
@@ -256,7 +309,7 @@
             </template>
         </el-dialog>
 
-        <!-- 收藏夹抽屉 -->
+        <!-- 收藏夹抽屉 (保持不变) -->
         <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
             <div v-if="favorites.length === 0" class="empty-cart">
                 <el-empty description="暂无收藏" />
@@ -289,9 +342,10 @@ import { ref, onMounted, computed, watch, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-// 修改：引入 Tickets 图标
+// 新增图标: ChatDotSquare, ChatLineRound, ThumbUp, Position
 import {
-    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Star, StarFilled, Tickets
+    ShoppingCart, Search, User, Delete, CirclePlus, Remove, Star, StarFilled, Tickets,
+    ChatDotSquare, ChatLineRound, ThumbUp, Position
 } from '@element-plus/icons-vue'
 
 const BASE_URL = 'http://192.168.126.94:8082'
@@ -329,6 +383,15 @@ const newAddressForm = reactive({
     oDeliveryNote: ''
 })
 
+// --- 新增：评论相关状态 ---
+const commentList = ref([])
+const commentLoading = ref(false)
+const newCommentContent = ref('') // 主评论框内容
+const commentSubmitting = ref(false)
+const activeReplyID = ref(null) // 当前正在回复的评论ID
+const replyContent = ref('') // 回复框内容
+
+
 // --- 生命周期 ---
 onMounted(async () => {
     const storedUID = sessionStorage.getItem('uID')
@@ -345,7 +408,8 @@ onMounted(async () => {
         await Promise.all([
             fetchProductDetail(pID),
             fetchCart(),
-            fetchFavorites()
+            fetchFavorites(),
+            fetchComments(pID) // 加载评论
         ])
     } else {
         ElMessage.error('参数错误：缺少商品ID')
@@ -369,6 +433,7 @@ watch(
     (newID, oldID) => {
         if (newID && newID !== oldID) {
             fetchProductDetail(newID)
+            fetchComments(newID) // 切换商品时刷新评论
             buyQuantity.value = 1
             window.scrollTo({ top: 0, behavior: 'smooth' })
         }
@@ -377,8 +442,8 @@ watch(
 
 const goToUserProfile = () => {
     router.push({
-        path: '/UserProfileView', // 这里的路径要和你路由配置里的一致
-        query: { uID: currentUserID.value } // 将当前用户ID传过去
+        path: '/UserProfileView',
+        query: { uID: currentUserID.value }
     })
 }
 
@@ -421,7 +486,106 @@ const handleLogout = () => {
     router.push('/')
 }
 
-// --- 购物车与收藏夹逻辑 ---
+// --- 新增：评论功能逻辑 ---
+
+// 获取评论列表
+const fetchComments = async (pid) => {
+    const targetID = pid || product.value?.pID
+    if (!targetID) return
+    commentLoading.value = true
+    try {
+        const res = await axios.post(`${BASE_URL}/api/GetAllProductComment`, { pID: targetID })
+        if (res.data && res.data.data) {
+            commentList.value = res.data.data
+        } else {
+            commentList.value = []
+        }
+    } catch (e) {
+        console.error("加载评论失败", e)
+        // ElMessage.warning('评论加载失败') // 可选，避免打扰用户
+    } finally {
+        commentLoading.value = false
+    }
+}
+
+// 提交评论 (如果 replyToID 存在，则是回复)
+// 提交评论 (如果 replyToID 存在，则是回复)
+const submitComment = async (replyToID) => {
+    const content = replyToID ? replyContent.value : newCommentContent.value
+
+    if (!content.trim()) {
+        ElMessage.warning('请输入评论内容')
+        return
+    }
+
+    if (!currentUserID.value) {
+        ElMessage.error('请登录后再评论')
+        return
+    }
+
+    commentSubmitting.value = true
+    try {
+        const payload = {
+            pID: product.value.pID,
+            uID: currentUserID.value,
+            cContent: content,
+            rReplyID: replyToID ? replyToID : null
+        }
+
+        await axios.post(`${BASE_URL}/api/SendProductComment`, payload)
+
+        ElMessage.success('评论发表成功')
+
+        // 清空输入框并刷新列表
+        if (replyToID) {
+            replyContent.value = ''
+            activeReplyID.value = null
+        } else {
+            newCommentContent.value = ''
+        }
+        await fetchComments()
+
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('评论发送失败')
+    } finally {
+        commentSubmitting.value = false
+    }
+}
+
+// 点赞评论
+const handleLike = async (item) => {
+    try {
+        await axios.post(`${BASE_URL}/api/GiveLikesProductComment`, { cID: item.cID })
+        // 点赞接口无返回值，需要手动更新本地数据或重新获取
+        // 简单起见，本地+1，或者重新拉取列表
+        // item.cLikes += 1 // 乐观更新
+        await fetchComments() // 重新拉取以确保数据一致
+        ElMessage.success('点赞成功')
+    } catch (e) {
+        ElMessage.error('点赞失败')
+    }
+}
+
+// 切换回复框显示
+const toggleReplyBox = (cID) => {
+    if (activeReplyID.value === cID) {
+        activeReplyID.value = null // 关闭
+    } else {
+        activeReplyID.value = cID
+        replyContent.value = '' // 清空之前的输入
+    }
+}
+
+// 格式化时间 (后端返回的可能是字符串，简单处理一下)
+const formatTime = (dateStr) => {
+    if (!dateStr) return ''
+    // 如果是标准格式，可以 format。如果已经是字符串直接返回
+    return dateStr
+}
+
+
+// --- 购物车与收藏夹逻辑 (保持不变) ---
 const fetchCart = async () => {
     if (!currentUserID.value) return
     cartLoading.value = true
@@ -518,8 +682,7 @@ const toggleFavorite = async (item) => {
 
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
 
-// --- 结算核心逻辑 ---
-
+// --- 结算核心逻辑 (保持不变) ---
 const handleCheckout = async () => {
     if (!currentUserID.value) return ElMessage.error("未登录")
     if (selectedCount.value === 0) return ElMessage.warning('请先勾选要结算的商品')
@@ -650,11 +813,10 @@ const updateOrderStatus = async (orderID, statusStr) => {
     }
 }
 
-
-
 </script>
 
 <style scoped>
+/* 保持原有 CSS 不变 */
 .detail-layout {
     min-height: 100vh;
     background-color: #f5f7fa;
@@ -1101,5 +1263,90 @@ const updateOrderStatus = async (orderID, statusStr) => {
 .addr-note {
     font-size: 12px;
     color: #909399;
+}
+
+/* --- 新增：评论区样式 --- */
+.comments-section {
+    padding: 0 10px;
+    margin-bottom: 40px;
+}
+
+.comment-input-area {
+    margin-bottom: 30px;
+}
+
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 15px;
+    border-bottom: 1px solid #f0f2f5;
+    padding-bottom: 20px;
+}
+
+.comment-content-box {
+    flex: 1;
+}
+
+.comment-header {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.username {
+    font-weight: bold;
+    font-size: 14px;
+    color: #303133;
+}
+
+.date {
+    font-size: 12px;
+    color: #909399;
+}
+
+.comment-text {
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+
+.reply-tag {
+    color: #409EFF;
+    margin-right: 5px;
+    font-weight: 500;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 20px;
+}
+
+.action-btn {
+    font-size: 13px;
+    color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #409EFF;
+}
+
+.inline-reply-box {
+    margin-top: 15px;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
 }
 </style>
