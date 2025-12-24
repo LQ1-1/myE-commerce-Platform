@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EBuyPlt 订单中心</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -23,7 +23,7 @@
             font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
         }
 
-        /* Header Styles */
+
         .app-header {
             background-color: #fff;
             height: 60px;
@@ -74,7 +74,6 @@
             padding: 3px 6px;
         }
 
-        /* Main Content */
         .main-content {
             max-width: 1200px;
             margin: 20px auto;
@@ -95,7 +94,7 @@
             color: #303133;
         }
 
-        /* Order Card */
+
         .order-card {
             background: #fff;
             border-radius: 4px;
@@ -142,7 +141,7 @@
         }
         .total-amount span, .subtotal { color: #f56c6c; }
 
-        /* Cart & Fav Drawer Items */
+
         .drawer-item {
             display: flex;
             align-items: center;
@@ -187,7 +186,6 @@
 
         .price-text { color: #f56c6c; font-weight: bold; }
 
-        /* Utilities */
         .d-none { display: none !important; }
         .cursor-pointer { cursor: pointer; }
     </style>
@@ -238,9 +236,9 @@
         <button class="btn btn-link text-primary text-decoration-none" onclick="fetchOrders()">刷新列表</button>
     </div>
 
-    <!-- Loading / Empty / List Container -->
+
     <div id="orderContainer">
-        <!-- Loading State -->
+
         <div id="orderLoading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -336,15 +334,17 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
+
     let currentUserID = '';
 
     // 全局数据缓存
     let globalCartList = [];
     let selectedCartItems = [];
 
-    // ================= 初始化 =================
+    //初始化
     $(document).ready(function() {
         const uID = sessionStorage.getItem('uID');
         if (!uID) {
@@ -361,7 +361,7 @@
         fetchCartCountOnly(); // 仅加载数量更新角标
     });
 
-    // ================= 1. 订单功能 =================
+    //订单功能
     function fetchOrders() {
         $('#orderLoading').removeClass('d-none');
         $('#orderList, #orderEmpty').addClass('d-none');
@@ -449,7 +449,7 @@
                         </div>
                         <div class="text-end">
                             <div class="total-amount">订单总额: <span>¥ ${totalAmount.toFixed(2)}</span></div>
-                            ${canCancel ? `<button class="btn btn-sm btn-outline-danger" onclick="handleCancelOrder('${order.oOrderID}')">取消订单</button>` : ''}
+                            ${canCancel != null && canCancel   ? '<button class="btn btn-sm btn-outline-danger" onclick="handleCancelOrder(\'' + order.oOrderID + '\')">取消订单</button>'   : ''}
                         </div>
                     </div>
                 </div>
@@ -518,7 +518,7 @@
         });
     }
 
-    // ================= 2. 购物车功能 =================
+    //购物车功能
 
     // 打开抽屉时加载
     function openCart() {
@@ -566,7 +566,7 @@
                     renderCartItems();
                     $('#cartContent').removeClass('d-none');
                 }
-                updateCartCalculations(); // 重置选中状态和金额
+                updateCartCalculations();
             },
             complete: function() {
                 $('#cartLoading').addClass('d-none');
@@ -677,7 +677,7 @@
         });
     }
 
-    // ================= 3. 收藏夹功能 =================
+    //收藏夹功能
     function openFavorites() {
         const drawer = new bootstrap.Offcanvas(document.getElementById('favDrawer'));
         drawer.show();
@@ -756,7 +756,7 @@
         });
     }
 
-    // ================= 4. 结算逻辑 =================
+    //结算逻辑
     function handleCheckout() {
         if (selectedCartItems.length === 0) return;
 
@@ -832,7 +832,7 @@
         });
     }
 
-    // ================= 5. 通用函数 =================
+    //通用函数
     function getProductImage(path) {
         if (!path) return 'https://via.placeholder.com/60';
         if (path.startsWith('http')) return path;

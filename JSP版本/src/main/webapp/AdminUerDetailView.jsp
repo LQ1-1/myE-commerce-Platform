@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户详情页 - EBuyPlt 后台</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -80,7 +80,7 @@
         }
         .desc-item {
             display: flex;
-            width: 33.33%; /* 3 columns */
+            width: 33.33%;
             border-bottom: 1px solid #ebeef5;
         }
         .desc-label {
@@ -288,12 +288,14 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
+
     let currentUID = '';
     let isEditMode = false;
 
-    // ================= 初始化 =================
+    //初始化
     $(document).ready(function() {
         const urlParams = new URLSearchParams(window.location.search);
         currentUID = urlParams.get('uID');
@@ -313,10 +315,8 @@
         fetchOrderInfo();
     });
 
-    // ================= 1. 获取用户信息 =================
+    //获取用户信息
     function fetchUserInfo() {
-        // 由于原代码是从 history.state 获取，这里为了稳健，直接调接口
-        // 如果后端没有专门查单用户的接口，这里复用 GetUserAccountInfo
         $.ajax({
             url: BASE_URL + '/api/GetUserAccountInfo',
             type: 'POST',
@@ -330,7 +330,7 @@
                     $('#info_uEmail').text(d.uEmail);
                     $('#info_uGender').text(d.uGender);
                     $('#info_uAccountType').text(d.uAccountType);
-                    $('#info_uAccountStatus').html(`<span class="badge ${d.uAccountStatus === '正常' ? 'bg-success' : 'bg-danger'}">${d.uAccountStatus}</span>`);
+                    $('#info_uAccountStatus').html(`<span class="badge ${d.uAccountStatus == '正常' ? 'bg-success' : 'bg-danger'}">${d.uAccountStatus}</span>`);
                     $('#info_uRegisterDate').text(d.uRegisterDate);
 
                     $('#userInfoLoading').addClass('d-none');
@@ -345,7 +345,7 @@
         });
     }
 
-    // ================= 2. 获取收货地址 =================
+    //获取收货地址
     function fetchDeliveryInfo() {
         $('#deliveryLoading').removeClass('d-none');
         $('#deliveryTableBody').empty();
@@ -393,7 +393,7 @@
         });
     }
 
-    // ================= 3. 获取订单记录 =================
+    //获取订单记录
     function fetchOrderInfo() {
         $('#orderLoading').removeClass('d-none');
         $('#orderTableBody').empty();
@@ -434,7 +434,7 @@
         });
     }
 
-    // ================= 4. 地址管理逻辑 =================
+    //地址管理逻辑
 
     function openAddDialog() {
         isEditMode = false;
@@ -540,7 +540,7 @@
         });
     }
 
-    // ================= 跳转逻辑 =================
+    //跳转逻辑
     function goToOrderDetail(orderID) {
         window.location.href = 'AdminOrderDetailView.jsp?oOrderID=' + orderID;
     }

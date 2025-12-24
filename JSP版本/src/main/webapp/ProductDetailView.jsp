@@ -6,25 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EBuyPlt - 商品详情</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body {
             background-color: #f5f7fa;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            padding-top: 60px; /* Header height */
+            padding-top: 60px;
         }
 
-        /* --- Header --- */
+
         .app-header {
             background-color: #fff;
             height: 60px;
@@ -72,7 +72,7 @@
             position: absolute; top: -5px; right: -8px; font-size: 10px; padding: 3px 6px;
         }
 
-        /* --- Main Content --- */
+
         .main-container {
             max-width: 1100px;
             margin: 20px auto;
@@ -86,7 +86,7 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
         }
 
-        /* Carousel */
+
         .carousel-container {
             border: 1px solid #ebeef5;
             border-radius: 8px;
@@ -103,7 +103,7 @@
             width: 100%;
         }
 
-        /* Info Column */
+
         .info-container {
             padding-left: 30px;
             display: flex;
@@ -130,7 +130,7 @@
 
         .action-buttons { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; }
 
-        /* Section Divider */
+
         .section-divider { border-top: 1px solid #eee; margin: 40px 0; }
 
         .desc-title h3 { font-size: 20px; color: #303133; margin-bottom: 8px; }
@@ -226,20 +226,20 @@
     </div>
 </header>
 
-<!-- Main Content -->
+
 <main class="main-container">
 
-    <!-- Loading Spinner -->
+
     <div id="pageLoading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-2 text-muted">加载商品信息中...</p>
     </div>
 
-    <!-- Product Wrapper -->
+
     <div id="productWrapper" class="product-detail-wrapper d-none">
-        <!-- Part 1: Images & Info -->
+
         <div class="row">
-            <!-- Carousel -->
+
             <div class="col-md-6 mb-4 mb-md-0">
                 <div id="productCarousel" class="carousel slide carousel-container" data-bs-ride="false">
                     <div class="carousel-inner" id="carouselInner">
@@ -254,7 +254,7 @@
                 </div>
             </div>
 
-            <!-- Info -->
+
             <div class="col-md-6">
                 <div class="info-container">
                     <div>
@@ -305,7 +305,7 @@
 
         <div class="section-divider"></div>
 
-        <!-- Part 2: Description -->
+
         <div class="description-section">
             <div class="desc-title">
                 <h3>商品详情</h3>
@@ -316,7 +316,7 @@
 
         <div class="section-divider"></div>
 
-        <!-- Part 3: Comments -->
+
         <div class="comments-section" id="commentsArea">
             <div class="desc-title">
                 <h3>用户评价 (<span id="commentCount">0</span>)</h3>
@@ -333,7 +333,7 @@
             </div>
 
             <div id="commentListContainer">
-                <!-- JS Injected -->
+
             </div>
             <div id="noCommentsMsg" class="text-center py-4 text-muted d-none">
                 <i class="fa-regular fa-comment-dots fa-2x mb-2"></i>
@@ -342,14 +342,14 @@
         </div>
     </div>
 
-    <!-- Not Found State -->
+
     <div id="notFoundState" class="text-center py-5 d-none">
         <h3>未找到商品信息</h3>
         <a href="ShoppingnbView.jsp" class="btn btn-primary mt-3">返回首页</a>
     </div>
 </main>
 
-<!-- 购物车 Offcanvas -->
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="cartDrawer" style="width: 480px;">
     <div class="offcanvas-header border-bottom">
         <h5 class="offcanvas-title">我的购物车</h5>
@@ -365,7 +365,7 @@
         </div>
 
         <div id="cartItemsList" class="flex-grow-1 overflow-auto p-3">
-            <!-- JS Items -->
+
         </div>
 
         <div id="cartEmpty" class="text-center py-5 d-none">
@@ -431,8 +431,9 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
 
     // 全局变量
     let currentUserID = '';
@@ -449,9 +450,9 @@
     let selectedAddressIndex = 0;
     let isAddingNewAddress = false;
 
-    // ================= 初始化 =================
+    // 初始化
     $(document).ready(function() {
-        // 1. 检查登录
+        //检查登录
         const uID = sessionStorage.getItem('uID');
         if (!uID) {
             Swal.fire('未登录', '请先登录', 'error').then(() => {
@@ -462,7 +463,7 @@
         currentUserID = uID;
         $('#menuUserID').text('用户ID: ' + uID);
 
-        // 2. 获取 URL 参数 pID
+        //获取 URL 参数 pID
         const urlParams = new URLSearchParams(window.location.search);
         currentPID = urlParams.get('pID');
 
@@ -473,14 +474,14 @@
             return;
         }
 
-        // 3. 加载数据
+        //加载数据
         fetchProductDetail(currentPID);
         fetchComments(currentPID);
         fetchCartCountOnly(); // 仅加载角标，点击时再加载详情
         fetchFavorites(); // 收藏状态需要用到
     });
 
-    // ================= 功能函数 =================
+    //功能函数
 
     function getImageUrl(path) {
         if (!path) return 'https://via.placeholder.com/400x400?text=No+Image';
@@ -511,7 +512,7 @@
         window.location.href = 'ProductDetailView.jsp?pID=' + pID;
     }
 
-    // ================= 1. 商品详情逻辑 =================
+    // 商品详情逻辑
     function fetchProductDetail(id) {
         $('#pageLoading').removeClass('d-none');
         $('#productWrapper').addClass('d-none');
@@ -536,7 +537,7 @@
     }
 
     function renderProductInfo(p) {
-        // 1. 轮播图
+        //轮播图
         const carouselInner = $('#carouselInner');
         carouselInner.empty();
         const images = p.pImagePaths || [];
@@ -553,7 +554,7 @@
             });
         }
 
-        // 2. 信息
+        //信息
         $('#pType').text(p.pType);
         $('#pProducer').text(p.pProducer);
         $('#pName').text(p.pName);
@@ -593,7 +594,7 @@
         $('#buyQtyInput').val(buyQuantity);
     }
 
-    // ================= 2. 评论逻辑 =================
+    // 评论逻辑
     function fetchComments(pid) {
         $.ajax({
             url: BASE_URL + '/api/GetAllProductComment',
@@ -627,7 +628,7 @@
                                 <span class="date">${item.cDate || ''}</span>
                             </div>
                             <div class="comment-text">
-                                ${isReply ? `<span class="reply-tag">回复 @${item.Recipient} :</span>` : ''}
+                                ${isReply != null && isReply   ? '<span class="reply-tag">回复 @' + item.Recipient + ' :</span>'   : ''}
                                 ${item.cContent}
                             </div>
                             <div class="comment-actions">
@@ -656,9 +657,7 @@
     }
 
     function toggleReplyBox(cid) {
-        // 先关闭其他的
         $('.inline-reply-box').addClass('d-none');
-        // 切换当前的
         const box = $(`#replyBox-${cid}`);
         if(box.hasClass('d-none')) {
             box.removeClass('d-none');
@@ -720,7 +719,7 @@
     }
 
 
-    // ================= 3. 购物车逻辑 =================
+    //购物车逻辑
     function addProductToCart() {
         if (productData.pInventory <= 0) return;
         addToCart(productData, buyQuantity);
@@ -865,7 +864,7 @@
     }
 
 
-    // ================= 4. 收藏夹逻辑 =================
+    //收藏夹逻辑
     function fetchFavorites() {
         $.ajax({
             url: BASE_URL + '/api/FavouriteRecords',
@@ -959,7 +958,6 @@
         });
     }
 
-    // Override fetchFavorites to return promise for chaining
     const originalFetchFav = fetchFavorites;
     fetchFavorites = function() {
         return new Promise((resolve) => {
@@ -978,7 +976,7 @@
     }
 
 
-    // ================= 5. 结算逻辑 =================
+    //结算逻辑
     function handleCheckout() {
         const selected = cartList.filter(i => i.isSelected);
         if (selected.length === 0) return;
@@ -1014,10 +1012,10 @@
         if (existingAddresses.length > 0) {
             existingAddresses.forEach((addr, idx) => {
                 const html = `
-                    <div class="address-card ${idx === 0 ? 'active' : ''}" onclick="selectAddress(${idx}, this)">
+                    <div class="address-card ${idx == 0 ? 'active' : ''}" onclick="selectAddress(${idx}, this)">
                         <div class="fw-bold">${addr.uContactPersonName} (${addr.uContactPersonPhone})</div>
                         <div class="small text-muted">${addr.uDeliveryAddress}</div>
-                        ${addr.oDeliveryNote ? `<div class="small text-muted fst-italic">备注: ${addr.oDeliveryNote}</div>` : ''}
+                        ${addr.oDeliveryNote != null && addr.oDeliveryNote != ''   ? '<div class="small text-muted fst-italic">备注: ' + addr.oDeliveryNote + '</div>'   : ''}
                     </div>
                 `;
                 listContainer.append(html);
@@ -1070,7 +1068,6 @@
                 oPostalCode: '000000'
             };
 
-            // 保存新地址 (fire and forget for this flow, usually should wait)
             $.ajax({ url: BASE_URL + '/api/OrderConfirm_NewDeliveryRecord', type: 'POST', contentType: 'application/json', data: JSON.stringify(finalInfo) });
 
         } else {

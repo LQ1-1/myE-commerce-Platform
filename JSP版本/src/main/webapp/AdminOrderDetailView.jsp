@@ -6,15 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单详情页 - EBuyPlt 后台</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -187,11 +186,13 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    // 配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
+
     let currentOrderID = '';
 
-    // ================= 初始化 =================
+    // 初始化
     $(document).ready(function() {
         // 1. 获取 URL 参数 oOrderID
         const urlParams = new URLSearchParams(window.location.search);
@@ -207,8 +208,7 @@
         $('#displayOrderID').text(currentOrderID);
 
         // 2. 加载数据
-        // 同时发起两个请求：获取头信息(Search) 和 获取商品列表(SpecificInfo)
-        // 注意：原Vue代码依赖 history.state 传递头信息，为了稳健性，这里我们通过搜索接口反查头信息
+
         Promise.all([fetchOrderHeader(), fetchOrderProducts()])
             .then(() => {
                 $('#pageLoading').addClass('d-none');
@@ -216,13 +216,12 @@
             })
             .catch(err => {
                 console.error(err);
-                // 即使头部加载失败，如果商品加载成功也显示
                 $('#pageLoading').addClass('d-none');
                 $('#contentWrapper').removeClass('d-none');
             });
     });
 
-    // ================= 1. 获取订单概览 (Header) =================
+    //  获取订单概览
     function fetchOrderHeader() {
         return new Promise((resolve, reject) => {
             // 使用搜索接口查询特定订单
@@ -243,7 +242,6 @@
                         renderOrderHeader(order);
                         resolve();
                     } else {
-                        // 如果搜索不到，尝试显示空或从商品接口推断(较难)
                         $('#oDeliveryNote').text('未获取到订单头信息');
                         resolve(); // 不阻塞页面显示
                     }
@@ -257,8 +255,8 @@
     }
 
     function renderOrderHeader(info) {
-        $('#oOrdererID').text(info.uID || '未知'); // 注意：后台返回字段可能是 uID 或 oOrdererID，需根据实际API调整
-        // 假设后台 AdminOrderInfoSearch 返回的字段类似：oDate, oStatus, oReceiverName 等
+        $('#oOrdererID').text(info.uID || '未知');
+
 
         $('#oDate').text(info.oDate);
         $('#oReceiverName').text(info.oReceiverName);
@@ -281,7 +279,7 @@
         }
     }
 
-    // ================= 2. 获取订单商品列表 =================
+    //  获取订单商品列表
     function fetchOrderProducts() {
         return new Promise((resolve, reject) => {
             $('#productLoading').removeClass('d-none');
@@ -335,7 +333,7 @@
         });
     }
 
-    // ================= 跳转逻辑 =================
+    // 跳转逻辑
     function goToProductDetail(pID) {
         window.location.href = 'AdminProductDetailView.jsp?pID=' + pID;
     }

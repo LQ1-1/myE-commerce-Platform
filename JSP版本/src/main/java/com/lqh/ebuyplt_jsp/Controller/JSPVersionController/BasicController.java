@@ -18,6 +18,7 @@ import jakarta.ws.rs.Produces;
 import java.sql.*;
 import java.util.ArrayList;
 
+@Path("/")
 public class BasicController
 {
     //数据库的信息
@@ -128,7 +129,7 @@ public class BasicController
     //处理函数2
     //参数是json形式,通过请求体传递json格式
     //    @CrossOrigin(origins="http://192.168.66.94:8082")
-    @GET
+    @POST
     @Path("/Login_RequestBody")
     @Produces("text/plain")
     public String Login_RequestBody(UserLogin userlogin)
@@ -276,7 +277,7 @@ public class BasicController
         return res.toString();
     }
 
-    @GET
+    @POST
     @Path("/GetUserAccountInfo")
     @Produces("application/json")
     public ApiResult<UserAccountTableItem> GetUserAccountInfo(UserAccountTableItem para)   //获取用户信息的接口，请求的时候只用填写uID
@@ -370,7 +371,7 @@ public class BasicController
     }
 
 
-    @GET
+    @POST
     @Path("/GetUserDeliveryInfo")
     @Produces("application/json")
     public ApiResult<ArrayList<UserDeliveryInfoTableItem>> GetUserDeliveryInfo(UserDeliveryInfoTableItem para)     //获取所有的该用户的收货记录，请求的时候只用填写uID,返回的数据中uDIndex不向用户显示

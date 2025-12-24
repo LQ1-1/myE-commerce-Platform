@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人中心 - EBuyPlt</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- 6. CryptoJS -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
@@ -300,15 +300,16 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
 
     // 全局变量
     let currentUserID = '';
     let currentUserPasswordHash = ''; // 存储原始密码hash，用于不修改密码时提交
     let isEditMode = false;
 
-    // ================= 初始化 =================
+    //初始化
     $(document).ready(function() {
         // 1. 获取 URL 参数 uID，如果没有则尝试 sessionStorage
         const urlParams = new URLSearchParams(window.location.search);
@@ -337,7 +338,7 @@
         });
     });
 
-    // ================= 1. 用户基础信息逻辑 =================
+    //用户基础信息逻辑
 
     function fetchUserInfo(id) {
         // loading state
@@ -451,7 +452,7 @@
         });
     }
 
-    // ================= 2. 收货地址逻辑 =================
+    //收货地址逻辑
 
     function fetchDeliveryList(uid) {
         $('#deliveryTableBody').empty();
@@ -482,8 +483,6 @@
         }
 
         list.forEach(item => {
-            // 将 item 对象转为 base64 字符串或者 JSON 字符串存储在 data 属性中，方便编辑时读取
-            // 为了避免 JSON 字符串中的引号问题，使用 encodeURIComponent
             const itemData = encodeURIComponent(JSON.stringify(item));
 
             const html = `

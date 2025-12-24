@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+@Path("/")
 public class MerchantController
 {
     private static String url="jdbc:kingbase8://localhost:54321/db_ebuyplt2";
@@ -242,7 +243,7 @@ public class MerchantController
     }
 
     //从后端返回该用户的所有商品的所有信息给前端
-    @GET
+    @POST
     @Path("/ProductAllInfo")
     @Produces("application/json")
     public ApiResult<ProductAllInfo_jsonSend> ProductAllInfo(ProductRecord_jsonGet recordCall)
@@ -605,7 +606,7 @@ public class MerchantController
         }
     }
 
-    @GET
+    @POST
     @Path("/ProductSaledInfo")
     @Produces("application/json")
     public ApiResult<ProductSaledInfo_jsonSend> ProductSaledInfo(ProductRecord_jsonGet recordCall)

@@ -6,15 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>商品详情页 - EBuyPlt 后台</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -98,7 +93,7 @@
             color: #606266;
             border: 1px solid #eee;
             min-height: 100px;
-            white-space: pre-line; /* 保留换行符 */
+            white-space: pre-line;
         }
 
         /* Utilities */
@@ -176,11 +171,13 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
+
     let currentPID = '';
 
-    // ================= 初始化 =================
+    //初始化
     $(document).ready(function() {
         // 1. 获取 URL 参数 pID
         const urlParams = new URLSearchParams(window.location.search);
@@ -193,11 +190,11 @@
             return;
         }
 
-        // 2. 加载数据
+        //加载数据
         fetchProductInfo();
     });
 
-    // ================= 数据逻辑 =================
+    //数据逻辑
     function fetchProductInfo() {
         $('#loadingState').removeClass('d-none');
         $('#contentWrapper').addClass('d-none');
@@ -208,7 +205,6 @@
             contentType: 'application/json',
             data: JSON.stringify({ pID: currentPID }),
             success: function(res) {
-                // 接口返回结构: { data: [ { ...item } ] }
                 if (res.data && res.data.length > 0) {
                     const info = res.data[0];
                     renderProduct(info);

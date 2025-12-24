@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+@Path("/")
 public class UIController
 {
     //数据库的信息
@@ -96,7 +97,7 @@ public class UIController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/ProductSearch")
     @Produces("application/json")
     public ApiResult<ArrayList<ProductSearch_jsonSend>> ProductSearch(ProductSearch_jsonGet SearchCondition)//返回商品搜索结果附带筛选条件
@@ -358,7 +359,7 @@ public class UIController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/ProductClick")
     @Produces("application/json")
     public ApiResult<ProductClick_jsonSend> ProductClick(ProductClick_jsonGet ClickCondition)              //返回该点击的商品信息
@@ -488,7 +489,7 @@ public class UIController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/GetAllProductComment")
     @Produces("application/json")
     public ApiResult<ArrayList<ProductCommentItem_jsonSend>> GetAllProductComment(ProductCommentItem para)      //只需要填写pID

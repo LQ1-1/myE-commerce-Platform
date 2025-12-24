@@ -4,7 +4,7 @@ public class UserLogin
 {
     private String uID;
     private String uPassword;
-    UserLogin(){}
+    public UserLogin(){}
 
     public String getuID()
     {
@@ -13,5 +13,13 @@ public class UserLogin
     public String getuPassword()
     {
         return uPassword;
+    }
+
+    public void setuID(String uID) {
+        this.uID = uID;
+    }
+
+    public void setuPassword(String uPassword) {
+        this.uPassword = uPassword;
     }
 }

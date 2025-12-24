@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EBuyPlt 管理后台</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- 6. CryptoJS (如果修改密码需要加密) -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
@@ -92,12 +92,11 @@
             border-right: 3px solid #409EFF;
         }
 
-        /* --- Main Content --- */
         .main-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            min-width: 0; /* 防止表格撑爆 flex */
+            min-width: 0;
         }
 
         .admin-header {
@@ -190,7 +189,7 @@
 
         <main class="admin-main">
 
-            <!-- ================== 搜索栏 (User) ================== -->
+            <!--搜索栏 (User)-->
             <div id="search-UserAccountTable" class="search-box">
                 <form id="form-user-search" onsubmit="return false;">
                     <div class="row g-3 mb-3">
@@ -284,7 +283,7 @@
                 </form>
             </div>
 
-            <!-- ================== 搜索栏 (Order) ================== -->
+            <!--  搜索栏 (Order)  -->
             <div id="search-OrderFullInfoTable" class="search-box d-none">
                 <form id="form-order-search" onsubmit="return false;">
                     <div class="row g-2 align-items-end mb-3">
@@ -317,7 +316,7 @@
                 </form>
             </div>
 
-            <!-- ================== 数据表格区域 ================== -->
+            <!--  数据表格区域  -->
             <div class="table-container">
                 <!-- Loading 遮罩 -->
                 <div id="tableLoading" class="position-absolute top-0 start-0 w-100 h-100 bg-white d-flex justify-content-center align-items-center d-none" style="z-index: 10; opacity: 0.8;">
@@ -392,13 +391,15 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    // 配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
+
     let currentAdminID = '';
     let activeMenu = 'UserAccountTable';
     let categoryList = [];
 
-    // ================= 初始化 =================
+    //初始化
     $(document).ready(function() {
         const uID = sessionStorage.getItem('uID');
         if (!uID) {
@@ -416,24 +417,24 @@
         fetchData('UserAccountTable');
     });
 
-    // ================= 导航逻辑 =================
+    //  导航逻辑
     function switchTab(menuName, element) {
-        // 1. 更新菜单样式
+        // 更新菜单样式
         $('.menu-item').removeClass('active');
         $(element).addClass('active');
 
-        // 2. 更新状态
+        //更新状态
         activeMenu = menuName;
         $('#breadcrumbText').text('当前位置：' + $(element).text());
 
-        // 3. 控制搜索栏显隐
+        //控制搜索栏显隐
         $('.search-box').addClass('d-none');
         if (['UserAccountTable', 'ProductTable', 'OrderFullInfoTable'].includes(menuName)) {
             $('#search-' + menuName).removeClass('d-none');
         }
 
-        // 4. 重置搜索并加载数据
-        resetSearch(false); // 重置搜索框但不自动请求，由fetchData请求
+        //重置搜索并加载数据
+        resetSearch(false);
         fetchData(menuName);
     }
 
@@ -452,7 +453,7 @@
         window.location.href = 'AdminOrderDetailView.jsp?oOrderID=' + oOrderID;
     }
 
-    // ================= 核心数据加载 =================
+    //核心数据加载
     function fetchData(tableName) {
         $('#tableLoading').removeClass('d-none');
         $('#emptyData').addClass('d-none');
@@ -495,7 +496,7 @@
         });
     }
 
-    // ================= 搜索逻辑 =================
+    //搜索逻辑
     function handleSearch() {
         $('#tableLoading').removeClass('d-none');
         $('#dynamicTable tbody').empty();
@@ -539,7 +540,6 @@
                 DateR: $('#o_DateEnd').val() || ''
             };
         } else {
-            // 没有搜索功能的页面直接刷新
             fetchData(activeMenu);
             return;
         }
@@ -562,7 +562,6 @@
     }
 
     function resetSearch(shouldFetch = true) {
-        // 重置所有搜索表单
         $('#form-user-search')[0].reset();
         $('#u_AccountTypes').val(['普通用户', '商户', '管理员']);
         $('#u_AccountStatuses').val(['正常', '封禁', '注销']);
@@ -577,7 +576,7 @@
         }
     }
 
-    // ================= 表格渲染核心 =================
+    //表格渲染核心
     function renderTable(data, tabName) {
         const thead = $('#dynamicTable thead');
         const tbody = $('#dynamicTable tbody');
@@ -601,8 +600,8 @@
                 rowBuilder = (row) => `
                     <td>${row.uID}</td>
                     <td>${row.uNickName}</td>
-                    <td><span class="badge ${row.uAccountType === '管理员' ? 'bg-danger' : 'bg-success'}">${row.uAccountType}</span></td>
-                    <td><span class="badge ${row.uAccountStatus === '正常' ? 'bg-primary' : 'bg-secondary'}">${row.uAccountStatus}</span></td>
+                    <td><span class="badge ${row.uAccountType == '管理员' ? 'bg-danger' : 'bg-success'}">${row.uAccountType}</span></td>
+                    <td><span class="badge ${row.uAccountStatus == '正常' ? 'bg-primary' : 'bg-secondary'}">${row.uAccountStatus}</span></td>
                     <td>${row.uPhone}</td>
                     <td>${row.uEmail}</td>
                     <td>${row.uGender}</td>
@@ -703,7 +702,7 @@
         });
     }
 
-    // ================= 用户编辑逻辑 =================
+    // 用户编辑逻辑
     function openEditUserModal(row) {
         $('#e_uID').val(row.uID);
         $('#e_uRegisterDate').val(row.uRegisterDate);
@@ -749,7 +748,7 @@
         });
     }
 
-    // ================= 通用函数 =================
+    // 通用函数
     function getImageUrl(path) {
         if (!path) return '';
         let clean = path.replace(/\\/g, '/');

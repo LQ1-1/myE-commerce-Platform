@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EBuyPlt 商户管理中心</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS (含 Popper) -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -27,7 +27,6 @@
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
-        /* --- Header --- */
         .app-header {
             background-color: #fff;
             border-bottom: 1px solid #dcdfe6;
@@ -75,7 +74,6 @@
             margin: 0 20px;
         }
 
-        /* --- Main Content --- */
         .app-main {
             flex: 1;
             padding: 20px;
@@ -94,7 +92,6 @@
             margin: 0;
         }
 
-        /* --- Product Card --- */
         .product-card {
             background: #fff;
             border-radius: 8px;
@@ -563,10 +560,11 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const API_BASE_URL = 'http://192.168.126.94:8082';
+    //配置
+    // const API_BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
 
-    // ================= 全局变量 =================
+    //全局变量
     let currentMerchantID = '';
     let currentEditingProduct = null; // 当前正在编辑的商品原始数据副本
 
@@ -578,12 +576,12 @@
     // 上架相关临时状态
     let addGalleryFiles = []; // 上架时的展示图文件数组
 
-    // ================= 初始化 =================
+    // 初始化
     $(document).ready(function() {
         const uID = sessionStorage.getItem('uID');
         if (!uID) {
             Swal.fire('未登录', '请先登录', 'warning').then(() => {
-                window.location.href = 'index.jsp'; // 假设登录页是 index.jsp
+                window.location.href = 'LoginView.jsp'; // 假设登录页是 index.jsp
             });
             return;
         }
@@ -595,7 +593,7 @@
         fetchProductList();
     });
 
-    // ================= 导航逻辑 =================
+    // 导航逻辑
     function switchTab(tabName) {
         // 更新按钮状态
         $('.nav-actions .btn-nav').removeClass('active');
@@ -623,14 +621,14 @@
         window.location.href = 'UserProfileView.jsp?uID=' + currentMerchantID;
     }
 
-    // ================= 工具函数 =================
+    //工具函数
     function getImageUrl(path) {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('blob:')) return path;
         return API_BASE_URL + path;
     }
 
-    // ================= 1. 库存管理逻辑 =================
+    //库存管理逻
     function fetchProductList() {
         $('#inventory-loading').removeClass('d-none');
         $('#inventory-list').addClass('d-none').empty();
@@ -669,8 +667,6 @@
             const statusText = item.pInventory > 0 ? '上架' : '缺货';
             const imgUrl = getImageUrl(item.pThumbnail);
 
-            // 存储数据到DOM以便点击时获取，避免再次请求
-            // 注意：属性名称都转为小写了，data-product
             const cardHtml = `
                 <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
                     <div class="product-card" onclick='openProductDetail(${JSON.stringify(item)})'>
@@ -693,7 +689,7 @@
         });
     }
 
-    // ================= 2. 新品上架逻辑 =================
+    //新品上架逻辑
 
     // 预览单张图片
     function previewImage(input, imgId, iconId) {
@@ -750,7 +746,7 @@
 
         $('#btn-submit-add').prop('disabled', true).text('提交中...');
 
-        // 1. 先提交文本信息
+        //先提交文本信息
         const payload = {
             uID: currentMerchantID,
             pName: $('#add-pName').val(),
@@ -821,7 +817,7 @@
         });
     }
 
-    // ================= 3. 销售记录逻辑 =================
+    //销售记录逻辑
     function fetchSalesRecord() {
         $('#sales-loading').removeClass('d-none');
         $('#sales-table-body').empty();
@@ -874,7 +870,7 @@
         });
     }
 
-    // ================= 4. 编辑/详情逻辑 (最复杂部分) =================
+    //编辑/详情逻辑 (最复杂部分)
 
     // 打开模态框并填充数据
     function openProductDetail(product) {
@@ -931,7 +927,7 @@
             $('#edit-thumbnail-uploader').removeClass('d-none');
         }
 
-        // 2. 展示图逻辑
+        //展示图逻辑
         const galleryContainer = $('#edit-gallery-list');
         // 保留最后一个元素（上传按钮），清空前面的图片
         galleryContainer.children('.image-preview-wrapper').remove();
@@ -950,7 +946,6 @@
         });
 
         // 渲染新上传的图片 (editNewGalleryFiles)
-        // 注意：反向遍历插入，保持顺序
         for (let i = editNewGalleryFiles.length - 1; i >= 0; i--) {
             const file = editNewGalleryFiles[i];
             const blobUrl = URL.createObjectURL(file);
@@ -962,12 +957,9 @@
                     </div>
                 </div>
             `;
-            galleryContainer.append(html); // new files append after old ones, but before the add button (handled by flex order logic usually, but here prepend/append mix is tricky. Let's simplify: Just clear all and rebuild including button)
+            galleryContainer.append(html);
         }
 
-        // 重新排序DOM：旧图 -> 新图 -> 按钮
-        // 为了简化，上面直接操作了 DOM。如果顺序乱了，可以清空全部，先插旧，再插新，再插按钮。
-        // 这里采用更稳妥的完全重绘
         galleryContainer.empty();
 
         editCurrentGalleryUrls.forEach((url, index) => {
@@ -1003,21 +995,16 @@
     // 缩略图操作
     function removeEditThumbnail() {
         if (editNewThumbnailFile) {
-            editNewThumbnailFile = null; // 取消新上传的
-            // 如果原本有图，恢复原本的图？还是说用户意图是删除？
-            // 逻辑：如果用户删除了新上传的，应该回到“无图”或者“原图”状态。
-            // 简单处理：视为删除当前显示的。
-            // 如果本来有原图，这里删除后，意味着 pThumbnail 为空。
+            editNewThumbnailFile = null;
         }
-        currentEditingProduct.pThumbnail = ''; // 标记为空
+        currentEditingProduct.pThumbnail = '';
         renderEditImages();
     }
 
     function handleEditThumbnailChange(input) {
         if (input.files && input.files[0]) {
             editNewThumbnailFile = input.files[0];
-            // 只要有新文件，逻辑上视为有了缩略图
-            // currentEditingProduct.pThumbnail = 'placeholder';
+
             renderEditImages();
         }
     }
@@ -1041,8 +1028,7 @@
 
     // 提交更新
     function updateProductInfo() {
-        // 校验缩略图
-        // 必须存在：要么有新文件，要么有旧URL
+
         const hasOld = !!currentEditingProduct.pThumbnail;
         const hasNew = !!editNewThumbnailFile;
 
@@ -1055,7 +1041,7 @@
 
         const formData = new FormData();
 
-        // 1. 基本信息
+        //基本信息
         formData.append('pID', $('#edit-pID').val());
         formData.append('pName', $('#edit-pName').val());
         formData.append('pType', $('#edit-pType').val());
@@ -1067,11 +1053,8 @@
         formData.append('pInventory', $('#edit-pInventory').val());
         formData.append('pStatus', $('#edit-pStatus').val());
 
-        // 2. 缩略图逻辑
+        // 缩略图逻辑
         // oldThumbnailPicURL 始终传递原始的URL（如果没有就是空串）
-        // 这里的逻辑有点绕，根据Vue代码：
-        // 如果有新文件 -> newThumbnailPicURL 为空，上传文件
-        // 如果没新文件 -> newThumbnailPicURL = oldThumbnailPicURL
 
         const originalUrl = currentEditingProduct.oldThumbnailPicURL || currentEditingProduct.pThumbnail || '';
         formData.append('oldThumbnailPicURL', originalUrl); // 后端可能只用这个做参考
@@ -1085,19 +1068,15 @@
             formData.append('newThumbnailPicURL', originalUrl);
         }
 
-        // 3. 展示图逻辑
-        // 3.1 旧图处理
+        // 展示图逻辑
+        // 旧图处理
         if (currentEditingProduct.oldShowcaseImagesURL) {
-            // Vue代码似乎传了所有原始的作为 oldShowcaseImagesURL，然后传剩余的作为 newShowcaseImagesURL(如果是字符串)
-            // 这里我们简化逻辑，匹配后端通常行为：
-            // 传入 "newShowcaseImagesURL" 列表，包含所有要在数据库保留的旧图URL
             editCurrentGalleryUrls.forEach(url => {
-                // 注意：有些后端可能需要区分 old 和 new 字段，这里照搬 Vue 逻辑
                 formData.append('newShowcaseImagesURL', url);
             });
         }
 
-        // 3.2 新图上传
+        //新图上传
         editNewGalleryFiles.forEach((file, index) => {
             formData.append(`pShowcaseImageList[${index}].pImgType`, '展示图');
             formData.append(`pShowcaseImageList[${index}].pImagePath`, file);

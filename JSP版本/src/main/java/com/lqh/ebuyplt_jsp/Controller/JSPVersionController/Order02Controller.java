@@ -14,13 +14,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
+@Path("/")
 public class Order02Controller
 {
     private static String url="jdbc:kingbase8://localhost:54321/db_ebuyplt2";
     private static String user="system";
     private static String password="qh20050908";
 
-    @GET
+    @POST
     @Path("/OrderConfirm_DeliveryCheck")
     @Produces("application/json")
     public ApiResult<ExistDeliveryRecords> OrderConfirm_DeliveryCheck(OrderItem orderItem)    //只需要用到uID,返回用户已经写过了的收货记录
@@ -781,7 +782,7 @@ public class Order02Controller
         return res;
     }
 
-    @GET
+    @POST
     @Path("/GetOrderRecords")
     @Produces("application/json")
     public ApiResult<OrderRecord_jsonSend> GetOrderRecords(OrderRecord_jsonGet obj)

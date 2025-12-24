@@ -11,6 +11,7 @@ import jakarta.ws.rs.Produces;
 import java.sql.*;
 import java.util.ArrayList;
 
+@Path("/")
 public class ShoppingCartController
 {
     private static String url="jdbc:kingbase8://localhost:54321/db_ebuyplt2";
@@ -162,7 +163,7 @@ public class ShoppingCartController
         return false;
     }
 
-    @GET
+    @POST
     @Path("/ShoppingCartRecords")
     @Produces("application/json")
     public ApiResult<ArrayList<ShoppingCartItem>> ShoppingCartRecords(ShoppingCartRecords_jsonGet shoppingCartRecords_jsonGet)
@@ -352,7 +353,7 @@ public class ShoppingCartController
         return false;
     }
 
-    @GET
+    @POST
     @Path("/FavouriteRecords")
     @Produces("application/json")
     public ApiResult<ArrayList<FavouriteRecordItem>> FavouriteRecords(FavouriteRecords_jsonGet favouriteRecords_jsonGet)

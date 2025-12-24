@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>电子商务系统 - 登录</title>
 
-    <!-- 1. 引入 Bootstrap 5 (用于布局和样式，替代 Element Plus) -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. 引入 FontAwesome (用于图标) -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. 引入 SweetAlert2 (用于替代 ElMessage 弹窗) -->
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- 4. 引入 CryptoJS (用于密码加密) -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- 5. 引入 jQuery (方便 DOM 操作和 Ajax) -->
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -40,18 +40,18 @@
         }
 
         .main-title {
-            position: absolute; /* 绝对定位，脱离文档流 */
-            top: 8%;           /* 距离顶部的距离，可根据需要调整 */
+            position: absolute;
+            top: 8%;
             left: 0;
-            width: 100%;        /* 宽度100%以实现文字居中 */
-            text-align: center; /* 文字水平居中 */
-            color: #FFD700;     /* 金色字体，呼应 "Gold" */
-            font-size: 3.5rem;  /* 大字体 */
+            width: 100%;
+            text-align: center;
+            color: #FFD700;
+            font-size: 3.5rem;
             font-weight: bold;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8); /* 黑色阴影，防止背景图太亮导致看不清 */
-            z-index: 10;        /* 确保在背景图之上 */
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            z-index: 10;
             letter-spacing: 2px;
-            text-transform: uppercase; /* 转换为大写，看起来更有气势 */
+            text-transform: uppercase;
         }
 
         .card-header {
@@ -69,7 +69,7 @@
             position: relative;
         }
 
-        /* 模拟 Element Plus 的输入框样式 */
+
         .input-group-text {
             background-color: #fff;
             border-right: none;
@@ -85,7 +85,7 @@
             border-color: #ced4da;
         }
 
-        /* 聚焦时整个输入组变色 */
+
         .input-group:focus-within .input-group-text,
         .input-group:focus-within .form-control {
             border-color: #409eff;
@@ -130,7 +130,7 @@
         </div>
 
         <form id="loginForm" onsubmit="return false;">
-            <!-- ================= 公共区域 (账号) ================= -->
+            <!-- 公共区域 (账号)  -->
             <div class="form-group">
                 <label class="form-label">账号</label>
                 <div class="input-group">
@@ -140,7 +140,7 @@
                 <div class="error-text" id="err-uID"></div>
             </div>
 
-            <!-- ================= 注册专用区域 (用户名) ================= -->
+            <!-- 注册专用区域 (用户名) -->
             <div class="form-group register-only hidden">
                 <label class="form-label">用户名</label>
                 <div class="input-group">
@@ -150,7 +150,7 @@
                 <div class="error-text" id="err-uNickName"></div>
             </div>
 
-            <!-- ================= 公共区域 (密码) ================= -->
+            <!-- 公共区域 (密码)  -->
             <div class="form-group">
                 <label class="form-label">密码</label>
                 <div class="input-group">
@@ -160,7 +160,7 @@
                 <div class="error-text" id="err-uPassword"></div>
             </div>
 
-            <!-- ================= 注册专用区域 (其他信息) ================= -->
+            <!--  注册专用区域 (其他信息)  -->
             <div class="register-only hidden">
                 <div class="form-group">
                     <label class="form-label">确认密码</label>
@@ -200,12 +200,12 @@
                 </div>
             </div>
 
-            <!-- ================= 按钮区域 ================= -->
+            <!-- 按钮区域  -->
             <button type="button" class="btn btn-primary login-button" id="submitBtn" onclick="handleSubmit()">
                 登 录
             </button>
 
-            <!-- ================= 底部链接区域 ================= -->
+            <!--  底部链接区域 -->
             <div class="form-footer">
                 <div id="loginLinks">
                     <a class="link-primary" onclick="switchToRegister('user')">没有账号？去注册</a>
@@ -223,9 +223,9 @@
 <script>
     // --- 状态变量 ---
     let isRegister = false;
-    let registerType = 'user'; // 'user' or 'merchant'
+    let registerType = 'user';
 
-    // --- 切换逻辑 ---
+    //  切换逻辑
     function updateView() {
         const titleSpan = document.getElementById('titleText');
         const submitBtn = document.getElementById('submitBtn');
@@ -268,7 +268,7 @@
         updateView();
     }
 
-    // --- 工具函数: 获取当前时间 ---
+    // 获取当前时间
     function getNowTime() {
         const date = new Date();
         const year = date.getFullYear();
@@ -280,7 +280,7 @@
         return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
     }
 
-    // --- 验证逻辑 ---
+    //验证逻辑
     function validateForm() {
         let isValid = true;
         const showError = (id, msg) => {
@@ -339,7 +339,7 @@
         return isValid;
     }
 
-    // --- 提交处理 ---
+    //提交处理
     function handleSubmit() {
         if (!validateForm()) return;
 
@@ -354,8 +354,12 @@
         let url = '';
         let payload = {};
 
+        // const baseUrl = '';
+
+        const BASE_URL = 'http://localhost:8080';
+
         if (isRegister) {
-            url = 'http://192.168.126.94:8082/api/Registration';
+            url =BASE_URL+'/Registration';
             const finalAccountType = registerType === 'merchant' ? '商户' : '普通用户';
 
             payload = {
@@ -370,7 +374,7 @@
                 uAccountStatus: '正常'
             };
         } else {
-            url = 'http://192.168.126.94:8082/api/Login_RequestBody';
+            url = BASE_URL+'/Login_RequestBody';
             payload = {
                 uID: uID,
                 uPassword: hashedPassword
@@ -386,8 +390,6 @@
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function(response) {
-                // 根据后端返回的数据类型处理（Vue代码中 response.data 是字符串）
-                // 这里的 response 可能是 JSON 对象也可能是字符串，取决于后端 Content-Type
                 const messageStr = (typeof response === 'object') ? JSON.stringify(response) : response;
 
                 if (messageStr.includes('Registration Success')) {

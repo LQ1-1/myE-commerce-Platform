@@ -6,16 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EBuyPlt - 商城首页</title>
 
-    <!-- 1. Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 2. FontAwesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- 3. jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- 4. Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- 5. SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
 
     <style>
         body {
@@ -420,8 +415,9 @@
 </div>
 
 <script>
-    // ================= 配置 =================
-    const BASE_URL = 'http://192.168.126.94:8082';
+    // 配置
+    // const BASE_URL = 'http://localhost:8080/EBuyPlt_JSP_war';
+    const BASE_URL = 'http://localhost:8080';
 
     // 全局变量
     let currentUserID = '';
@@ -436,7 +432,7 @@
     let selectedAddressIndex = 0;
     let isAddingNewAddress = false;
 
-    // ================= 初始化 =================
+    // 初始化
     $(document).ready(function() {
         const uID = sessionStorage.getItem('uID');
         if (!uID) {
@@ -465,7 +461,7 @@
         fetchFavorites();
     });
 
-    // ================= 导航与通用 =================
+    // 导航与通用
     function goToUserProfile() { window.location.href = 'UserProfileView.jsp?uID=' + currentUserID; }
     function handleLogout() { sessionStorage.removeItem('uID'); window.location.href = 'index.jsp'; }
     function getImageUrl(path) {
@@ -477,7 +473,7 @@
     }
     function goToDetail(pID) { window.location.href = 'ProductDetailView.jsp?pID=' + pID; }
 
-    // ================= 1. 筛选与分类 =================
+    // 筛选与分类
     function fetchCategories() {
         $.ajax({
             url: BASE_URL + '/api/GetAllProductType',
@@ -499,13 +495,13 @@
         const selectContainer = $('#f_pType');
 
         categoryList.forEach(cat => {
-            // Tab
+
             tabContainer.append(`
                 <li class="nav-item">
                     <a class="nav-link" onclick="handleCategoryChange('${cat}', this)">${cat}</a>
                 </li>
             `);
-            // Filter Select
+
             selectContainer.append(`<option value="${cat}">${cat}</option>`);
         });
     }
@@ -516,7 +512,7 @@
         btnText.text(btnText.text() === '高级筛选' ? '收起筛选' : '高级筛选');
     }
 
-    // ================= 2. 核心查询逻辑 =================
+    //核心查询逻辑
     function handleSearchEnter(e) { if(e.key === 'Enter') handleSearch(); }
 
     function handleSearch() {
@@ -645,7 +641,7 @@
         $('#productGrid').removeClass('d-none');
     }
 
-    // ================= 3. 购物车逻辑 =================
+    //购物车逻辑
     function fetchCartCountOnly() {
         $.ajax({
             url: BASE_URL + '/api/ShoppingCartRecords',
@@ -779,7 +775,7 @@
         $('#checkAllCart').prop('checked', cartList.length > 0 && selected.length === cartList.length);
     }
 
-    // ================= 4. 收藏夹逻辑 =================
+    //收藏夹逻辑
     function fetchFavorites() {
         return new Promise((resolve) => {
             $.ajax({
@@ -789,7 +785,7 @@
                 data: JSON.stringify({ uID: currentUserID }),
                 success: function(res) {
                     favList = (res.data && res.data.data) ? res.data.data : [];
-                    renderProducts(); // Refresh heart icons
+                    renderProducts();
                     resolve();
                 }
             });
@@ -856,7 +852,7 @@
         }
     }
 
-    // ================= 5. 结算逻辑 (与详情页类似) =================
+    // 结算逻辑 (与详情页类似)
     function handleCheckout() {
         const btn = $('#btnCheckout');
         btn.prop('disabled', true);
@@ -888,10 +884,10 @@
         if (existingAddresses.length > 0) {
             existingAddresses.forEach((addr, idx) => {
                 const html = `
-                    <div class="address-card ${idx === 0 ? 'active' : ''}" onclick="selectAddress(${idx}, this)">
+                    <div class="address-card ${idx == 0 ? 'active' : ''}" onclick="selectAddress(${idx}, this)">
                         <div class="fw-bold">${addr.uContactPersonName} (${addr.uContactPersonPhone})</div>
                         <div class="small text-muted">${addr.uDeliveryAddress}</div>
-                        ${addr.oDeliveryNote ? `<div class="small text-muted fst-italic">备注: ${addr.oDeliveryNote}</div>` : ''}
+                        ${addr.oDeliveryNote != null && addr.oDeliveryNote != ''  ? '<div class="small text-muted fst-italic">备注: ' + addr.oDeliveryNote + '</div>'   : ''}
                     </div>
                 `;
                 listContainer.append(html);
