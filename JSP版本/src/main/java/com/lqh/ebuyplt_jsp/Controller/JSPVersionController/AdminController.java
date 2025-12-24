@@ -477,7 +477,7 @@ public class AdminController
 
     //-----------------------------------筛选接口-----------------------------------//
 
-    @GET
+    @POST
     @Path("/AdminUserAccountTableSearch")
     @Produces("application/json")
     public ApiResult<ArrayList<UserAccountTableItem>> AdminUserAccountTableSearch(UserAccountTableItem_selectParameter para)     //搜索用户
@@ -652,7 +652,7 @@ public class AdminController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/AdminProductTableSearch")
     @Produces("application/json")
     public ApiResult<ArrayList<ProductTableItem>> AdminProductTableSearch(ProductSearch_jsonGet SearchCondition)     //搜索商品
@@ -914,7 +914,7 @@ public class AdminController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/AdminOrderInfoSearch")
     @Produces("application/json")
     public ApiResult<ArrayList<OrderFullInfoTableItem>> AdminOrderInfoSearch(OrderFullInfoTableItem_selectParameter para)
@@ -1621,7 +1621,7 @@ public class AdminController
 
     //-----------------------------返回具体的信息的接口----------------------------//
 
-    @GET
+    @POST
     @Path("/AdminGetUserDeliveryInfo")
     @Produces("application/json")                                                                      //返回被点击的账号记录的所有收货信息
     public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminGetUserDeliveryInfo(UserAccountTableItem para)     //参数只用填写账号信息
@@ -1677,7 +1677,7 @@ public class AdminController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/AdminGetUserOrderInfo")
     @Produces("application/json")                                                                                 //返回被点击的账号记录的所有订购信息
     public ApiResult<ArrayList<OrderFullInfoTableItem>> AdminGetUserOrderInfo(UserAccountTableItem para)       //参数只用填写账号信息
@@ -1751,7 +1751,7 @@ public class AdminController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/AdminGetOrderSpecificInfo")
     @Produces("application/json")                                                                             //被点击的订单信息的订购的商品信息
     public ApiResult<ArrayList<OrderProductInfoTableItem>> AdminGetOrderSpecificInfo(OrderProductInfoTableItem para)       //参数只用填写订单号oOrderID
@@ -1799,7 +1799,7 @@ public class AdminController
         return res;
     }
 
-    @GET
+    @POST
     @Path("/AdminGetSpecificProductInfo")
     @Produces("application/json")
     public ApiResult<ArrayList<ProductTableItem>> AdminGetSpecificProductInfo(ProductTableItem para)       //参数只用填写商品的编号

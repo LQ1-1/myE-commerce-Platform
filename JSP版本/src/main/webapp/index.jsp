@@ -8,11 +8,19 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <title>HELLO</title>
+    <title>Ein tag wie gold</title>
 </head>
 <body>
 <div>
     <h1>Ein tag wie gold</h1>
+    <button onclick="ToLoginPageButtonClick()">To Login page</button>
 </div>
+
+<script>
+    function ToLoginPageButtonClick(){
+        window.location.href="LoginView.jsp";
+    }
+</script>
+
 </body>
 </html>
