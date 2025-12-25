@@ -11,6 +11,12 @@ import com.lqh.ebuyplt_1001p.Controller.MerchantPack.ProductInfoUpdate_jsonGet;
 import com.lqh.ebuyplt_1001p.Controller.ResultPack.ApiResult;
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonGet;
 import com.lqh.ebuyplt_1001p.Controller.UIControllerTools.ProductSearch_jsonSend;
+import com.lqh.ebuyplt_1001p.Controller.mapper.PaginationMapper;
+import com.lqh.ebuyplt_1001p.Controller.mapper.ProductCommentMapper;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,6 +91,31 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserAccountTablePagination")
+    public ApiResult<ArrayList<UserAccountTableItem>> AdminUserAccountTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminUserAccountTablePaginationResult(para));
+    }
+    private ArrayList<UserAccountTableItem> AdminUserAccountTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.UserAccountTablePagination(para);
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminUserDeliveryInfoTable")
     public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminUserDeliveryInfoTable()     //获取所有用户的所有收货信息
     {
@@ -128,6 +160,31 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserDeliveryInfoTablePagination")
+    public ApiResult<ArrayList<UserDeliveryInfoTableItem>> AdminUserDeliveryInfoTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminUserDeliveryInfoTablePaginationResult(para));
+    }
+    private ArrayList<UserDeliveryInfoTableItem> AdminUserDeliveryInfoTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.UserDeliveryInfoTablePagination(para);
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminUserShoppingCartTable")
     public ApiResult<ArrayList<UserShoppingCartTableItem>> AdminUserShoppingCartTable()     //返回所有用户的所有购物车记录
     {
@@ -162,6 +219,31 @@ public class AdminController        //管理员控制器
             e.printStackTrace();
         }
         return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserShoppingCartTablePagination")
+    public ApiResult<ArrayList<UserShoppingCartTableItem>> AdminUserShoppingCartTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminUserShoppingCartTablePaginationResult(para));
+    }
+    private ArrayList<UserShoppingCartTableItem> AdminUserShoppingCartTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.UserShoppingCartTablePagination(para);
     }
 
     @CrossOrigin(origins="*")
@@ -202,6 +284,31 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminUserFavoritesTablePagination")
+    public ApiResult<ArrayList<UserFavoritesTableItem>> AdminUserFavoritesTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminUserFavoritesTablePaginationResult(para));
+    }
+    private ArrayList<UserFavoritesTableItem> AdminUserFavoritesTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.UserFavoritesTablePagination(para);
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminMerchantsProductTable")
     public ApiResult<ArrayList<MerchantsProductTableItem>> AdminMerchantsProductTable()      //获取所有商户的所有上架记录
     {
@@ -236,6 +343,31 @@ public class AdminController        //管理员控制器
             e.printStackTrace();
         }
         return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminMerchantsProductTablePagination")
+    public ApiResult<ArrayList<MerchantsProductTableItem>> AdminMerchantsProductTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminMerchantsProductTablePaginationResult(para));
+    }
+    private ArrayList<MerchantsProductTableItem> AdminMerchantsProductTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.MerchantsProductTablePagination(para);
     }
 
     @CrossOrigin(origins="*")
@@ -288,6 +420,31 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminProductTablePagination")
+    public ApiResult<ArrayList<ProductTableItem>> AdminProductTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminProductTablePaginationResult(para));
+    }
+    private ArrayList<ProductTableItem> AdminProductTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.ProductTablePagination(para);
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminProductImagesTable")
     public ApiResult<ArrayList<ProductImagesTableItem>> AdminProductImagesTable()    //返回所有商品的所有图片记录信息
     {
@@ -327,6 +484,31 @@ public class AdminController        //管理员控制器
         return res;
     }
 
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminProductImagesTablePagination")
+    public ApiResult<ArrayList<ProductImagesTableItem>> AdminProductImagesTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminProductImagesTablePaginationResult(para));
+    }
+    private ArrayList<ProductImagesTableItem> AdminProductImagesTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.ProductImagesTablePagination(para);
+    }
+
     @CrossOrigin(origins = "*")
     @RequestMapping("/api/AdminProductClicksInfoTable")
     public ApiResult<ArrayList<ProductClicksInfoTableItem>> AdminProductClicksInfoTable()    //返回所有商品的点击次数记录信息
@@ -362,6 +544,31 @@ public class AdminController        //管理员控制器
             e.printStackTrace();
         }
         return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminProductClicksInfoTablePagination")
+    public ApiResult<ArrayList<ProductClicksInfoTableItem>> AdminProductClicksInfoTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminProductClicksInfoTablePaginationResult(para));
+    }
+    private ArrayList<ProductClicksInfoTableItem> AdminProductClicksInfoTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.ProductClicksInfoTablePagination(para);
     }
 
     @CrossOrigin(origins = "*")
@@ -420,6 +627,31 @@ public class AdminController        //管理员控制器
     }
 
     @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminOrderFullInfoTablePagination")
+    public ApiResult<ArrayList<OrderFullInfoTableItem>> AdminOrderFullInfoTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminOrderFullInfoTablePaginationResult(para));
+    }
+    private ArrayList<OrderFullInfoTableItem> AdminOrderFullInfoTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.OrderFullInfoTablePagination(para);
+    }
+
+    @CrossOrigin(origins="*")
     @RequestMapping("/api/AdminOrderProductInfoTable")
     public ApiResult<ArrayList<OrderProductInfoTableItem>> AdminOrderProductInfoTable()      //返回所有订单的所有的订购的商品信息
     {
@@ -457,6 +689,31 @@ public class AdminController        //管理员控制器
             e.printStackTrace();
         }
         return res;
+    }
+
+    @CrossOrigin(origins="*")
+    @RequestMapping("/api/AdminOrderProductInfoTablePagination")
+    public ApiResult<ArrayList<OrderProductInfoTableItem>> AdminOrderProductInfoTablePagination(@RequestBody PageItem para)
+    {
+        return ApiResult.success(AdminOrderProductInfoTablePaginationResult(para));
+    }
+    private ArrayList<OrderProductInfoTableItem> AdminOrderProductInfoTablePaginationResult(PageItem para)
+    {
+        InputStream inputStream = null;
+        try
+        {
+            inputStream = Resources.getResourceAsStream("mybatis-config.xml");
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        //读取mybatis的配置
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        // 打开会话
+        SqlSession sqlSession = sqlSessionFactory.openSession(true);
+        PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
+        return mapper.OrderProductInfoTablePagination(para);
     }
 
     //-----------------------------------基本表的信息----------------------------------//

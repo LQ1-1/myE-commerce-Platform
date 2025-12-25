@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lqh.ebuyplt_1001p.Controller.mapper.PaginationMapper">
+
+    <select id="UserAccountTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.UserAccountTableItem">
+        SELECT * FROM UserAccountTable ORDER BY uID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="UserDeliveryInfoTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.UserDeliveryInfoTableItem">
+        SELECT * FROM UserDeliveryInfoTable ORDER BY uID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="UserFavoritesTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.UserFavoritesTableItem">
+        SELECT * FROM UserFavoritesTable ORDER BY uID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="UserShoppingCartTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.UserShoppingCartTableItem">
+        SELECT * FROM UserShoppingCartTable ORDER BY uID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="MerchantsProductTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.MerchantsProductTableItem">
+        SELECT * FROM MerchantsProductTable ORDER BY uID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="ProductTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.ProductTableItem">
+        SELECT * FROM ProductTable ORDER BY pID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="ProductImagesTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.ProductImagesTableItem">
+        SELECT * FROM ProductImagesTable ORDER BY pID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="ProductClicksInfoTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.ProductClicksInfoTableItem">
+        SELECT * FROM ProductClicksInfoTable ORDER BY pID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="OrderFullInfoTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.OrderFullInfoTableItem">
+        SELECT
+        OrderGeneralInfoTable.oOrderID, OrderGeneralInfoTable.oOrdererID,
+        OrderBasicInfoTable.oDate, OrderBasicInfoTable.oStatus,
+        OrdererInfoTable.oReceiverName, OrdererInfoTable.oReceieverGender, OrdererInfoTable.oReceieverEmail,
+        OrderDeliveryInfo.oDeliveryAddress, OrderDeliveryInfo.oPostalCode, OrderDeliveryInfo.oContactPhone, OrderDeliveryInfo.oDeliveryNote
+        FROM OrderGeneralInfoTable
+        INNER JOIN OrderBasicInfoTable ON OrderGeneralInfoTable.oOrderID=OrderBasicInfoTable.oOrderID
+        INNER JOIN OrdererInfoTable ON OrdererInfoTable.oOrderID=OrderGeneralInfoTable.oOrderID
+        INNER JOIN OrderDeliveryInfo ON OrderDeliveryInfo.oOrderID=OrderGeneralInfoTable.oOrderID
+        ORDER BY OrderGeneralInfoTable.oOrderID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+    <select id="OrderProductInfoTablePagination" parameterType="com.lqh.ebuyplt_1001p.Controller.AdminPack.PageItem" resultType="com.lqh.ebuyplt_1001p.Controller.AdminPack.OrderProductInfoTableItem">
+        SELECT * FROM OrderProductInfoTable ORDER BY oOrderID ASC LIMIT #{pageSize} OFFSET (#{currentPage} - 1) * #{pageSize};
+    </select>
+
+</mapper>
