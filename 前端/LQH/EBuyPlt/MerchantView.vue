@@ -233,9 +233,13 @@
             </el-table-column>
             <el-table-column label="买家信息" min-width="100">
               <template #default="scope">
-                <div>姓名: {{ scope.row.DeliveryInfoItem?.uContactPersonName }}</div>
-                <div>电话: {{ scope.row.DeliveryInfoItem?.uContactPersonPhone }}</div>
-                <div>地址: {{ scope.row.DeliveryInfoItem?.uDeliveryAddress }}</div>
+                <div>收货人姓名: {{ scope.row.DeliveryInfoItem?.uContactPersonName }}</div>
+                <div>收货人电话: {{ scope.row.DeliveryInfoItem?.uContactPersonPhone }}</div>
+                <div>收货人邮箱:{{scope.row.DeliveryInfoItem?.uContactPersonEmail }}</div>
+                <div>收货人性别: {{ scope.row.DeliveryInfoItem?.uContactPersonGender }}</div>
+                <div>收货地址: {{ scope.row.DeliveryInfoItem?.uDeliveryAddress }}</div>
+                <div>收货人邮编:{{scope.row.DeliveryInfoItem?.oPostalCode }}</div>
+                <div>收货人收件备注:{{scope.row.DeliveryInfoItem?.oDeliveryNote }}</div>
               </template>
             </el-table-column>
             <el-table-column prop="oDate" label="下单时间" width="180" />

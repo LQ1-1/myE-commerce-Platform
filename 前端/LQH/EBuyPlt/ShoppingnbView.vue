@@ -17,7 +17,6 @@
                             {{ showFilter ? '收起筛选' : '高级筛选' }}
                         </el-button>
 
-                        <!-- 新增：订单列表跳转按钮 -->
                         <el-button :icon="Tickets" circle size="large" @click="router.push('/OrderListView')"
                             title="我的订单" />
 
@@ -101,13 +100,27 @@
                 </div>
             </el-collapse-transition>
 
+            <!-- 新增：推荐商品轮播图 -->
+            <!-- 逻辑：只在推荐模式下，且有商品数据时显示。只取前5个作为轮播展示 -->
+            <div v-if="isRecommendMode && products.length > 0" class="recommend-carousel">
+                <el-carousel :interval="4000" type="card" height="300px">
+                    <el-carousel-item v-for="item in products.slice(0, 5)" :key="item.pID">
+                        <div class="carousel-item-wrapper" @click="goToDetail(item.pID)">
+                            <img :src="getProductImage(item.pImagePath)" class="carousel-img" />
+                            <div class="carousel-info-mask">
+                                <h3 class="carousel-title">{{ item.pName }}</h3>
+                                <span class="carousel-price">¥ {{ item.pPrice }}</span>
+                            </div>
+                            <el-tag effect="dark" type="danger" class="carousel-tag">热销推荐</el-tag>
+                        </div>
+                    </el-carousel-item>
+                </el-carousel>
+            </div>
+
             <!-- 快捷分类栏 -->
             <div class="category-bar">
                 <el-tabs v-model="activeCategory" class="category-tabs" @tab-change="handleCategoryChange">
-                    <!-- 修改：将 "全部" 替换为 "推荐" -->
                     <el-tab-pane label="推荐" name="推荐" />
-
-                    <!-- 循环渲染其他分类 -->
                     <el-tab-pane v-for="type in categoryList" :key="type" :label="type" :name="type" />
                 </el-tabs>
             </div>
@@ -171,7 +184,7 @@
             <p>© 2023 EBuyPlt. Built with Element Plus.</p>
         </el-footer>
 
-        <!-- 购物车抽屉 -->
+        <!-- 购物车抽屉 (保持不变) -->
         <el-drawer v-model="cartVisible" title="我的购物车" direction="rtl" size="480px">
             <div v-if="cart.length === 0" class="empty-cart">
                 <el-empty description="购物车是空的" />
@@ -188,12 +201,9 @@
 
                 <div class="cart-list">
                     <div v-for="item in cart" :key="item.pID" class="cart-item">
-                        <!-- 单选框 -->
                         <div class="checkbox-wrapper">
                             <el-checkbox v-model="item.isSelected" />
                         </div>
-
-                        <!-- 商品信息 -->
                         <div class="cart-content-wrapper clickable-item" @click="goToDetail(item.pID)">
                             <img :src="getProductImage(item.pImagesPath)" class="cart-item-img" />
                             <div class="cart-item-info">
@@ -228,7 +238,7 @@
             </template>
         </el-drawer>
 
-        <!-- 结算流程弹窗 -->
+        <!-- 结算流程弹窗 (保持不变) -->
         <el-dialog v-model="checkoutVisible" title="确认收货信息" width="500px" destroy-on-close>
             <div v-loading="checkoutLoading">
                 <div v-if="existingAddresses.length > 0 && !isAddingNewAddress">
@@ -290,7 +300,7 @@
             </template>
         </el-dialog>
 
-        <!-- 收藏夹抽屉 -->
+        <!-- 收藏夹抽屉 (保持不变) -->
         <el-drawer v-model="favVisible" title="我的收藏" direction="rtl" size="450px">
             <div v-if="favorites.length === 0" class="empty-cart">
                 <el-empty description="暂无收藏" />
@@ -320,9 +330,9 @@
 </template>
 
 <script setup>
+// Script部分无需大的改动，因为数据直接复用了 existing 的 products 变量
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// 新增引入 Tickets 图标
 import {
     ShoppingCart, Search, User, Delete, CirclePlus, Remove, Filter, Star, StarFilled, Tickets
 } from '@element-plus/icons-vue'
@@ -375,7 +385,8 @@ const newAddressForm = reactive({
     oDeliveryNote: ''
 })
 
-// 生命周期
+const categoryList = ref([])
+
 onMounted(() => {
     const storedUID = sessionStorage.getItem('uID')
     if (!storedUID) {
@@ -397,16 +408,15 @@ onMounted(() => {
 
 const goToUserProfile = () => {
     router.push({
-        path: '/UserProfileView', // 这里的路径要和你路由配置里的一致
-        query: { uID: currentUserID.value } // 将当前用户ID传过去
+        path: '/UserProfileView',
+        query: { uID: currentUserID.value }
     })
 }
 
-// 路由跳转
 const goToDetail = (id) => { router.push({ name: 'ProductDetailView', params: { pID: id } }) }
 const handleLogout = () => { sessionStorage.removeItem('uID'); router.push('/') }
 
-// 推荐逻辑
+// 推荐逻辑 - 这里获取的数据会被轮播图复用
 const handleRecommend = async () => {
     isLoading.value = true
     isRecommendMode.value = true
@@ -431,17 +441,13 @@ const handleRecommend = async () => {
 // 搜索逻辑
 const handleSearch = async () => {
     isLoading.value = true
-    isRecommendMode.value = false
+    isRecommendMode.value = false // 搜索模式下隐藏轮播图
 
     try {
-        // 构造请求参数，完全信任 filterForm 中的数据
         const payload = {
             SearchDesciption: searchQuery.value,
             pID: filterForm.pID,
-
-            // 【重点】直接取表单里的类型，不再看 activeCategory
             pType: filterForm.pType,
-
             pPrice_f: filterForm.minPrice || 0.0,
             pPrice_r: filterForm.maxPrice || 0.0,
             pProducer: filterForm.pProducer,
@@ -466,38 +472,23 @@ const handleSearch = async () => {
 }
 
 const handleCategoryChange = (val) => {
-    // 1. 如果点击的是“推荐”
     if (val === '推荐') {
-        // 清空类型，进入推荐模式
         filterForm.pType = ''
         handleRecommend()
         return
     }
-
-    // 2. 如果点击的是具体分类（如“电子产品”）
-    // 【重点逻辑】：重置高级筛选的其他条件，确保导航栏点击是“纯净”的分类搜索
     filterForm.pID = ''
     filterForm.pProducer = ''
     filterForm.pInfo = ''
     filterForm.minPrice = undefined
     filterForm.maxPrice = undefined
     filterForm.dateRange = null
-
-    // 把当前点击的 Tab 类型同步给表单
     filterForm.pType = val
-
-    // 立即执行搜索
     handleSearch()
 }
 
 const applyAdvancedFilter = () => {
-    // 【重点逻辑】：将导航栏状态置空，视觉上变成“未选择”
-    // 注意：Element Plus Tabs 如果绑定值不在选项列表中，就会不显示下划线，刚好符合需求
     activeCategory.value = ''
-
-    // 注意：这里不需要清空 filterForm，因为用户就是要用这里面的值去搜
-
-    // 执行搜索
     handleSearch()
 }
 
@@ -521,17 +512,13 @@ const getProductImage = (path) => {
     return `${BASE_URL}${cleanPath}`
 }
 
-// 购物车逻辑
 const fetchCart = async () => {
     if (!currentUserID.value) return
     cartLoading.value = true
     try {
         const res = await axios.post(`${BASE_URL}/api/ShoppingCartRecords`, { uID: currentUserID.value })
         const rawList = res.data && res.data.data ? res.data.data : []
-
-        // 保留勾选状态逻辑
         const oldMap = new Map(cart.value.map(i => [i.pID, i.isSelected]))
-
         cart.value = rawList.map(item => ({
             ...item,
             isSelected: oldMap.has(item.pID) ? oldMap.get(item.pID) : false
@@ -603,7 +590,6 @@ const removeLineFromCart = async (item) => {
 
 const openCart = () => { cartVisible.value = true; fetchCart() }
 
-// 收藏夹逻辑
 const fetchFavorites = async () => {
     if (!currentUserID.value) return
     favLoading.value = true
@@ -633,19 +619,15 @@ const toggleFavorite = async (product) => {
 }
 
 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.cAmount, 0))
-// const categoryList = computed(() => ['电子产品', '日用品', '书籍', '服装', '食品'])
 
-// 结算逻辑
 const handleCheckout = async () => {
     if (!currentUserID.value) return ElMessage.error("未登录")
     if (selectedCount.value === 0) {
         return ElMessage.warning('请先勾选要结算的商品')
     }
-
     checkoutVisible.value = true
     checkoutLoading.value = true
     isAddingNewAddress.value = false
-
     newAddressForm.uContactPersonGender = ''
     newAddressForm.uContactPersonName = ''
     newAddressForm.uContactPersonPhone = ''
@@ -658,7 +640,6 @@ const handleCheckout = async () => {
         const res = await axios.post(`${BASE_URL}/api/OrderConfirm_DeliveryCheck`, {
             uID: currentUserID.value
         })
-
         if (res.data && res.data.data && res.data.data.DeliveryInfos && res.data.data.DeliveryInfos.length > 0) {
             existingAddresses.value = res.data.data.DeliveryInfos
             selectedAddressIndex.value = 0
@@ -676,21 +657,14 @@ const handleCheckout = async () => {
 
 const confirmOrderGeneration = async () => {
     let finalDeliveryInfo = null
-
     if (isAddingNewAddress.value || existingAddresses.value.length === 0) {
         if (!newAddressForm.uContactPersonName || !newAddressForm.uDeliveryAddress || !newAddressForm.uContactPersonPhone) {
             return ElMessage.warning('请填写完整的收货信息')
         }
-
-        finalDeliveryInfo = {
-            uID: currentUserID.value,
-            ...newAddressForm
-        }
-
+        finalDeliveryInfo = { uID: currentUserID.value, ...newAddressForm }
         try {
             checkoutLoading.value = true
             const addrRes = await axios.post(`${BASE_URL}/api/OrderConfirm_NewDeliveryRecord`, finalDeliveryInfo)
-            // alert(addrRes.data);
             if (addrRes.data !== 'Request Accept') {
                 throw new Error('地址保存失败')
             }
@@ -705,9 +679,7 @@ const confirmOrderGeneration = async () => {
 
     try {
         checkoutLoading.value = true
-
         const selectedItems = cart.value.filter(item => item.isSelected)
-
         const orderPayload = {
             uID: currentUserID.value,
             oDeliveryInfo: finalDeliveryInfo,
@@ -717,60 +689,38 @@ const confirmOrderGeneration = async () => {
                 oPrice: Number(item.pPrice)
             }))
         }
-
         const orderRes = await axios.post(`${BASE_URL}/api/OrderConfirm_OrderGenerate`, orderPayload)
-
         checkoutVisible.value = false
-
         const feedback = orderRes.data.data
         const failedItems = feedback.pProducts.filter(p => p.pFeedback === 'Inventory Insufficient')
-
         if (failedItems.length > 0) {
             ElMessage.error(`部分商品库存不足，订单创建失败`)
             return
         }
-
-        // 本地移除已购买商品
         cart.value = cart.value.filter(item => !item.isSelected)
-
         const newOrderID = feedback.oOrderID
         if (!newOrderID) {
             ElMessage.error('订单生成异常，未获取到订单号')
             return
         }
-
-        ElMessageBox.confirm(
-            '订单已生成！是否立即支付？',
-            '支付确认',
-            {
-                confirmButtonText: '立即支付',
-                cancelButtonText: '稍后支付',
-                type: 'success',
-            }
-        )
-            .then(async () => {
-                await updateOrderStatus(newOrderID, 'Paid')
-            })
-            .catch(() => {
-                ElMessage.info('您可以稍后在订单中心支付')
-            })
-
+        ElMessageBox.confirm('订单已生成！是否立即支付？', '支付确认', {
+            confirmButtonText: '立即支付', cancelButtonText: '稍后支付', type: 'success',
+        })
+            .then(async () => { await updateOrderStatus(newOrderID, 'Paid') })
+            .catch(() => { ElMessage.info('您可以稍后在订单中心支付') })
     } catch (e) {
         console.error(e)
         ElMessage.error('订单生成失败')
     } finally {
         checkoutLoading.value = false
-        // 不自动刷新购物车以免拉回刚删除的商品(如果后端没删的话)
     }
 }
 
 const updateOrderStatus = async (orderID, statusStr) => {
     try {
         const res = await axios.post(`${BASE_URL}/api/OrderStatus_Update`, {
-            oOrderID: orderID,
-            NewStatus: statusStr
+            oOrderID: orderID, NewStatus: statusStr
         })
-
         if (res.data === 'Update Accept') {
             ElMessage.success('支付成功！')
         } else {
@@ -782,28 +732,84 @@ const updateOrderStatus = async (orderID, statusStr) => {
     }
 }
 
-const categoryList = ref([]) // 改为响应式数组
-
 const fetchCategories = async () => {
     try {
-        // 根据你的描述，参数为空，且沿用该项目的 POST 风格
         const res = await axios.post(`${BASE_URL}/api/GetAllProductType`, {})
-
-        // 假设后端返回结构为 { code: 200, data: ["电子产品", "服装", ...] }
         if (res.data && res.data.data) {
             categoryList.value = res.data.data
         }
     } catch (e) {
         console.error('获取商品分类失败', e)
-        // 发生错误时可以给个默认值，或者保持为空
-        // categoryList.value = ['电子产品', '书籍'] 
     }
 }
-
 </script>
 
 <style scoped>
-/* 样式保留 */
+/* 轮播图样式 */
+.recommend-carousel {
+    margin-bottom: 25px;
+}
+
+.carousel-item-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.carousel-item-wrapper:hover .carousel-img {
+    transform: scale(1.05);
+}
+
+.carousel-info-mask {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.carousel-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+}
+
+.carousel-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #f56c6c;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+}
+
+/* 原有样式保持不变 */
 .shop-layout {
     min-height: 100vh;
     background-color: #f5f7fa;
@@ -1142,7 +1148,6 @@ const fetchCategories = async () => {
     color: #909399;
 }
 
-/* 购物车新样式 */
 .cart-header-actions {
     display: flex;
     justify-content: space-between;

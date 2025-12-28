@@ -17,7 +17,7 @@
                             </el-icon>
                             <span>用户管理</span>
                         </template>
-                        <el-menu-item index="UserAccountTable">用户账户信息 (搜索/详情)</el-menu-item>
+                        <el-menu-item index="UserAccountTable">用户账户信息</el-menu-item>
                         <el-menu-item index="UserDeliveryInfoTable">用户收货地址</el-menu-item>
                         <el-menu-item index="UserShoppingCartTable">用户购物车</el-menu-item>
                         <el-menu-item index="UserFavoritesTable">用户收藏夹</el-menu-item>
@@ -30,7 +30,7 @@
                             </el-icon>
                             <span>商品管理</span>
                         </template>
-                        <el-menu-item index="ProductTable">商品基础信息 (搜索/详情)</el-menu-item>
+                        <el-menu-item index="ProductTable">商品基础信息</el-menu-item>
                         <el-menu-item index="MerchantsProductTable">商户上架记录</el-menu-item>
                         <el-menu-item index="ProductImagesTable">商品图片记录</el-menu-item>
                         <el-menu-item index="ProductClicksInfoTable">商品点击统计</el-menu-item>
@@ -43,7 +43,7 @@
                             </el-icon>
                             <span>订单管理</span>
                         </template>
-                        <el-menu-item index="OrderFullInfoTable">订单完整详情 (搜索/详情)</el-menu-item>
+                        <el-menu-item index="OrderFullInfoTable">订单完整详情</el-menu-item>
                         <el-menu-item index="OrderProductInfoTable">订单商品明细</el-menu-item>
                     </el-sub-menu>
                 </el-menu>
@@ -142,7 +142,7 @@
                         </el-form>
                     </div>
 
-                    <!-- 2. 商品搜索栏 (参照 ShoppingnbView 改造) -->
+                    <!-- 2. 商品搜索栏 -->
                     <div v-if="activeMenu === 'ProductTable'" class="search-box">
                         <el-form :model="productSearchParams" size="small" label-width="70px">
                             <!-- 顶部：综合搜索 -->
@@ -269,7 +269,6 @@
                                     <template #default="scope">
                                         <el-button type="primary" link size="small"
                                             @click="openEditDialog(scope.row)">编辑</el-button>
-                                        <!-- 跳转详情 -->
                                         <el-button type="success" link size="small"
                                             @click="goToUserDetail(scope.row)">详情</el-button>
                                     </template>
@@ -305,7 +304,6 @@
                                 <el-table-column prop="pInfo" label="简介" show-overflow-tooltip />
                                 <el-table-column label="操作" width="100" fixed="right">
                                     <template #default="scope">
-                                        <!-- 跳转详情 -->
                                         <el-button type="success" link size="small"
                                             @click="goToProductDetail(scope.row)">详情</el-button>
                                     </template>
@@ -329,7 +327,6 @@
                                 <el-table-column prop="oDeliveryNote" label="备注" />
                                 <el-table-column label="操作" width="100" fixed="right">
                                     <template #default="scope">
-                                        <!-- 跳转详情 -->
                                         <el-button type="success" link size="small"
                                             @click="goToOrderDetail(scope.row)">详情</el-button>
                                     </template>
@@ -344,6 +341,8 @@
                                 <el-table-column prop="uID" label="用户ID" width="120" />
                                 <el-table-column prop="uContactPersonName" label="收货人" width="120" />
                                 <el-table-column prop="uContactPersonPhone" label="联系电话" width="140" />
+                                <el-table-column prop="uContactPersonEmail" label="电子邮箱" width="140" />
+                                <el-table-column prop="uContactPersonGender" label="联系人性别" width="100" />
                                 <el-table-column prop="uDeliveryAddress" label="收货地址" min-width="200" />
                                 <el-table-column prop="oPostalCode" label="邮编" width="100" />
                                 <el-table-column prop="oDeliveryNote" label="备注" />
@@ -412,6 +411,38 @@
                         </div>
 
                         <el-empty v-else description="请选择左侧菜单查看数据" />
+                    </div>
+
+                    <!-- 分页组件区域 -->
+                    <div v-if="!isSearchMode && tableData.length > 0 || (pagination.currentPage > 1 && !isSearchMode)"
+                        class="pagination-footer">
+                        <div class="custom-pagination-controls">
+                            <span>跳转至第</span>
+                            <el-input v-model="customCurrentPage" size="small"
+                                style="width: 50px; margin: 0 8px; text-align: center;"
+                                @input="handleNumberInput($event, 'page')" />
+                            <span>页</span>
+
+                            <span style="margin-left: 15px">每页</span>
+                            <el-input v-model="customPageSize" size="small" style="width: 50px; margin: 0 8px"
+                                @input="handleNumberInput($event, 'size')" />
+                            <span>条</span>
+
+                            <el-button type="primary" size="small" style="margin-left: 10px"
+                                @click="applyCustomPagination" :disabled="loading">
+                                确定
+                            </el-button>
+                        </div>
+
+                        <div class="pagination-right">
+                            <el-pagination v-model:current-page="pagination.currentPage"
+                                :page-size="pagination.pageSize" :small="false" :disabled="loading" :background="true"
+                                layout="prev, slot, next" prev-text="上一页" next-text="下一页" :total="fakeTotal"
+                                @current-change="handleCurrentChange">
+                                <!-- 这里就是中间的那个“蓝底白字” -->
+                                <span class="current-page-badge">{{ pagination.currentPage }}</span>
+                            </el-pagination>
+                        </div>
                     </div>
 
                 </el-main>
@@ -486,10 +517,67 @@ const currentAdminID = ref('')
 const activeMenu = ref('UserAccountTable')
 const tableData = ref([])
 const loading = ref(false)
+const isSearchMode = ref(false) // 标记当前是否处于搜索模式（搜索模式不分页）
+
+// 分页状态
+const pagination = reactive({
+    currentPage: 1,
+    pageSize: 20
+})
+
+// 自定义分页输入状态
+const customPageSize = ref('20')
+const customCurrentPage = ref('1')
+
+// 输入框防抖与数字校验
+const handleNumberInput = (value, type) => {
+    // 使用正则替换非数字字符
+    const cleanValue = value.replace(/[^\d]/g, '')
+    if (type === 'size') {
+        customPageSize.value = cleanValue
+    } else {
+        customCurrentPage.value = cleanValue
+    }
+}
+
+// 点击确定应用自定义分页
+const applyCustomPagination = () => {
+    let size = parseInt(customPageSize.value)
+    if (!size || size <= 0) {
+        ElMessage.warning('每页条数必须是大于0的数字')
+        customPageSize.value = String(pagination.pageSize)
+        return
+    }
+
+    let page = parseInt(customCurrentPage.value)
+    if (!page || page <= 0) {
+        ElMessage.warning('页码必须是大于0的数字')
+        customCurrentPage.value = String(pagination.currentPage)
+        return
+    }
+
+    // 更新状态
+    pagination.pageSize = parseInt(customPageSize.value)
+    pagination.currentPage = page
+
+    fetchData(activeMenu.value)
+}
+
+// 同步分页数据显示到输入框
+const syncInputValues = () => {
+    customPageSize.value = String(pagination.pageSize)
+    customCurrentPage.value = String(pagination.currentPage)
+}
+
+// 计算属性：伪造Total
+const fakeTotal = computed(() => {
+    if (tableData.value.length === pagination.pageSize) {
+        return pagination.currentPage * pagination.pageSize + 1
+    }
+    return (pagination.currentPage - 1) * pagination.pageSize + tableData.value.length
+})
 
 // --- 搜索相关状态 ---
-
-// 1. 用户搜索参数
 const userSearchParams = reactive({
     SearchInput: '',
     uID: '',
@@ -502,20 +590,18 @@ const userSearchParams = reactive({
 })
 const userDateRange = ref([])
 
-// 2. 商品搜索参数 (参照 ShoppingnbView 字段)
 const productSearchParams = reactive({
-    SearchDesciption: '', // 综合搜索
+    SearchDesciption: '',
     pID: '',
     pProducer: '',
     pType: '',
     pInfo: '',
-    pPrice_f: undefined, // 对应 filterForm.minPrice
-    pPrice_r: undefined  // 对应 filterForm.maxPrice
+    pPrice_f: undefined,
+    pPrice_r: undefined
 })
 const productDateRange = ref([])
-const categoryList = ref([]) // 存储商品分类
+const categoryList = ref([])
 
-// 3. 订单搜索参数
 const orderSearchParams = reactive({
     SearchInput: '',
     oStatuses: []
@@ -561,7 +647,7 @@ onMounted(() => {
     }
     currentAdminID.value = uID
     fetchData(activeMenu.value)
-    fetchCategories() // 初始化获取商品分类
+    fetchCategories()
 })
 
 const handleLogout = () => {
@@ -571,22 +657,31 @@ const handleLogout = () => {
 
 const handleMenuSelect = (index) => {
     activeMenu.value = index
-    resetSearch(false)
-    fetchData(index)
+    resetSearch(true)
+
+    // 切换菜单时重置分页输入框为默认
+    customPageSize.value = '20'
+    customCurrentPage.value = '1'
 }
 
-// 获取全量数据
+// 核心修改：改为调用分页接口
 const fetchData = async (tableName) => {
     loading.value = true
-    tableData.value = []
+    // tableData.value = []
+    isSearchMode.value = false // 确保标记为非搜索模式，显示分页条
+
     try {
-        const url = `${BASE_URL}/api/Admin${tableName}`
-        const res = await axios.post(url, {})
+        const url = `${BASE_URL}/api/Admin${tableName}Pagination`
+        const pageBody = {
+            pageSize: pagination.pageSize,
+            currentPage: pagination.currentPage
+        }
+        const res = await axios.post(url, pageBody)
 
         if (res.data && res.data.data) {
             tableData.value = res.data.data
         } else {
-            // ElMessage.warning('暂无数据')
+            tableData.value = []
         }
     } catch (error) {
         console.error(error)
@@ -596,7 +691,6 @@ const fetchData = async (tableName) => {
     }
 }
 
-// 获取商品分类 (参照 ShoppingnbView)
 const fetchCategories = async () => {
     try {
         const res = await axios.post(`${BASE_URL}/api/GetAllProductType`, {})
@@ -608,10 +702,21 @@ const fetchCategories = async () => {
     }
 }
 
+// 分页事件处理 - 点击上一页/下一页时触发
+const handleCurrentChange = (val) => {
+    // 1. 更新内部页码
+    pagination.currentPage = val
+    // 2. 【核心同步】把右边变动的页码，填回左边的输入框里
+    customCurrentPage.value = String(val)
+    // 3. 查数据
+    fetchData(activeMenu.value)
+}
+
 // --- 搜索逻辑 ---
 const handleSearch = async () => {
     loading.value = true
     tableData.value = []
+    isSearchMode.value = true // 标记为搜索模式，隐藏分页条
 
     try {
         let url = ''
@@ -627,7 +732,6 @@ const handleSearch = async () => {
         }
         else if (activeMenu.value === 'ProductTable') {
             url = `${BASE_URL}/api/AdminProductTableSearch`
-            // 构造与 ShoppingnbView 逻辑一致的 payload
             params = {
                 SearchDesciption: productSearchParams.SearchDesciption,
                 pID: productSearchParams.pID,
@@ -648,10 +752,10 @@ const handleSearch = async () => {
                 DateR: orderDateRange.value ? orderDateRange.value[1] : ''
             }
         } else {
+            // 如果该表没有搜索功能，则回退到分页获取
             fetchData(activeMenu.value)
             return
         }
-        // alert(params.pProducer);
 
         const res = await axios.post(url, params)
         if (res.data && res.data.data) {
@@ -671,7 +775,7 @@ const handleSearch = async () => {
 
 // --- 重置逻辑 ---
 const resetSearch = (shouldFetch = true) => {
-    // 重置用户搜索
+    // 重置所有搜索字段
     userSearchParams.SearchInput = ''
     userSearchParams.uID = ''
     userSearchParams.uNickName = ''
@@ -682,7 +786,6 @@ const resetSearch = (shouldFetch = true) => {
     userSearchParams.uAccountStatuses = ['正常', '封禁', '注销']
     userDateRange.value = []
 
-    // 重置商品搜索
     productSearchParams.SearchDesciption = ''
     productSearchParams.pID = ''
     productSearchParams.pProducer = ''
@@ -692,17 +795,20 @@ const resetSearch = (shouldFetch = true) => {
     productSearchParams.pPrice_r = undefined
     productDateRange.value = []
 
-    // 重置订单搜索
     orderSearchParams.SearchInput = ''
     orderSearchParams.oStatuses = []
     orderDateRange.value = []
+
+    // 重置分页状态
+    pagination.currentPage = 1
+    pagination.pageSize = 20
+    syncInputValues() // 重置时同步输入框
 
     if (shouldFetch) {
         fetchData(activeMenu.value)
     }
 }
 
-// --- 详情页跳转逻辑 ---
 const goToUserDetail = (row) => {
     router.push({
         name: 'AdminUserDetailView',
@@ -726,7 +832,6 @@ const goToProductDetail = (row) => {
     })
 }
 
-// --- 编辑用户逻辑 ---
 const openEditDialog = (row) => {
     Object.assign(editForm, row)
     editDialogVisible.value = true
@@ -748,7 +853,6 @@ const handleUpdateUser = async () => {
     }
 }
 
-// --- 辅助函数：处理图片URL ---
 const getImageUrl = (path) => {
     if (!path) return ''
     let cleanPath = path.replace(/\\/g, '/')
@@ -836,7 +940,7 @@ const getImageUrl = (path) => {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* 表格容器样式 - 占据剩余空间 */
+/* 表格容器样式 - 占据剩余空间，且为底部分页留出空间 */
 .table-content {
     flex: 1;
     background: #fff;
@@ -844,6 +948,8 @@ const getImageUrl = (path) => {
     border-radius: 4px;
     overflow: hidden;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
 }
 
 .image-slot {
@@ -856,4 +962,58 @@ const getImageUrl = (path) => {
     color: #909399;
     font-size: 20px;
 }
+
+.pagination-footer {
+    background: #fff;
+    padding: 12px 20px;
+    border-top: 1px solid #ebeef5;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+}
+
+:deep(.el-pagination .btn-prev), 
+:deep(.el-pagination .btn-next) {
+    height: 32px;
+    line-height: 32px;
+    border-radius: 4px;
+    padding: 0 16px; 
+    background-color: #f4f4f5; 
+    color: #606266;
+    margin: 0; 
+}
+
+:deep(.el-pagination .btn-prev:hover), 
+:deep(.el-pagination .btn-next:hover) {
+    color: #409EFF;
+}
+
+:deep(.el-pagination .btn-prev:disabled), 
+:deep(.el-pagination .btn-next:disabled) {
+    background-color: #f5f7fa;
+    color: #c0c4cc;
+}
+
+.custom-pagination-controls {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #606266;
+}
+
+.current-page-badge {
+    display: inline-block;
+    background-color: #409EFF; /* 蓝色背景 */
+    color: #fff;               /* 白色文字 */
+    border-radius: 4px;        /* 圆角 */
+    padding: 0 12px;
+    height: 32px;
+    line-height: 32px;
+    margin: 0 10px;            /* 距离左右按钮的间距 */
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 32px;
+    text-align: center;
+}
+
 </style>
