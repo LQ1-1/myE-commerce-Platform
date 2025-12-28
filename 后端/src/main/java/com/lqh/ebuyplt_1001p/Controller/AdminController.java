@@ -181,7 +181,19 @@ public class AdminController        //管理员控制器
         // 打开会话
         SqlSession sqlSession = sqlSessionFactory.openSession(true);
         PaginationMapper mapper=sqlSession.getMapper(PaginationMapper.class);
-        return mapper.UserDeliveryInfoTablePagination(para);
+        ArrayList<UserDeliveryInfoTableItem> res=mapper.UserDeliveryInfoTablePagination(para);
+
+        {
+            System.out.println("*******************2025-12-27测试******************");
+//            for(UserDeliveryInfoTableItem item:res)
+//            {
+//                System.out.println(item.getuContactPersonEmail());
+//                System.out.println(item.getoDeliveryNote());
+//            }
+            System.out.println("*******************2025-12-27测试******************");
+        }
+
+        return res;
     }
 
     @CrossOrigin(origins="*")

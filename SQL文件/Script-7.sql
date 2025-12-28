@@ -22,6 +22,8 @@ SELECT * FROM UserAccountTable;
 SELECT * FROM UserAccountTable WHERE uNickName LIKE '%%';
 UPDATE UserAccountTable SET uPassword='932f3c1b56257ce8539ac269d7aab42550dacf8818d075f0bdf1990562aae3ef' WHERE uID='1522788291@163.com';
 
+SELECT * FROM UserAccountTable ORDER BY uID ASC LIMIT 10 OFFSET (1-1)*10;  -- 绑定偏移量参数（(2-1)*10=10）
+
 
 --用户收件地址,用户保存的收件人，收件地址，收件联系方式(与订单购买人信息表不一样)
 CREATE TABLE UserDeliveryInfoTable
