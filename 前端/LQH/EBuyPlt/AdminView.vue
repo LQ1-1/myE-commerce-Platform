@@ -639,6 +639,8 @@ const currentMenuName = computed(() => {
 })
 
 onMounted(() => {
+    document.title ='Admin';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     const uID = sessionStorage.getItem('uID')
     if (!uID) {
         ElMessage.error('请先登录')

@@ -89,7 +89,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Key, UserFilled, Phone, MessageBox } from '@element-plus/icons-vue'
 import CryptoJS from 'crypto-js'
@@ -102,6 +102,11 @@ const isLoading = ref(false)
 // --- 状态控制 ---
 const isRegister = ref(false)
 const registerType = ref('user')
+
+onMounted(() => {
+  document.title = 'Login';
+  document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
+})
 
 // 计算标题文字
 const titleText = computed(() => {

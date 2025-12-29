@@ -221,6 +221,8 @@ const deliveryRules = {
 
 // 初始化
 onMounted(() => {
+    document.title ='User Profile';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     let targetID = route.query.uID
     if (!targetID) {
         targetID = sessionStorage.getItem('uID')

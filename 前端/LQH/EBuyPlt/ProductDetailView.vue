@@ -394,6 +394,8 @@ const replyContent = ref('') // 回复框内容
 
 // --- 生命周期 ---
 onMounted(async () => {
+    document.title ='Product Detail';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     const storedUID = sessionStorage.getItem('uID')
     if (!storedUID) {
         ElMessage.error('请先登录')

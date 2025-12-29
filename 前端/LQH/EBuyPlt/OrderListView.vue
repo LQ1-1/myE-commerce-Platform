@@ -203,6 +203,8 @@ const checkoutLoading = ref(false)
 const checkoutItems = ref([])
 
 onMounted(() => {
+    document.title ='History Order';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     const storedUID = sessionStorage.getItem('uID')
     if (!storedUID) {
         ElMessage.error('请先登录')

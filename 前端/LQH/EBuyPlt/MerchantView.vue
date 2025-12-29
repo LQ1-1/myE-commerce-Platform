@@ -440,6 +440,9 @@ const rules = {
 
 // ================= 生命周期 =================
 onMounted(() => {
+  document.title ='Merchant';
+  document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
+
   const uID = sessionStorage.getItem('uID');
   if (!uID) {
     ElMessage.warning('请先登录');

@@ -54,6 +54,8 @@ const productInfo = ref(null)
 const loading = ref(false)
 
 onMounted(() => {
+    document.title ='Product Detail-Admin';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     fetchProductInfo()
 })
 

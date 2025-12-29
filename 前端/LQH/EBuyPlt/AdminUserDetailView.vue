@@ -163,6 +163,8 @@ const rules = {
 }
 
 onMounted(() => {
+    document.title ='User Detail-Admin';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     // 1. 获取 uID
     if (route.params.uID) {
         uID.value = route.params.uID

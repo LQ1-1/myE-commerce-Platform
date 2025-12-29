@@ -69,6 +69,8 @@ const productList = ref([])
 const loading = ref(false)
 
 onMounted(() => {
+    document.title ='Order Detail-Admin';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
     // 获取传递过来的订单头信息
     if (history.state && history.state.orderData) {
         orderInfo.value = JSON.parse(history.state.orderData)

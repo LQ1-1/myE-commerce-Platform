@@ -388,6 +388,9 @@ const newAddressForm = reactive({
 const categoryList = ref([])
 
 onMounted(() => {
+    document.title = 'Shop';
+    document.querySelector('link[rel="icon"]').href = '/myIcon.svg';
+
     const storedUID = sessionStorage.getItem('uID')
     if (!storedUID) {
         ElMessage.error('请先登录')
@@ -771,35 +774,53 @@ const fetchCategories = async () => {
     transform: scale(1.05);
 }
 
+/* 修改 .carousel-info-mask */
 .carousel-info-mask {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 20px;
+    /* 增加右侧内边距，防止数字紧贴边缘被圆角切掉 */
+    padding: 20px 24px 20px 20px; 
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
     color: #fff;
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-end; /* 底部对齐 */
+    box-sizing: border-box; /* 确保 padding 不会撑大宽度 */
 }
 
+/* 修改 .carousel-title */
 .carousel-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 18px; /* 如果觉得字太大可以适当调小 */
     font-weight: 600;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    
+    /* --- 核心修改开始 --- */
+    flex: 1;          /* 让标题占据剩余空间 */
+    min-width: 0;     /* 关键：允许 flex 子项在溢出时缩小，配合 truncate 使用 */
+    padding-right: 15px; /* 给标题和价格之间留出空隙 */
+    /* --- 核心修改结束 --- */
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
+    /* 删除原来的 max-width: 70%; 让 flex 自动计算 */
 }
 
+/* 修改 .carousel-price */
 .carousel-price {
-    font-size: 20px;
+    /* --- 核心修改开始 --- */
+    flex-shrink: 0;   /* 关键：禁止价格被压缩，始终显示完整宽度 */
+    /* --- 核心修改结束 --- */
+    
+    font-size: 22px;  /* 稍微调整大小以适应布局 */
     font-weight: bold;
     color: #f56c6c;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    line-height: 1;   /* 防止行高过大导致底部对齐时被切掉 */
+    padding-bottom: 2px; /* 微调位置，避免基线被切 */
 }
 
 .carousel-tag {
